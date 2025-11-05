@@ -1,0 +1,12 @@
+{
+  "name": "industrial-hardware-idaho-fullstack",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "install-all": "npm --prefix server i && npm --prefix client i"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
