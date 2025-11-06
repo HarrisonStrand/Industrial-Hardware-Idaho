@@ -11,13 +11,17 @@ import ProductDetails from "./pages/ProductDetails/ProductDetails.jsx";
 import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Header from "./components/Header/Header.jsx";
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { fab } from '@fortawesome/free-brands-svg-icons';
+import { fas } from '@fortawesome/free-solid-svg-icons';
+import { far } from '@fortawesome/free-regular-svg-icons';
+
 
 export default function App() {
+
   return (
     <Router>
-      <Header/>
-      <main className="main">
+      <main className="main container-fluid position-relative p-0">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -36,3 +40,5 @@ export default function App() {
     </Router>
   );
 }
+
+library.add(fab, fas, far);

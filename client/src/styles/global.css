@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Red+Rose:wght@400;500;600;700&display=swap");
+
+:root {
+	--main-color: #495a42 !important;
+	--alt-color: #183018;
+	--accent-light: #b9ab8e;
+	--accent-dark: #8e6953;
+  --font-main: 'Red Rose', serif;
+	--font-secondary: 'Open Sans', sans-serif;
+	--logo: url('../assets/images/IHI-stamp-white.png');
+}
+
+
+:root[data-theme="light"] {
+  --logo: url('../assets/images/IHI-stamp-green.png');
+}
+
+.text-main {
+	color: var(--main-color);
+}
+
+.text-secondary{
+	color: var(--alt-color);
+}
+
+.text-accent-light{
+	color: var(--main-color);
+}
+
+.text-accent-dark{
+	color: var(--alt-color);
+}
+
+.bg-main {
+	background: var(--main-color);
+}
+
+.bg-secondary {
+	background: var(--alt-color);
+}
+
+.bg-accent-light {
+	background: var(--main-color);
+}
+
+.bg-accent-dark {
+	background: var(--alt-color);
+}
+
+body {
+  font-family: var(--font-main);
+}
+
+.font-main {
+	font-family: var(--font-main);
+}
+
+.font-secondary {
+	font-family: var(--font-secondary);
+}
+
+.logo {
+  background: var(--logo) no-repeat center / contain;
+  width: 10em;
+  height: 8em;
+  display: inline-block;
+  vertical-align: middle;
+}
