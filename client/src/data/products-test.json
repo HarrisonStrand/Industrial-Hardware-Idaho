@@ -1,0 +1,108 @@
+{
+  "products": [
+    {
+      "id": "bolt-1",
+      "name": "Hex Bolt",
+      "type": "bolt",
+      "grade": "Grade 2",
+      "material": "Steel",
+      "diameter": "1/4\"",
+      "length": "1\"",
+      "thread": "Coarse",
+      "finish": "Zinc-Plated",
+      "stock": 1200,
+      "price": 0.25
+    },
+    {
+      "id": "bolt-2",
+      "name": "Hex Bolt",
+      "type": "bolt",
+      "grade": "Grade 5",
+      "material": "Steel",
+      "diameter": "1/2\"",
+      "length": "2\"",
+      "thread": "Fine",
+      "finish": "Plain",
+      "stock": 800,
+      "price": 0.45
+    },
+    {
+      "id": "bolt-3",
+      "name": "Carriage Bolt",
+      "type": "bolt",
+      "grade": "Grade 8",
+      "material": "Alloy Steel",
+      "diameter": "3/8\"",
+      "length": "3\"",
+      "thread": "Coarse",
+      "finish": "Black Oxide",
+      "stock": 500,
+      "price": 0.65
+    },
+    {
+      "id": "screw-1",
+      "name": "Wood Screw",
+      "type": "screw",
+      "grade": "Standard",
+      "material": "Stainless Steel",
+      "diameter": "#8",
+      "length": "1-1/2\"",
+      "thread": "Coarse",
+      "finish": "Polished",
+      "stock": 2000,
+      "price": 0.12
+    },
+    {
+      "id": "screw-2",
+      "name": "Machine Screw",
+      "type": "screw",
+      "grade": "Grade 5",
+      "material": "Steel",
+      "diameter": "1/4\"",
+      "length": "2\"",
+      "thread": "Fine",
+      "finish": "Zinc-Plated",
+      "stock": 1300,
+      "price": 0.18
+    },
+    {
+      "id": "screw-3",
+      "name": "Sheet Metal Screw",
+      "type": "screw",
+      "grade": "Standard",
+      "material": "Steel",
+      "diameter": "#10",
+      "length": "3/4\"",
+      "thread": "Coarse",
+      "finish": "Galvanized",
+      "stock": 2200,
+      "price": 0.10
+    },
+    {
+      "id": "bolt-4",
+      "name": "Structural Bolt",
+      "type": "bolt",
+      "grade": "A325",
+      "material": "Alloy Steel",
+      "diameter": "3/4\"",
+      "length": "4\"",
+      "thread": "Coarse",
+      "finish": "Hot-Dip Galvanized",
+      "stock": 400,
+      "price": 1.10
+    },
+    {
+      "id": "screw-4",
+      "name": "Deck Screw",
+      "type": "screw",
+      "grade": "Exterior",
+      "material": "Stainless Steel",
+      "diameter": "#10",
+      "length": "2-1/2\"",
+      "thread": "Coarse",
+      "finish": "Ceramic Coated",
+      "stock": 1800,
+      "price": 0.20
+    }
+  ]
+}

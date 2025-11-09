@@ -1,0 +1,23 @@
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Red+Rose:wght@400;500;600;700&display=swap");
+
+:root {
+	--main-color: #495a42;
+	--alt-color: #183018;
+	--accent-light: #b9ab8e;
+	--accent-dark: #8e6953;
+  --font-main: 'Red Rose', serif;
+	--transition-base: 0.3s ease;
+	--font-secondary: 'Open Sans', sans-serif;
+	--logo: url('../assets/images/IHI-stamp-white.png');
+	--account-thumb: url('../assets/images/profile-placeholder.jpg');
+}
+
+:root[data-theme="dark"] {
+	--main-color: #8aa07c;
+  --alt-color: #0f1a0f;
+  --accent-light: #d4c9b0;
+  --accent-dark: #b07f67; 
+  --body-light: #1b1b1b;
+  --text-color: #e7e7e7;
+	--logo: url('../assets/images/IHI-stamp-green.png');
+}

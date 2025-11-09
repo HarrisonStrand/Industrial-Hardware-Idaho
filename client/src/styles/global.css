@@ -1,15 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Red+Rose:wght@400;500;600;700&display=swap");
-
-:root {
-	--main-color: #495a42 !important;
-	--alt-color: #183018;
-	--accent-light: #b9ab8e;
-	--accent-dark: #8e6953;
-  --font-main: 'Red Rose', serif;
-	--font-secondary: 'Open Sans', sans-serif;
-	--logo: url('../assets/images/IHI-stamp-white.png');
-	--account-thumb: url('../assets/images/profile-placeholder.jpg');
-}
+@import "./design-tokens.css";
 
 .theme-btn {
 	border: none;
@@ -20,28 +9,28 @@
 	height: 5px;
 }
 
-:root[data-theme="light"] {
-  --logo: url('../assets/images/IHI-stamp-green.png');
-}
-
 .text-main {
 	color: var(--main-color);
 }
 
-.text-secondary{
-	color: var(--alt-color);
+.text-secondary {
+	color: var(--alt-color) !important;
 }
 
-.text-accent-light{
+.text-accent-light {
 	color: var(--accent-light);
 }
 
-.text-accent-dark{
+.text-accent-dark {
 	color: var(--accent-dark);
 }
 
 .text-main-light {
 	color: #e7e7e7;
+}
+
+.text-secondary-light {
+	color: #D9D9D9;
 }
 
 .text-main-dark {
@@ -53,7 +42,7 @@
 }
 
 .bg-secondary {
-	background: var(--alt-color);
+	background: var(--alt-color) !important;
 }
 
 .bg-accent-light {
@@ -62,6 +51,14 @@
 
 .bg-accent-dark {
 	background: var(--accent-dark);
+}
+
+.bg-main-light {
+	background: #e7e7e7;
+}
+
+.bg-secondary-light {
+	background: #D9D9D9;
 }
 
 .border-main {
