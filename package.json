@@ -7,6 +7,8 @@
     "install-all": "npm --prefix server i && npm --prefix client i"
   },
   "devDependencies": {
-    "concurrently": "^8.2.0"
+    "babel-plugin-react-compiler": "^1.0.0",
+    "concurrently": "^8.2.0",
+    "prettier": "3.6.2"
   }
 }

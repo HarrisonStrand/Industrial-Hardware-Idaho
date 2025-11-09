@@ -8,8 +8,17 @@
   --font-main: 'Red Rose', serif;
 	--font-secondary: 'Open Sans', sans-serif;
 	--logo: url('../assets/images/IHI-stamp-white.png');
+	--account-thumb: url('../assets/images/profile-placeholder.jpg');
 }
 
+.theme-btn {
+	border: none;
+	box-shadow: none;
+	top: 0;
+	right: 3px;
+	width: 5px;
+	height: 5px;
+}
 
 :root[data-theme="light"] {
   --logo: url('../assets/images/IHI-stamp-green.png');
@@ -24,11 +33,19 @@
 }
 
 .text-accent-light{
-	color: var(--main-color);
+	color: var(--accent-light);
 }
 
 .text-accent-dark{
-	color: var(--alt-color);
+	color: var(--accent-dark);
+}
+
+.text-main-light {
+	color: #e7e7e7;
+}
+
+.text-main-dark {
+	color: #101010;
 }
 
 .bg-main {
@@ -40,11 +57,27 @@
 }
 
 .bg-accent-light {
-	background: var(--main-color);
+	background: var(--accent-light);
 }
 
 .bg-accent-dark {
-	background: var(--alt-color);
+	background: var(--accent-dark);
+}
+
+.border-main {
+	border-color: var(--main-color);
+}
+
+.border-secondary {
+	border-color: var(--alt-color);
+}
+
+.border-accent-light {
+	border-color: var(--accent-light);
+}
+
+.border-accent-dark {
+	border-color: var(--accent-dark);
 }
 
 body {
@@ -57,12 +90,4 @@ body {
 
 .font-secondary {
 	font-family: var(--font-secondary);
-}
-
-.logo {
-  background: var(--logo) no-repeat center / contain;
-  width: 10em;
-  height: 8em;
-  display: inline-block;
-  vertical-align: middle;
 }

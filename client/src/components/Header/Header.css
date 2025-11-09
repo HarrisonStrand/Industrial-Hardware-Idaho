@@ -1,0 +1,43 @@
+
+.header-logo {
+  /* background: var(--logo) no-repeat center / contain; */
+	border: none;
+	outline: none;
+	width: 100px !important;
+	height: 100px !important;
+	filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.40));
+	-moz-filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.40));
+	-webkit-filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.40)); 
+	-o-filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.40));
+}
+
+.account-link {
+	border: 1px rgba(0, 0, 0, 0.30);
+	border-style: solid;
+	filter: drop-shadow( 1px 1px 5px rgba(0, 0, 0, 0.58));
+	-moz-filter: drop-shadow( 1px 1px 5px rgba(0, 0, 0, 0.58));
+	-webkit-filter: drop-shadow( 1px 1px 5px rgba(0, 0, 0, 0.58)); 
+	-o-filter: drop-shadow( 1px 1px 5px rgba(0, 0, 0, 0.58));
+}
+
+.account-thumb {
+	background: var(--account-thumb) no-repeat center / contain;
+	width: 50px;
+	height: 50px;
+}
+
+.company-title {
+	color: #E7E7E7;
+		filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.50));
+	-moz-filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.50));
+	-webkit-filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.50)); 
+	-o-filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.50));
+}
+
+.cart-icon {
+		color: #E7E7E7;
+		filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.25));
+	-moz-filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.25));
+	-webkit-filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.25)); 
+	-o-filter: drop-shadow( 2px 4px 4px rgba(0, 0, 0, 0.25));
+}
