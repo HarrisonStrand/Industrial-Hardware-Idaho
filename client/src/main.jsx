@@ -1,5 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -11,14 +13,20 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { DataContext } from "./context/DataContext";
 import brand from "./data/brand.json";
 
+document.addEventListener("DOMContentLoaded", () => {
+	document.body.classList.add("fade-in");
+});
+
 createRoot(document.getElementById("root")).render(
 	<React.StrictMode>
-		<ThemeProvider>
-			<DataContext.Provider value={brand}>
-				<AuthProvider>
-					<App />
-				</AuthProvider>
-			</DataContext.Provider>
-		</ThemeProvider>
+		<BrowserRouter>
+			<ThemeProvider>
+				<DataContext.Provider value={brand}>
+					<AuthProvider>
+						<App />
+					</AuthProvider>
+				</DataContext.Provider>
+			</ThemeProvider>
+		</BrowserRouter>
 	</React.StrictMode>
 );

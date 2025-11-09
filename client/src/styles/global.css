@@ -1,12 +1,33 @@
 @import "./design-tokens.css";
 
+/* DESIGN BEHAVIOR */
+
+*,
+*::before,
+*::after {
+transition: var(--transition-base);
+}
+
+body {
+	opacity: 0;
+	transition: opacity 0.6s ease-in-out;
+	will-change: opacity;
+}
+
+body.fade-in {
+	opacity: 1;
+}
+
+/* COLOR CLASSES */
+
 .theme-btn {
+	z-index: 1;
 	border: none;
 	box-shadow: none;
 	top: 0;
 	right: 3px;
-	width: 5px;
-	height: 5px;
+	width: 3px;
+	height: 3px;
 }
 
 .text-main {
@@ -88,3 +109,6 @@ body {
 .font-secondary {
 	font-family: var(--font-secondary);
 }
+
+
+/* DETAIL BEHAVIOR CLASSES */

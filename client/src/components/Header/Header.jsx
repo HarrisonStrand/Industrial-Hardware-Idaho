@@ -1,61 +1,57 @@
-import { useEffect, useState } from "react";
-import { useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import { ThemeContext } from "../../context/ThemeContext.jsx";
 import { DataContext } from "../../context/DataContext";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import data from "../../data/products-test.json";
 import "./Header.css";
 
 export default function Header() {
 	const brand = useContext(DataContext);
-
-	// SEARCH BAR FUNCTIONALITY
-	const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
+	
   const navigate = useNavigate();
+  const location = useLocation();
 
-	const handleSearch = (value) => {
+  const isProductListPage = location.pathname === "/products";
+
+  // SEARCH
+  const [query, setQuery] = useState("");
+
+  const handleSearch = (value) => {
     setQuery(value);
 
-    if (!value.trim()) {
-      setResults([]);
-      return;
-    }
+  if (location.pathname === "/products") {
+    const params = new URLSearchParams();
+    if (value.trim()) params.set("search", value.trim());
+    navigate(`/products?${params.toString()}`, { replace: true }); // 👈 updates URL without reload
+    return;
+  }
 
     const normalizedQuery = value.toLowerCase();
-
     const filtered = data.products.filter((p) => {
-      const name = p.name.toLowerCase();
-      const type = p.type.toLowerCase();
-      const grade = p.grade.toLowerCase();
-      const material = p.material.toLowerCase();
-      const diameter = p.diameter.toLowerCase();
-      const length = p.length.toLowerCase();
-      const thread = p.thread.toLowerCase();
-      const finish = p.finish.toLowerCase();
-
-      return (
-        name.includes(normalizedQuery) ||
-        type.includes(normalizedQuery) ||
-        grade.includes(normalizedQuery) ||
-        material.includes(normalizedQuery) ||
-        diameter.includes(normalizedQuery) ||
-        length.includes(normalizedQuery) ||
-        thread.includes(normalizedQuery) ||
-        finish.includes(normalizedQuery) ||
-        `${grade} ${type}`.includes(normalizedQuery) ||
-        `${type} ${grade}`.includes(normalizedQuery) ||
-        normalizedQuery.includes(diameter.replace(/[^0-9/]/g, ""))
-      );
+      const fields = [
+        p.name,
+        p.type,
+        p.grade,
+        p.material,
+        p.diameter,
+        p.length,
+        p.thread,
+        p.finish,
+      ].map((f) => f.toLowerCase());
+      return fields.some((f) => f.includes(normalizedQuery));
     });
-
-    setResults(filtered);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (results.length === 1) {
-      navigate(`/product/${results[0].id}`);
+
+    // 🔹 If we're on ProductList, do nothing special (live search handles it)
+    if (isProductListPage) return;
+
+    // 🔹 If not on ProductList, redirect to filtered results
+    if (query.trim()) {
+      navigate(`/products?search=${encodeURIComponent(query.trim())}`);
+      setQuery("");
     }
   };
 
@@ -167,7 +163,12 @@ export default function Header() {
 					</Link>
 				</div>
 				<div className="col-6 d-flex text-end justify-content-end">
-					<input type="text" className="search-bar me-4 d-block w-100" placeholder="Search Products"/>
+					<form onSubmit={handleSubmit} className="d-flex position-relative w-100">
+						<input type="text" className="search-bar me-4 d-flex w-100 fw-lighter ps-3 pe-5 align-items-center" value={query} onChange={(e) => handleSearch(e.target.value)} placeholder="Search Products"/>
+					<button type="submit" className="btn position-absolute end-0 top-50 translate-middle pt-0 pe-2 me-1 border-0 bg-transparent">
+						<i className="bi bi-search fs-5"></i>
+					</button>
+					</form>
 				</div>
 			</div>
 			<div className='collapse navbar-collapse' id='navMain'>
