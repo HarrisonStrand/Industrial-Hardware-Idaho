@@ -83,19 +83,19 @@ body.fade-in {
 }
 
 .border-main {
-	border-color: var(--main-color);
+	border-color: var(--main-color) !important;
 }
 
 .border-secondary {
-	border-color: var(--alt-color);
+	border-color: var(--alt-color) !important;
 }
 
 .border-accent-light {
-	border-color: var(--accent-light);
+	border-color: var(--accent-light) !important;
 }
 
 .border-accent-dark {
-	border-color: var(--accent-dark);
+	border-color: var(--accent-dark) !important;
 }
 
 body {

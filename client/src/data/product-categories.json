@@ -1,0 +1,21 @@
+{
+  "Products": [
+    { "id": 1, "name": "Grade 2 Bolts", "path": "/products?category=grade2bolts" },
+    { "id": 2, "name": "Machine Screws", "path": "/products?category=machinescrews" },
+    { "id": 3, "name": "Carriage Bolts", "path": "/products?category=carriagebolts" },
+    { "id": 3, "name": "Carriage Bolts", "path": "/products?category=carriagebolts" },
+    { "id": 3, "name": "Carriage Bolts", "path": "/products?category=carriagebolts" },
+    { "id": 3, "name": "Carriage Bolts", "path": "/products?category=carriagebolts" },
+    { "id": 3, "name": "Carriage Bolts", "path": "/products?category=carriagebolts" }
+  ],
+  "Deals": [
+    { "id": 10, "name": "U-Line Strut", "path": "/products?category=uline" },
+    { "id": 11, "name": "Tubing", "path": "/products?category=tubing" },
+    { "id": 12, "name": "Abrasives", "path": "/products?category=abrasives" }
+  ],
+  "New Products": [
+    { "id": 20, "name": "Drill Bits", "path": "/products?category=drillbits" },
+    { "id": 21, "name": "Saw Blades", "path": "/products?category=sawblades" },
+    { "id": 22, "name": "Concrete", "path": "/products?category=concrete" }
+  ]
+}
