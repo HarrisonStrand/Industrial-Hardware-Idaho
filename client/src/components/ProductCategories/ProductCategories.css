@@ -1,4 +1,0 @@
-.product-box:hover {
-  transform: translateY(-5px) translateX(3px) scale(1.01);
-  animation: product-shadow-anim 150ms ease-in-out 0s 1 normal forwards;
-}

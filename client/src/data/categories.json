@@ -1,0 +1,52 @@
+{
+  "categories": [
+    {
+      "id": 1,
+      "name": "Bolts",
+      "slug": "bolts",
+      "image": "/images/categories/bolts.jpg"
+    },
+		{
+			"id": 2,
+			"name": "Screws",
+			"slug": "screws",
+			"image": "/images/categories/screws.jpg"
+		},
+    {
+      "id": 3,
+      "name": "Nuts",
+      "slug": "nuts",
+      "image": "/images/categories/nuts.jpg"
+    },
+    {
+      "id": 4,
+      "name": "Washers",
+      "slug": "washers",
+      "image": "/images/categories/washers.jpg"
+    },
+    {
+      "id": 5,
+      "name": "Electrical",
+      "slug": "electrical",
+      "image": "/images/categories/electrical.jpg"
+    },
+    {
+      "id": 6,
+      "name": "Strut",
+      "slug": "strut",
+      "image": "/images/categories/strut.jpg"
+    },
+    {
+      "id": 7,
+      "name": "Tools",
+      "slug": "tools",
+      "image": "/images/categories/tools.jpg"
+    },
+    {
+      "id": 8,
+      "name": "Utilities",
+      "slug": "utilities",
+      "image": "/images/categories/utilities.jpg"
+    }
+  ]
+}

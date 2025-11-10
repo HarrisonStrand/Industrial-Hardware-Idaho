@@ -12,6 +12,7 @@ import "./styles/global.css";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { DataContext } from "./context/DataContext";
 import brand from "./data/brand.json";
+import { SearchProvider } from "./context/SearchContext.jsx";
 
 document.addEventListener("DOMContentLoaded", () => {
 	document.body.classList.add("fade-in");
@@ -22,9 +23,11 @@ createRoot(document.getElementById("root")).render(
 		<BrowserRouter>
 			<ThemeProvider>
 				<DataContext.Provider value={brand}>
-					<AuthProvider>
-						<App />
-					</AuthProvider>
+					<SearchProvider>
+						<AuthProvider>
+							<App />
+						</AuthProvider>
+					</SearchProvider>
 				</DataContext.Provider>
 			</ThemeProvider>
 		</BrowserRouter>

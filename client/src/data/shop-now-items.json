@@ -1,0 +1,40 @@
+{
+  "Products": [
+    { "id": 1, "name": "Grade 2 Bolts", "path": "/products?category=grade2bolts" },
+    { "id": 2, "name": "Grade 5 Bolts", "path": "/products?category=grade5bolts" },
+    { "id": 3, "name": "Grade 8 Bolts", "path": "/products?category=grade8bolts" },
+    { "id": 4, "name": "Carriage Bolts", "path": "/products?category=carriagebolts" },
+    { "id": 5, "name": "Sheet Metal Screws", "path": "/products?category=sheetmetalscrews" },
+    { "id": 6, "name": "Machine Screws", "path": "/products?category=machinescrews" },
+    { "id": 7, "name": "Wood Screws", "path": "/products?category=woodscrews" },
+    { "id": 8, "name": "Outdoor Screws", "path": "/products?category=outdoorscrews" },
+    { "id": 9, "name": "Drywall Screws", "path": "/products?category=drywallscrews" },
+    { "id": 10, "name": "U-Line Strut", "path": "/products?category=strut" },
+    { "id": 11, "name": "Tubing", "path": "/products?category=tubing" },
+    { "id": 12, "name": "Chain", "path": "/products?category=chain" },
+    { "id": 13, "name": "Abrasives", "path": "/products?category=abrasives" },
+    { "id": 14, "name": "Sprays", "path": "/products?category=sprays" },
+    { "id": 15, "name": "Tapes", "path": "/products?category=tapes" },
+    { "id": 16, "name": "Hand Tools", "path": "/products?category=handtools" },
+    { "id": 17, "name": "Rivets", "path": "/products?category=rivets" },
+    { "id": 18, "name": "Drill Bits", "path": "/products?category=drillbits" },
+    { "id": 19, "name": "Saw Blades", "path": "/products?category=sawblades" },
+    { "id": 20, "name": "Concrete", "path": "/products?category=concrete" },
+    { "id": 21, "name": "Structural", "path": "/products?category=structural" },
+    { "id": 22, "name": "Stainless", "path": "/products?category=stainless" },
+    { "id": 23, "name": "Metric", "path": "/products?category=metric" },
+    { "id": 24, "name": "Adhesives", "path": "/products?category=adhesives" },
+    { "id": 25, "name": "Anchors", "path": "/products?category=anchors" },
+    { "id": 26, "name": "Au-ve-co", "path": "/products?category=auveco" }
+  ],
+  "Deals": [
+    { "id": 27, "name": "U-Line Strut", "path": "/products?category=uline" },
+    { "id": 28, "name": "Tubing", "path": "/products?category=tubing" },
+    { "id": 29, "name": "Abrasives", "path": "/products?category=abrasives" }
+  ],
+  "New Products": [
+    { "id": 30, "name": "Drill Bits", "path": "/products?category=drillbits" },
+    { "id": 31, "name": "Saw Blades", "path": "/products?category=sawblades" },
+    { "id": 32, "name": "Concrete", "path": "/products?category=concrete" }
+  ]
+}
