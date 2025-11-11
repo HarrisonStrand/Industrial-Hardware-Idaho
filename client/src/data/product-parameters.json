@@ -1,0 +1,97 @@
+{
+  "categories": [
+    {
+      "id": "bolts",
+      "name": "Bolts",
+      "subcategories": [
+        {
+          "id": "hex-head-bolts",
+          "name": "Hex Head Bolts",
+          "attributes": {
+            "material": ["Steel", "Stainless Steel", "Brass"],
+            "grade": ["Grade 2", "Grade 5", "Grade 8"],
+            "diameter": ["1/4 in", "5/16 in", "3/8 in", "1/2 in"],
+            "length": ["1 in", "1-1/2 in", "2 in", "2-1/2 in", "3 in"],
+            "thread": ["Coarse (UNC)", "Fine (UNF)"],
+            "finish": ["Plain", "Zinc Plated", "Hot-Dip Galvanized", "Black Oxide"]
+          },
+          "image": "/images/categories/hex-head-bolts.jpg"
+        },
+        {
+          "id": "carriage-bolts",
+          "name": "Carriage Bolts",
+          "attributes": {
+            "material": ["Steel", "Stainless Steel"],
+            "grade": ["Grade 2", "Grade 5"],
+            "diameter": ["1/4 in", "5/16 in", "3/8 in"],
+            "length": ["1 in", "1-1/2 in", "2 in", "3 in", "4 in"],
+            "thread": ["Coarse (UNC)"],
+            "finish": ["Plain", "Zinc", "Hot-Dip Galvanized"]
+          },
+          "image": "/images/categories/carriage-bolts.jpg"
+        }
+      ]
+    },
+    {
+      "id": "screws",
+      "name": "Screws",
+      "subcategories": [
+        {
+          "id": "wood-screws",
+          "name": "Wood Screws",
+          "attributes": {
+            "material": ["Steel", "Brass", "Stainless Steel"],
+            "head-type": ["Flat Head", "Pan Head", "Round Head"],
+            "drive-type": ["Phillips", "Slotted", "Square"],
+            "length": ["1 in", "1-1/2 in", "2 in", "3 in"],
+            "diameter": ["#6", "#8", "#10", "#12"],
+            "finish": ["Zinc", "Brass", "Nickel", "Black Oxide"]
+          },
+          "image": "/images/categories/wood-screws.jpg"
+        },
+        {
+          "id": "machine-screws",
+          "name": "Machine Screws",
+          "attributes": {
+            "material": ["Steel", "Stainless Steel", "Nylon"],
+            "head-type": ["Pan Head", "Flat Head", "Socket Head"],
+            "drive-type": ["Phillips", "Slotted", "Allen"],
+            "thread": ["Coarse (UNC)", "Fine (UNF)"],
+            "length": ["1/2 in", "1 in", "1-1/2 in", "2 in"],
+            "finish": ["Zinc", "Black Oxide", "Nickel"]
+          },
+          "image": "/images/categories/machine-screws.jpg"
+        }
+      ]
+    },
+    {
+      "id": "washers",
+      "name": "Washers",
+      "subcategories": [
+        {
+          "id": "flat-washers",
+          "name": "Flat Washers",
+          "attributes": {
+            "material": ["Steel", "Stainless Steel", "Brass", "Nylon"],
+            "finish": ["Plain", "Zinc", "Black Oxide"],
+            "inner-diameter": ["1/4 in", "5/16 in", "3/8 in", "1/2 in"],
+            "outer-diameter": ["1/2 in", "5/8 in", "3/4 in", "1 in"],
+            "thickness": ["1/16 in", "1/8 in"]
+          },
+          "image": "/images/categories/flat-washers.jpg"
+        },
+        {
+          "id": "lock-washers",
+          "name": "Lock Washers",
+          "attributes": {
+            "material": ["Steel", "Stainless Steel"],
+            "finish": ["Plain", "Zinc", "Black Oxide"],
+            "type": ["Split", "Tooth", "External Tooth", "Internal Tooth"],
+            "diameter": ["1/4 in", "5/16 in", "3/8 in", "1/2 in"]
+          },
+          "image": "/images/categories/lock-washers.jpg"
+        }
+      ]
+    }
+  ]
+}

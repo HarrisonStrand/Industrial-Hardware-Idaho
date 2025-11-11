@@ -38,7 +38,7 @@ export default function ProductList() {
 
   const currentCategory =
     categoriesData.categories.find(
-      (c) => c.slug.toLowerCase() === category
+      (c) => c.id.toLowerCase() === category
     ) || null;
 
   const currentSubcategories = currentCategory?.subcategories || [];
@@ -59,7 +59,7 @@ export default function ProductList() {
             {categoriesData.categories.map((cat) => (
               <div key={cat.id} className="col-6 col-md-4 col-lg-3">
                 <Link
-                  to={`/products?category=${cat.slug}`}
+                  to={`/products?category=${cat.id}`}
                   className="category-card text-decoration-none"
                 >
                   <img src={cat.image} alt={cat.name} className="w-100 rounded" />
@@ -81,7 +81,7 @@ export default function ProductList() {
             {currentSubcategories.map((sub) => (
               <div key={sub.id} className="col-6 col-md-4 col-lg-3">
                 <Link
-                  to={`/products?category=${category}&subcategory=${sub.slug}`}
+                  to={`/products?category=${category}&subcategory=${sub.id}`}
                   className="subcategory-card text-decoration-none"
                 >
                   <img src={sub.image} alt={sub.name} className="w-100 rounded" />

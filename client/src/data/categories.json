@@ -1,52 +1,463 @@
 {
   "categories": [
     {
-      "id": 1,
+      "id": "bolts",
       "name": "Bolts",
-      "slug": "bolts",
-      "image": "/images/categories/bolts.jpg"
+      "image": "/images/categories/bolts.jpg",
+      "subcategories": [
+        {
+          "id": "hex-head-bolts",
+          "name": "Hex Head Bolts",
+          "image": "/images/categories/hex-head-bolts.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "carriage-bolts",
+          "name": "Carriage Bolts",
+          "image": "/images/categories/carriage-bolts.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "lag-bolts",
+          "name": "Lag Bolts",
+          "image": "/images/categories/lag-bolts.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "anchor-bolts",
+          "name": "Anchor Bolts",
+          "image": "/images/categories/anchor-bolts.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        }
+      ]
     },
-		{
-			"id": 2,
-			"name": "Screws",
-			"slug": "screws",
-			"image": "/images/categories/screws.jpg"
-		},
     {
-      "id": 3,
+      "id": "screws",
+      "name": "Screws",
+      "image": "/images/categories/screws.jpg",
+      "subcategories": [
+        {
+          "id": "wood-screws",
+          "name": "Wood Screws",
+          "image": "/images/categories/wood-screws.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "machine-screws",
+          "name": "Machine Screws",
+          "image": "/images/categories/machine-screws.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "self-tapping-screws",
+          "name": "Self-Tapping Screws",
+          "image": "/images/categories/self-tapping-screws.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "drywall-screws",
+          "name": "Drywall Screws",
+          "image": "/images/categories/drywall-screws.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "nuts",
       "name": "Nuts",
-      "slug": "nuts",
-      "image": "/images/categories/nuts.jpg"
+      "image": "/images/categories/nuts.jpg",
+      "subcategories": [
+        {
+          "id": "hex-nuts",
+          "name": "Hex Nuts",
+          "image": "/images/categories/hex-nuts.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "lock-nuts",
+          "name": "Lock Nuts",
+          "image": "/images/categories/lock-nuts.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "flange-nuts",
+          "name": "Flange Nuts",
+          "image": "/images/categories/flange-nuts.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "wing-nuts",
+          "name": "Wing Nuts",
+          "image": "/images/categories/wing-nuts.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        }
+      ]
     },
     {
-      "id": 4,
+      "id": "washers",
       "name": "Washers",
-      "slug": "washers",
-      "image": "/images/categories/washers.jpg"
+      "image": "/images/categories/washers.jpg",
+      "subcategories": [
+        {
+          "id": "flat-washers",
+          "name": "Flat Washers",
+          "image": "/images/categories/flat-washers.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "lock-washers",
+          "name": "Lock Washers",
+          "image": "/images/categories/lock-washers.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "fender-washers",
+          "name": "Fender Washers",
+          "image": "/images/categories/fender-washers.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        }
+      ]
     },
     {
-      "id": 5,
+      "id": "electrical",
       "name": "Electrical",
-      "slug": "electrical",
-      "image": "/images/categories/electrical.jpg"
+      "image": "/images/categories/electrical.jpg",
+      "subcategories": [
+        {
+          "id": "wire-connectors",
+          "name": "Wire Connectors",
+          "image": "/images/categories/wire-connectors.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "conduit-fittings",
+          "name": "Conduit Fittings",
+          "image": "/images/categories/conduit-fittings.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "switches",
+          "name": "Switches",
+          "image": "/images/categories/switches.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "outlet-boxes",
+          "name": "Outlet Boxes",
+          "image": "/images/categories/outlet-boxes.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        }
+      ]
     },
     {
-      "id": 6,
+      "id": "strut",
       "name": "Strut",
-      "slug": "strut",
-      "image": "/images/categories/strut.jpg"
+      "image": "/images/categories/strut.jpg",
+      "subcategories": [
+        {
+          "id": "strut-channel",
+          "name": "Strut Channel",
+          "image": "/images/categories/strut-channel.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "pipe-clamps",
+          "name": "Pipe Clamps",
+          "image": "/images/categories/pipe-clamps.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "brackets",
+          "name": "Brackets",
+          "image": "/images/categories/brackets.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "strut-accessories",
+          "name": "Strut Accessories",
+          "image": "/images/categories/strut-accessories.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        }
+      ]
     },
     {
-      "id": 7,
+      "id": "tools",
       "name": "Tools",
-      "slug": "tools",
-      "image": "/images/categories/tools.jpg"
+      "image": "/images/categories/tools.jpg",
+      "subcategories": [
+        {
+          "id": "hand-tools",
+          "name": "Hand Tools",
+          "image": "/images/categories/hand-tools.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "power-tools",
+          "name": "Power Tools",
+          "image": "/images/categories/power-tools.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "cutting-tools",
+          "name": "Cutting Tools",
+          "image": "/images/categories/cutting-tools.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "measuring-tools",
+          "name": "Measuring Tools",
+          "image": "/images/categories/measuring-tools.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        }
+      ]
     },
     {
-      "id": 8,
+      "id": "utilities",
       "name": "Utilities",
-      "slug": "utilities",
-      "image": "/images/categories/utilities.jpg"
+      "image": "/images/categories/utilities.jpg",
+      "subcategories": [
+        {
+          "id": "adhesives",
+          "name": "Adhesives",
+          "image": "/images/categories/adhesives.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "sealants",
+          "name": "Sealants",
+          "image": "/images/categories/sealants.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "lubricants",
+          "name": "Lubricants",
+          "image": "/images/categories/lubricants.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        },
+        {
+          "id": "cleaners",
+          "name": "Cleaners",
+          "image": "/images/categories/cleaners.jpg",
+          "attributes": {
+            "finish": [],
+            "grade": [],
+            "quantity": [],
+            "thread": [],
+            "diameter": [],
+            "length": []
+          }
+        }
+      ]
     }
   ]
 }
