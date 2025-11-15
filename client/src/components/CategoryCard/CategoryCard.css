@@ -1,80 +1,52 @@
 .category-card {
-  cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+	cursor: pointer;
+  background: rgba(231, 231, 231, 0.54);
+  box-shadow: 1px 4px 8px 0px rgb(0 0 0 / 30%);
+	transition:
+		transform 0.3s ease,
+		box-shadow 0.3s ease;
+  border: 2px solid rgba(231, 231, 231, 0.35);
 }
 
 .category-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+	transform: translateY(-5px);
+  box-shadow: 1px 4px 8px 2px rgb(0 0 0 / 30%);
 }
 
 .category-image-wrapper {
-  position: relative;
-  height: 200px;
-  overflow: hidden;
+	position: relative;
+	height: 200px;
+	overflow: hidden;
 }
 
 .category-image {
-  transition: transform 0.5s ease;
+	transition: transform 0.5s ease;
 }
 
-.category-card:hover .category-image {
-  transform: scale(1.05);
-}
-
-.category-overlay {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.7) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.category-card:hover .category-overlay {
-  opacity: 1;
+.category-card:hover .category-image .category-name {
+	transform: scale(1.06);
 }
 
 .category-name {
-  color: #fff;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-}
-
-.category-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.category-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.category-overlay {
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.category-card:hover .category-overlay {
-  opacity: 1;
-}
-
-.subcategory-list,
-.product-list {
-  border-top: 1px solid #ddd;
-  animation: fadeIn 0.3s ease;
+	color: var(--main-color) !important;
+	letter-spacing: 1px;
+  transition:
+		scale 0.3s ease;
+	filter: drop-shadow( 1px 1px 1px rgba(0, 0, 0, 0.25));
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+	from {
+		opacity: 0;
+		transform: translateY(-5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .hover-fade:hover {
-  opacity: 0.7;
-  transition: opacity 0.2s ease;
+	opacity: 0.7;
+	transition: opacity 0.2s ease;
 }

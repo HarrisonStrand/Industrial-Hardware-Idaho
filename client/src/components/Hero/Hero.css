@@ -1,0 +1,39 @@
+.hero-container {
+  position: relative;
+  width: 100%;
+  height: 70vh;
+  background: url("../../assets/images/hero-main.jpg") center/cover no-repeat;
+  filter: brightness(0.75);
+}
+
+/* TEXT stays centered & sharp */
+.hero-overlay {
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  color: white;
+  z-index: 10;
+}
+
+.hero-title {
+  font-size: 3.2rem;
+  font-weight: 900;
+  margin-bottom: 0.5rem;
+}
+
+.hero-subtitle {
+  font-size: 1.3rem;
+}
+
+/* CATEGORIES floating below text, on hero */
+.hero-categories-wrapper {
+  position: absolute;
+  bottom: -60px; /* pushes it slightly outside hero for overlap style */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 1200px;
+  z-index: 20;
+}

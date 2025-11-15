@@ -9,15 +9,13 @@ export default function CategoryCard({
   let linkTo = "";
 
   if (isSubcategory && parentCategoryId) {
-    // SUBCATEGORY → Product Detail Page
     linkTo = `/products/${parentCategoryId}/${category.id}`;
   } else {
-    // MAIN CATEGORY → Show subcategories
     linkTo = `/products?category=${category.id}`;
   }
 
   return (
-    <div className="category-card card border-0 shadow-sm rounded-3 overflow-hidden">
+    <div className="category-card shadow-md rounded-4 overflow-hidden">
       <Link to={linkTo} className="text-decoration-none text-dark">
         <div className="category-image-wrapper position-relative">
           <img
@@ -26,8 +24,8 @@ export default function CategoryCard({
             className="category-image w-100 h-100 object-fit-cover"
           />
 
-          <div className="category-overlay position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center">
-            <h5 className="category-name text-white text-uppercase fw-bold">
+          <div className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-start align-items-end ps-3">
+            <h5 className="fs-4 font-secondary category-name text-uppercase fw-semibold">
               {category.name}
             </h5>
           </div>

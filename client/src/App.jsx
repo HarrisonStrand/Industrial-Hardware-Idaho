@@ -27,10 +27,7 @@ export default function App() {
 
 	return (
 		<main className='main container-fluid position-relative p-0'>
-			{/* ✅ Persistent Header — outside route animations */}
 			<Header />
-
-			{/* ✅ Page transition animations for route content */}
 			<AnimatePresence mode='wait'>
 				<motion.div
 					key={location.pathname + location.search}
@@ -68,8 +65,6 @@ export default function App() {
 					</Routes>
 				</motion.div>
 			</AnimatePresence>
-
-			{/* ✅ Optional Footer (also persistent) */}
 			{/* <Footer /> */}
 		</main>
 	);
