@@ -98,6 +98,11 @@ body.fade-in {
 	border-color: var(--accent-dark) !important;
 }
 
+.main-linebreak {
+	opacity: 0.36;
+	border-width: 2px !important;
+}
+
 body {
   font-family: var(--font-main);
 }

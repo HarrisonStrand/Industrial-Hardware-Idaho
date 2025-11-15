@@ -1,6 +1,6 @@
 .category-card {
 	cursor: pointer;
-  background: rgba(231, 231, 231, 0.54);
+  background: rgba(231, 231, 231, 0.80);
   box-shadow: 1px 4px 8px 0px rgb(0 0 0 / 30%);
 	transition:
 		transform 0.3s ease,

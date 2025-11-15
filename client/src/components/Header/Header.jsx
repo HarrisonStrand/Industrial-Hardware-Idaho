@@ -3,7 +3,6 @@ import { ThemeContext } from "../../context/ThemeContext.jsx";
 import { DataContext } from "../../context/DataContext";
 import { SearchContext } from "../../context/SearchContext.jsx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import data from "../../data/products-test.json";
 import ShopNowItems from "../../data/shop-now-items.json";
 import "./Header.css";
 

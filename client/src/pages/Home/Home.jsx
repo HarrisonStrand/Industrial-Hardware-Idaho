@@ -6,8 +6,9 @@ import "./Home.css";
 
 export default function Home() {
   return (
-    <div className="home container-fluid m-5 hero-main">
-      <section className="categories mb-5">
+    <div className="home container-fluid g-0 hero-main">
+      <Hero/>
+      {/* <section className="categories mb-5">
         <h4 className="categories-title fw-regular text-main text-uppercase text-start mb-4">
           Product Categories
         </h4>
@@ -18,7 +19,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }

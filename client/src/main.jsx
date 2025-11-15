@@ -10,7 +10,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./index.css";
 import "./styles/global.css";
 import { ThemeProvider } from "./context/ThemeContext.jsx";
-import { DataContext } from "./context/DataContext";
+import { DataProvider } from "./context/DataContext";
 import brand from "./data/brand.json";
 import { SearchProvider } from "./context/SearchContext.jsx";
 
@@ -22,13 +22,13 @@ createRoot(document.getElementById("root")).render(
 	<React.StrictMode>
 		<BrowserRouter>
 			<ThemeProvider>
-				<DataContext.Provider value={brand}>
+				<DataProvider value={brand}>
 					<SearchProvider>
 						<AuthProvider>
 							<App />
 						</AuthProvider>
 					</SearchProvider>
-				</DataContext.Provider>
+				</DataProvider>
 			</ThemeProvider>
 		</BrowserRouter>
 	</React.StrictMode>
