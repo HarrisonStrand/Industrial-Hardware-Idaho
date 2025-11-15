@@ -1,136 +1,129 @@
 import { useEffect, useState } from "react";
-import { useLocation, Link } from "react-router-dom";
-import data from "../../data/products-test.json";
+import { useLocation } from "react-router-dom";
 import categoriesData from "../../data/categories.json";
+import CategoryCard from "../../components/CategoryCard/CategoryCard";
 import "./ProductList.css";
 
 export default function ProductList() {
   const location = useLocation();
+
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [results, setResults] = useState([]);
 
+  // Read URL parameters
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    setQuery(params.get("search")?.toLowerCase() || "");
-    setCategory(params.get("category")?.toLowerCase() || "");
-    setSubcategory(params.get("subcategory")?.toLowerCase() || "");
+    const p = new URLSearchParams(location.search);
+    setQuery(p.get("search")?.toLowerCase() || "");
+    setCategory(p.get("category")?.toLowerCase() || "");
+    setSubcategory(p.get("subcategory")?.toLowerCase() || "");
   }, [location.search]);
 
+  // MAIN FILTER LOGIC
   useEffect(() => {
+    // SEARCH MODE
     if (query) {
-      const results = data.products.filter((p) =>
-        Object.values(p).some((val) =>
-          String(val).toLowerCase().includes(query)
-        )
-      );
-      setFilteredProducts(results);
-    } else if (subcategory) {
-      const results = data.products.filter(
-        (p) => p.subcategory?.toLowerCase() === subcategory
-      );
-      setFilteredProducts(results);
-    } else {
-      setFilteredProducts([]);
+      const q = query.toLowerCase();
+      const matched = [];
+
+      categoriesData.categories.forEach((cat) => {
+        const catMatch = cat.name.toLowerCase().includes(q);
+
+        const subMatches = cat.subcategories.filter((sub) =>
+          sub.name.toLowerCase().includes(q)
+        );
+
+        if (catMatch || subMatches.length > 0) {
+          matched.push({
+            ...cat,
+            subcategories: subMatches.length > 0 ? subMatches : cat.subcategories
+          });
+        }
+      });
+
+      setResults(matched);
+      return;
     }
-  }, [query, subcategory]);
 
-  const currentCategory =
-    categoriesData.categories.find(
-      (c) => c.id.toLowerCase() === category
-    ) || null;
+    // CATEGORY → SHOW SUBCATEGORIES
+    if (category && !subcategory) {
+      const found = categoriesData.categories.find(
+        (c) => c.id.toLowerCase() === category
+      );
+      setResults(found ? [found] : []);
+      return;
+    }
 
-  const currentSubcategories = currentCategory?.subcategories || [];
+    // DEFAULT → SHOW CATEGORIES
+    setResults(categoriesData.categories);
+  }, [query, category, subcategory]);
 
-  const showCategories = !category && !query;
-  const showSubcategories = category && !subcategory && !query;
-  const showProducts = query || subcategory;
+  const showCategories = !query && !category;
+  const showSubcategories = !query && category && !subcategory;
+  const showSearchResults = query.length > 0;
 
   return (
-    <div className="container my-5">
-      {/* 🧭 Category View */}
+    <div className="container-fluid m-5">
+
+      {/* CATEGORY VIEW */}
       {showCategories && (
         <>
-          <h2 className="mb-4 text-main text-uppercase fw-bold">
-            Browse Categories
-          </h2>
-          <div className="row g-4">
-            {categoriesData.categories.map((cat) => (
-              <div key={cat.id} className="col-6 col-md-4 col-lg-3">
-                <Link
-                  to={`/products?category=${cat.id}`}
-                  className="category-card text-decoration-none"
-                >
-                  <img src={cat.image} alt={cat.name} className="w-100 rounded" />
-                  <h5 className="mt-2 text-dark text-center">{cat.name}</h5>
-                </Link>
+          <h2 className="mb-4 text-main text-uppercase fw-bold">Browse Categories</h2>
+          <div className="row g-4 justify-content-evenly">
+            {results.map((cat) => (
+              <div key={cat.id} className="col-6 col-md-2 col-lg">
+                <CategoryCard category={cat} />
               </div>
             ))}
           </div>
         </>
       )}
 
-      {/* 🧱 Subcategory View */}
-      {showSubcategories && (
+      {/* SUBCATEGORY VIEW */}
+      {showSubcategories && results.length > 0 && (
         <>
-          <h2 className="mb-4 text-main text-uppercase fw-bold">
-            {currentCategory.name}
-          </h2>
-          <div className="row g-4">
-            {currentSubcategories.map((sub) => (
+          <h2 className="mb-4 text-main text-uppercase fw-bold">{results[0].name}</h2>
+          <div className="row g-4 justify-content-evenly">
+            {results[0].subcategories.map((sub) => (
               <div key={sub.id} className="col-6 col-md-4 col-lg-3">
-                <Link
-                  to={`/products?category=${category}&subcategory=${sub.id}`}
-                  className="subcategory-card text-decoration-none"
-                >
-                  <img src={sub.image} alt={sub.name} className="w-100 rounded" />
-                  <h6 className="mt-2 text-dark text-center">{sub.name}</h6>
-                </Link>
+                <CategoryCard
+                  category={sub}
+                  parentCategoryId={results[0].id}
+                  isSubcategory={true}
+                />
               </div>
             ))}
           </div>
         </>
       )}
 
-      {/* 🛠 Product View */}
-      {showProducts && (
+      {/* SEARCH RESULTS */}
+      {showSearchResults && (
         <>
-          <h2 className="mb-4 text-main fw-bold text-uppercase">
-            {query
-              ? `Search results for “${query}”`
-              : `Products in ${subcategory.replace(/-/g, " ")}`}
+          <h2 className="mb-4 text-main text-uppercase fw-bold">
+            Search results for “{query}”
           </h2>
 
-          {filteredProducts.length > 0 ? (
-            <div className="row g-3">
-              {filteredProducts.map((item) => (
-                <div key={item.id} className="col-6 col-md-4 col-lg-3">
-                  <Link
-                    to={`/products/${item.id}`}
-                    className="product-card text-decoration-none"
-                  >
-                    <img
-                      src={item.image || "/images/default-product.jpg"}
-                      alt={item.name}
-                      className="w-100 rounded"
-                    />
-                    <div className="text-center mt-2">
-                      <h6 className="fw-semibold text-dark mb-1">
-                        {item.name}
-                      </h6>
-                      <span className="badge bg-secondary">
-                        ${item.price.toFixed(2)}
-                      </span>
+          {results.length > 0 ? (
+            results.map((cat) => (
+              <div key={cat.id} className="mb-5">
+                <h4 className="fw-bold text-main">{cat.name}</h4>
+                <div className="row g-4 mt-3 mb-4">
+                  {cat.subcategories.map((sub) => (
+                    <div key={sub.id} className="col-6 col-md-4 col-lg-3">
+                      <CategoryCard
+                        category={sub}
+                        parentCategoryId={cat.id}
+                        isSubcategory={true}
+                      />
                     </div>
-                  </Link>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))
           ) : (
-            <p className="text-muted text-center">
-              No products match your search or selection.
-            </p>
+            <p className="text-muted text-center">No categories match your search.</p>
           )}
         </>
       )}

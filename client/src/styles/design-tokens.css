@@ -11,6 +11,7 @@
 	--font-secondary: 'Open Sans', sans-serif;
 	--logo: url('../assets/images/IHI-stamp-white.png');
 	--account-thumb: url('../assets/images/profile-placeholder.jpg');
+	--hero-main: url('../assets/images/hero-main.jph');
 }
 
 :root[data-theme="dark"] {

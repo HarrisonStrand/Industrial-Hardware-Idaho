@@ -10,7 +10,7 @@ import Register from "./pages/Register/Register.jsx";
 import Dashboard from "./pages/Dashboard/Dashboard.jsx";
 import AdminPanel from "./pages/AdminPanel/AdminPanel.jsx";
 import ProductList from "./pages/ProductList/ProductList.jsx";
-import ProductDetails from "./pages/ProductDetails/ProductDetails.jsx";
+import ProductDetail from "./pages/ProductDetail/ProductDetail.jsx";
 import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -23,54 +23,54 @@ import { far } from "@fortawesome/free-regular-svg-icons";
 library.add(fab, fas, far);
 
 export default function App() {
-  const location = useLocation();
+	const location = useLocation();
 
-  return (
-    <main className="main container-fluid position-relative p-0">
-      {/* ✅ Persistent Header — outside route animations */}
-      <Header />
+	return (
+		<main className='main container-fluid position-relative p-0'>
+			{/* ✅ Persistent Header — outside route animations */}
+			<Header />
 
-      {/* ✅ Page transition animations for route content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={location.pathname}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/products" element={<ProductList />} />
-            <Route path="/products/:id" element={<ProductDetails />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute requireAdmin={true}>
-                  <AdminPanel />
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </motion.div>
-      </AnimatePresence>
+			{/* ✅ Page transition animations for route content */}
+			<AnimatePresence mode='wait'>
+				<motion.div
+					key={location.pathname + location.search}
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					exit={{ opacity: 0 }}
+					transition={{ duration: 0.4 }}>
+					<Routes location={location} key={location.pathname}>
+						<Route path='/' element={<Home />} />
+						<Route path='/about' element={<About />} />
+						<Route path='/contact' element={<Contact />} />
+						<Route path='/login' element={<Login />} />
+						<Route path='/register' element={<Register />} />
+						<Route path='/products/' element={<ProductList />} />
+						<Route path='/products/:id' element={<ProductDetail />} />
+						<Route path='/products/:categoryId/:subcategoryId' element={<ProductDetail />} />
+						<Route path='/cart' element={<Cart />} />
+						<Route path='/checkout' element={<Checkout />} />
+						<Route
+							path='/dashboard'
+							element={
+								<ProtectedRoute>
+									<Dashboard />
+								</ProtectedRoute>
+							}
+						/>
+						<Route
+							path='/admin'
+							element={
+								<ProtectedRoute requireAdmin={true}>
+									<AdminPanel />
+								</ProtectedRoute>
+							}
+						/>
+					</Routes>
+				</motion.div>
+			</AnimatePresence>
 
-      {/* ✅ Optional Footer (also persistent) */}
-      {/* <Footer /> */}
-    </main>
-  );
+			{/* ✅ Optional Footer (also persistent) */}
+			{/* <Footer /> */}
+		</main>
+	);
 }
