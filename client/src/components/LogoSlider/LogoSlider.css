@@ -3,25 +3,40 @@
   overflow: hidden;
   padding: 25px 0;
   position: relative;
+  box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Edge gradients */
+/* --------------------------------------------- */
+/* White overlay tint (NEW) */
+/* --------------------------------------------- */
+.logo-slider-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.28); /* <-- Adjust strength */
+  pointer-events: none;
+  z-index: 1; /* Below fades, above logos */
+}
+
+
+/* --------------------------------------------- */
+/* Edge gradient fades */
+/* --------------------------------------------- */
 .logo-slider-container::before,
 .logo-slider-container::after {
   content: "";
   position: absolute;
   top: 0;
-  width: 120px;
+  width: 300px;
   height: 100%;
   pointer-events: none;
-  z-index: 2;
+  z-index: 3; /* Above overlay */
 }
 
 .logo-slider-container::before {
   left: 0;
   background: linear-gradient(
     to right,
-    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0.8),
     rgba(255, 255, 255, 0)
   );
 }
@@ -30,17 +45,22 @@
   right: 0;
   background: linear-gradient(
     to left,
-    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0.8),
     rgba(255, 255, 255, 0)
   );
 }
 
-/* Track */
+
+/* --------------------------------------------- */
+/* Scrolling track */
+/* --------------------------------------------- */
 .logo-track {
   display: flex;
   width: fit-content;
   animation: marquee 40s linear infinite;
-  transition: animation-duration 0.4s ease; /* Smooth slowdown */
+  transition: animation-duration 0.4s ease; 
+  position: relative;
+  z-index: 0; /* Logos under overlay */
 }
 
 .logo-track-overlay {
@@ -48,15 +68,19 @@
   width: fit-content;
 }
 
-/* Stop on hover */
+
+/* Pause on hover */
 .logo-slider-container:hover .logo-track {
   animation-play-state: paused;
 }
 
-/* Images */
+
+/* --------------------------------------------- */
+/* Logo images */
+/* --------------------------------------------- */
 .logo-item {
   height: 80px;
-  margin: 0 40px;
+  margin: 0 30px;
   flex-shrink: 0;
   object-fit: contain;
   filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.25));
@@ -68,7 +92,10 @@
   opacity: 1;
 }
 
+
+/* --------------------------------------------- */
 /* Infinite seamless animation */
+/* --------------------------------------------- */
 @keyframes marquee {
   0% {
     transform: translateX(0);
