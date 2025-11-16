@@ -19,12 +19,12 @@ export default function FeatureBanner() {
 	return (
 		<section className='feature-banner-container bg-accent-light'>
 			<div className='feature-banner-overlay d-flex justify-content-center align-items-center'>
-				<div className='feature-banner shadow-sm rounded-4 d-flex align-items-center justify-content-between px-2'>
+				<div className='feature-banner rounded-4 d-flex align-items-center justify-content-between px-2'>
 					{/* CTA BUTTON */}
 					<Link
 						to='/register'
 						className='feature-banner-link text-decoration-none justify-content-center d-flex'>
-						<button className='feature-banner-cta rounded-4 px-0 py-2 text-uppercase fw-regular fs-3 text-main-light py-4'>
+						<button className='btn-main-cta rounded-4 px-0 py-2 text-uppercase fw-regular fs-3 text-main-light py-4'>
 							{brand.bannerCTA}
 						</button>
 					</Link>

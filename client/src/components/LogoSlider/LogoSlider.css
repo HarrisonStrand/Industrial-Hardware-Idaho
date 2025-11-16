@@ -1,0 +1,39 @@
+.logo-slider-container {
+  width: 100%;
+  overflow: hidden;
+  background: transparent;
+  padding: 25px 0;
+  position: relative;
+}
+
+.logo-track {
+  display: flex;
+  width: fit-content;
+  animation: marquee 20s linear infinite;
+}
+
+/* Ensure no spacing glitches */
+.logo-item {
+  height: 55px;
+  margin: 0 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+  display: block;
+  filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.3));
+  opacity: 0.95;
+  transition: opacity 0.3s ease;
+}
+
+.logo-item:hover {
+  opacity: 1;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    /* Move exactly the width of the FIRST full set of logos */
+    transform: translateX(-50%);
+  }
+}

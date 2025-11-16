@@ -1,25 +1,27 @@
-import { Link } from "react-router-dom";
-import categoriesData from "../../data/categories.json";
-import CategoryCard from "../../components/CategoryCard/CategoryCard";
 import Hero from "../../components/Hero/Hero"
 import "./Home.css";
+import { useContext } from "react";
+import { DataContext } from "../../context/DataContext";
+import FeatureBanner from "../../components/FeatureBanner/FeatureBanner";
+import LogoSlider from "../../components/LogoSlider/LogoSlider";
 
 export default function Home() {
+  const brand = useContext(DataContext);
+
   return (
     <div className="home container-fluid g-0 hero-main">
       <Hero/>
-      {/* <section className="categories mb-5">
-        <h4 className="categories-title fw-regular text-main text-uppercase text-start mb-4">
-          Product Categories
-        </h4>
-        <div className="row g-4 justify-content-evenly">
-          {categoriesData.categories.map((category) => (
-            <div key={category.id} className="col-6 col-md-2 col-lg">
-              <CategoryCard category={category}/>
-            </div>
-          ))}
-        </div>
-      </section> */}
+			<FeatureBanner/>
+					<div className='hero-title-container m-5 px-5 align-items-center d-flex row justify-content-center m-auto p-5'>
+						<div className='section-title fs-1 text-main text-center text-uppercase mb-0'>
+							{brand.sec2Title}
+						</div>
+						<div className='main-linebreak border-0 border-top border-main py-2'></div>
+						<div className='section-copy fs-5 text-main text-center fw-light mb-1'>
+              {brand.sec2Copy}
+						</div>
+					</div>
+					<LogoSlider/>
     </div>
   );
 }

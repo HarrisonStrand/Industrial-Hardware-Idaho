@@ -1,7 +1,6 @@
 import "./Hero.css";
 import { useContext } from "react";
 import CategorySection from "../CategorySection/CategorySection";
-import FeatureBanner from "../FeatureBanner/FeatureBanner";
 import { DataContext } from "../../context/DataContext";
 
 export default function Hero() {
@@ -14,18 +13,17 @@ export default function Hero() {
 					<div className='hero-categories-wrapper'>
 						<CategorySection />
 					</div>
-					<div className='hero-title-container m-5 px-5 align-items-center d-flex row justify-content-center m-auto mb-5'>
-						<div className='hero-sec1-title fs-1 text-main text-center text-uppercase mb-0'>
+					<div className='hero-title-container m-5 px-5 align-items-center d-flex row justify-content-center m-auto pb-5'>
+						<div className='section-title fs-1 text-main text-center text-uppercase mb-0'>
 							{brand.sec1Title}
 						</div>
 						<div className='main-linebreak border-0 border-top border-main py-2'></div>
 							{brand.sec1Copy.map((line, index) => (
-						<div className='hero-sec1-copy fs-5 text-main text-center fw-light mb-1' key={index}>
+						<div className='section-copy fs-5 text-main text-center fw-light mb-1' key={index}>
               {line}
 						</div>
 							))}
 					</div>
-					<FeatureBanner/>
 				</div>
 			</div>
 		</section>
