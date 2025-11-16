@@ -1,26 +1,66 @@
 .logo-slider-container {
   width: 100%;
   overflow: hidden;
-  background: transparent;
   padding: 25px 0;
   position: relative;
 }
 
+/* Edge gradients */
+.logo-slider-container::before,
+.logo-slider-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 120px;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.logo-slider-container::before {
+  left: 0;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0)
+  );
+}
+
+.logo-slider-container::after {
+  right: 0;
+  background: linear-gradient(
+    to left,
+    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0)
+  );
+}
+
+/* Track */
 .logo-track {
   display: flex;
   width: fit-content;
-  animation: marquee 20s linear infinite;
+  animation: marquee 40s linear infinite;
+  transition: animation-duration 0.4s ease; /* Smooth slowdown */
 }
 
-/* Ensure no spacing glitches */
+.logo-track-overlay {
+  display: flex;
+  width: fit-content;
+}
+
+/* Stop on hover */
+.logo-slider-container:hover .logo-track {
+  animation-play-state: paused;
+}
+
+/* Images */
 .logo-item {
-  height: 55px;
+  height: 80px;
   margin: 0 40px;
-  object-fit: contain;
   flex-shrink: 0;
-  display: block;
-  filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.3));
-  opacity: 0.95;
+  object-fit: contain;
+  filter: drop-shadow(1px 1px 4px rgba(0,0,0,0.25));
+  opacity: 0.9;
   transition: opacity 0.3s ease;
 }
 
@@ -28,12 +68,12 @@
   opacity: 1;
 }
 
+/* Infinite seamless animation */
 @keyframes marquee {
   0% {
     transform: translateX(0);
   }
   100% {
-    /* Move exactly the width of the FIRST full set of logos */
     transform: translateX(-50%);
   }
 }

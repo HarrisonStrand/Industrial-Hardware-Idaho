@@ -1,19 +1,19 @@
 {
   "logos": [
-    { "src": "public/logos/company1.png", "alt": "Company 1" },
-    { "src": "public/logos/company2.png", "alt": "Company 2" },
-    { "src": "public/logos/company3.png", "alt": "Company 3" },
-    { "src": "public/logos/company4.png", "alt": "Company 4" },
-    { "src": "public/logos/company5.png", "alt": "Company 5" },
-    { "src": "public/logos/company6.png", "alt": "Company 6" },
-    { "src": "public/logos/company7.png", "alt": "Company 7" },
-    { "src": "public/logos/company8.png", "alt": "Company 8" },
-    { "src": "public/logos/company9.png", "alt": "Company 9" },
-    { "src": "public/logos/company10.png", "alt": "Company 10" },
-    { "src": "public/logos/company11.png", "alt": "Company 11" },
-    { "src": "public/logos/company12.png", "alt": "Company 12" },
-    { "src": "public/logos/company13.png", "alt": "Company 13" },
-    { "src": "public/logos/company14.png", "alt": "Company 14" },
-    { "src": "public/logos/company15.png", "alt": "Company 15" }
+    { "src": "/logos/company1.png", "alt": "Company 1" },
+    { "src": "/logos/company2.png", "alt": "Company 2" },
+    { "src": "/logos/company3.png", "alt": "Company 3" },
+    { "src": "/logos/company4.png", "alt": "Company 4" },
+    { "src": "/logos/company5.png", "alt": "Company 5" },
+    { "src": "/logos/company6.png", "alt": "Company 6" },
+    { "src": "/logos/company7.png", "alt": "Company 7" },
+    { "src": "/logos/company8.png", "alt": "Company 8" },
+    { "src": "/logos/company9.png", "alt": "Company 9" },
+    { "src": "/logos/company10.png", "alt": "Company 10" },
+    { "src": "/logos/company11.png", "alt": "Company 11" },
+    { "src": "/logos/company12.png", "alt": "Company 12" },
+    { "src": "/logos/company13.png", "alt": "Company 13" },
+    { "src": "/logos/company14.png", "alt": "Company 14" },
+    { "src": "/logos/company15.png", "alt": "Company 15" }
   ]
 }
