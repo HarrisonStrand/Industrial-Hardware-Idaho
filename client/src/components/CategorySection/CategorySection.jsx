@@ -3,7 +3,7 @@ import CategoryCard from "../CategoryCard/CategoryCard";
 
 export default function CategorySection() {
 	return (
-		<div className='categories px-5 p-5'>
+		<div className='categories p-5'>
 			<h4 className='categories-title fw-regular text-main text-uppercase text-start mb-3'>
 				Product Categories
 			</h4>
