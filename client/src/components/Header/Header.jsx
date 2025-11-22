@@ -91,7 +91,7 @@ export default function Header() {
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
 						to={`tel:${brand.phone}`}>
 						<div className='bi bi-telephone phone-icon h5 m-0' />
-						<h5 className='top-bar-text font-secondary m-0 px-2'>
+						<h5 className='d-none d-md-block top-bar-text font-secondary m-0 px-2'>
 							{brand.phone}
 						</h5>
 					</Link>
@@ -99,7 +99,7 @@ export default function Header() {
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
 						to={`mailto:${brand.email}`}>
 						<div className='bi bi-envelope-open mail-icon h5 m-0' />
-						<h5 className='top-bar-text font-secondary m-0 px-2'>
+						<h5 className='d-none d-md-block top-bar-text font-secondary m-0 px-2'>
 							{brand.email}
 						</h5>
 					</Link>
@@ -108,28 +108,28 @@ export default function Header() {
 					<Link
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
 						to='/location'>
-						<p className='top-bar-text font-secondary text-uppercase m-0 px-2'>
+						<p className='d-none d-md-block top-bar-text font-secondary text-uppercase m-0 px-2'>
 							Location
 						</p>
 					</Link>
 					<Link
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
 						to='/about`'>
-						<p className='top-bar-text font-secondary text-uppercase m-0 px-2'>
+						<p className='d-none d-md-block top-bar-text font-secondary text-uppercase m-0 px-2'>
 							About
 						</p>
 					</Link>
 					<Link
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
 						to='/orders`'>
-						<p className='top-bar-text font-secondary text-uppercase m-0 px-2'>
+						<p className='d-none d-md-block top-bar-text font-secondary text-uppercase m-0 px-2'>
 							orders
 						</p>
 					</Link>
 					<Link
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
 						to='/careers`'>
-						<p className='top-bar-text font-secondary text-uppercase m-0 px-2'>
+						<p className='d-none d-md-block top-bar-text font-secondary text-uppercase m-0 px-2'>
 							careers
 						</p>
 					</Link>
@@ -145,7 +145,7 @@ export default function Header() {
 								src={logoSrc}
 								className='header-logo col-4 col-lg-2 d-flex mx-4'
 							/>
-							<h2 className='text-main-light align-items-center company-title py-0 my-0 px-2 d-flex'>
+							<h2 className='d-none d-md-flex text-main-light align-items-center company-title py-0 my-0 px-2 d-flex'>
 								{brand.brandName}
 							</h2>
 						</Link>

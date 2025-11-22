@@ -9,7 +9,7 @@ export default function CategorySection() {
 			</h4>
 			<div className='row g-4 justify-content-evenly'>
 				{categoriesData.categories.map((category) => (
-					<div key={category.id} className='col-6 col-md'>
+					<div key={category.id} className='col-sm-6 col-md-3 col-xl'>
 						<CategoryCard category={category} />
 					</div>
 				))}

@@ -3,12 +3,12 @@
     {
       "id": "bolts",
       "name": "Bolts",
-      "image": "/images/categories/bolts.jpg",
+      "image": "/images/categories/BOLTS.png",
       "subcategories": [
         {
           "id": "hex-head-bolts",
           "name": "Hex Head Bolts",
-          "image": "/images/categories/hex-head-bolts.jpg",
+          "image": "/images/categories/hex-head-bolts.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -21,7 +21,7 @@
         {
           "id": "carriage-bolts",
           "name": "Carriage Bolts",
-          "image": "/images/categories/carriage-bolts.jpg",
+          "image": "/images/categories/carriage-bolts.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -34,7 +34,7 @@
         {
           "id": "lag-bolts",
           "name": "Lag Bolts",
-          "image": "/images/categories/lag-bolts.jpg",
+          "image": "/images/categories/lag-bolts.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -47,7 +47,7 @@
         {
           "id": "anchor-bolts",
           "name": "Anchor Bolts",
-          "image": "/images/categories/anchor-bolts.jpg",
+          "image": "/images/categories/anchor-bolts.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -62,12 +62,12 @@
     {
       "id": "screws",
       "name": "Screws",
-      "image": "/images/categories/screws.jpg",
+      "image": "/images/categories/SCREWS.png",
       "subcategories": [
         {
           "id": "wood-screws",
           "name": "Wood Screws",
-          "image": "/images/categories/wood-screws.jpg",
+          "image": "/images/categories/wood-screws.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -80,7 +80,7 @@
         {
           "id": "machine-screws",
           "name": "Machine Screws",
-          "image": "/images/categories/machine-screws.jpg",
+          "image": "/images/categories/machine-screws.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -93,7 +93,7 @@
         {
           "id": "self-tapping-screws",
           "name": "Self-Tapping Screws",
-          "image": "/images/categories/self-tapping-screws.jpg",
+          "image": "/images/categories/self-tapping-screws.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -106,7 +106,7 @@
         {
           "id": "drywall-screws",
           "name": "Drywall Screws",
-          "image": "/images/categories/drywall-screws.jpg",
+          "image": "/images/categories/drywall-screws.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -121,12 +121,12 @@
     {
       "id": "nuts",
       "name": "Nuts",
-      "image": "/images/categories/nuts.jpg",
+      "image": "/images/categories/NUTS.png",
       "subcategories": [
         {
           "id": "hex-nuts",
           "name": "Hex Nuts",
-          "image": "/images/categories/hex-nuts.jpg",
+          "image": "/images/categories/hex-nuts.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -139,7 +139,7 @@
         {
           "id": "lock-nuts",
           "name": "Lock Nuts",
-          "image": "/images/categories/lock-nuts.jpg",
+          "image": "/images/categories/lock-nuts.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -152,7 +152,7 @@
         {
           "id": "flange-nuts",
           "name": "Flange Nuts",
-          "image": "/images/categories/flange-nuts.jpg",
+          "image": "/images/categories/flange-nuts.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -165,7 +165,7 @@
         {
           "id": "wing-nuts",
           "name": "Wing Nuts",
-          "image": "/images/categories/wing-nuts.jpg",
+          "image": "/images/categories/wing-nuts.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -180,12 +180,12 @@
     {
       "id": "washers",
       "name": "Washers",
-      "image": "/images/categories/washers.jpg",
+      "image": "/images/categories/WASHERS.png",
       "subcategories": [
         {
           "id": "flat-washers",
           "name": "Flat Washers",
-          "image": "/images/categories/flat-washers.jpg",
+          "image": "/images/categories/flat-washers.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -198,7 +198,7 @@
         {
           "id": "lock-washers",
           "name": "Lock Washers",
-          "image": "/images/categories/lock-washers.jpg",
+          "image": "/images/categories/lock-washers.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -211,7 +211,7 @@
         {
           "id": "fender-washers",
           "name": "Fender Washers",
-          "image": "/images/categories/fender-washers.jpg",
+          "image": "/images/categories/fender-washers.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -226,12 +226,12 @@
     {
       "id": "electrical",
       "name": "Electrical",
-      "image": "/images/categories/electrical.jpg",
+      "image": "/images/categories/ELECTRICAL.png",
       "subcategories": [
         {
           "id": "wire-connectors",
           "name": "Wire Connectors",
-          "image": "/images/categories/wire-connectors.jpg",
+          "image": "/images/categories/wire-connectors.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -244,7 +244,7 @@
         {
           "id": "conduit-fittings",
           "name": "Conduit Fittings",
-          "image": "/images/categories/conduit-fittings.jpg",
+          "image": "/images/categories/conduit-fittings.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -257,7 +257,7 @@
         {
           "id": "switches",
           "name": "Switches",
-          "image": "/images/categories/switches.jpg",
+          "image": "/images/categories/switches.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -270,7 +270,7 @@
         {
           "id": "outlet-boxes",
           "name": "Outlet Boxes",
-          "image": "/images/categories/outlet-boxes.jpg",
+          "image": "/images/categories/outlet-boxes.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -285,12 +285,12 @@
     {
       "id": "strut",
       "name": "Strut",
-      "image": "/images/categories/strut.jpg",
+      "image": "/images/categories/STRUTS.png",
       "subcategories": [
         {
           "id": "strut-channel",
           "name": "Strut Channel",
-          "image": "/images/categories/strut-channel.jpg",
+          "image": "/images/categories/strut-channel.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -303,7 +303,7 @@
         {
           "id": "pipe-clamps",
           "name": "Pipe Clamps",
-          "image": "/images/categories/pipe-clamps.jpg",
+          "image": "/images/categories/pipe-clamps.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -316,7 +316,7 @@
         {
           "id": "brackets",
           "name": "Brackets",
-          "image": "/images/categories/brackets.jpg",
+          "image": "/images/categories/brackets.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -329,7 +329,7 @@
         {
           "id": "strut-accessories",
           "name": "Strut Accessories",
-          "image": "/images/categories/strut-accessories.jpg",
+          "image": "/images/categories/strut-accessories.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -344,12 +344,12 @@
     {
       "id": "tools",
       "name": "Tools",
-      "image": "/images/categories/tools.jpg",
+      "image": "/images/categories/TOOLS.png",
       "subcategories": [
         {
           "id": "hand-tools",
           "name": "Hand Tools",
-          "image": "/images/categories/hand-tools.jpg",
+          "image": "/images/categories/hand-tools.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -362,7 +362,7 @@
         {
           "id": "power-tools",
           "name": "Power Tools",
-          "image": "/images/categories/power-tools.jpg",
+          "image": "/images/categories/power-tools.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -375,7 +375,7 @@
         {
           "id": "cutting-tools",
           "name": "Cutting Tools",
-          "image": "/images/categories/cutting-tools.jpg",
+          "image": "/images/categories/cutting-tools.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -388,7 +388,7 @@
         {
           "id": "measuring-tools",
           "name": "Measuring Tools",
-          "image": "/images/categories/measuring-tools.jpg",
+          "image": "/images/categories/measuring-tools.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -403,12 +403,12 @@
     {
       "id": "utilities",
       "name": "Utilities",
-      "image": "/images/categories/utilities.jpg",
+      "image": "/images/categories/UTILITIES.png",
       "subcategories": [
         {
           "id": "adhesives",
           "name": "Adhesives",
-          "image": "/images/categories/adhesives.jpg",
+          "image": "/images/categories/adhesives.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -421,7 +421,7 @@
         {
           "id": "sealants",
           "name": "Sealants",
-          "image": "/images/categories/sealants.jpg",
+          "image": "/images/categories/sealants.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -434,7 +434,7 @@
         {
           "id": "lubricants",
           "name": "Lubricants",
-          "image": "/images/categories/lubricants.jpg",
+          "image": "/images/categories/lubricants.png",
           "attributes": {
             "finish": [],
             "grade": [],
@@ -447,7 +447,7 @@
         {
           "id": "cleaners",
           "name": "Cleaners",
-          "image": "/images/categories/cleaners.jpg",
+          "image": "/images/categories/cleaners.png",
           "attributes": {
             "finish": [],
             "grade": [],

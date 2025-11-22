@@ -64,12 +64,12 @@ export default function ProductList() {
   const showSearchResults = query.length > 0;
 
   return (
-    <div className="container-fluid m-5">
+    <div className="container-fluid p-5">
 
       {/* CATEGORY VIEW */}
       {showCategories && (
         <>
-          <h2 className="mb-4 text-main text-uppercase fw-bold">Browse Categories</h2>
+          <h4 className="categories-title fw-regular text-main text-uppercase text-start mb-3">Browse Categories</h4>
           <div className="row g-4 justify-content-evenly">
             {results.map((cat) => (
               <div key={cat.id} className="col-6 col-md-2 col-lg">
@@ -83,7 +83,7 @@ export default function ProductList() {
       {/* SUBCATEGORY VIEW */}
       {showSubcategories && results.length > 0 && (
         <>
-          <h2 className="mb-4 text-main text-uppercase fw-bold">{results[0].name}</h2>
+          <h4 className="categories-title fw-regular text-main text-uppercase text-start mb-3">{results[0].name}</h4>
           <div className="row g-4 justify-content-evenly">
             {results[0].subcategories.map((sub) => (
               <div key={sub.id} className="col-6 col-md-4 col-lg-3">
@@ -101,9 +101,9 @@ export default function ProductList() {
       {/* SEARCH RESULTS */}
       {showSearchResults && (
         <>
-          <h2 className="mb-4 text-main text-uppercase fw-bold">
+          <h4 className="categories-title fw-regular text-main text-uppercase text-start mb-3">
             Search results for “{query}”
-          </h2>
+          </h4>
 
           {results.length > 0 ? (
             results.map((cat) => (
