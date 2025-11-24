@@ -15,7 +15,7 @@ export default function CategoryCard({
 	}
 
 	return (
-		<div className='category-card shadow-md rounded-4 overflow-hidden'>
+		<div className='category-card rounded-4 overflow-hidden border-0'>
 			<Link to={linkTo} className='text-decoration-none text-dark'>
 				<div className='category-card-image-wrapper position-relative flex-row justify-content-end'>
 					<img
