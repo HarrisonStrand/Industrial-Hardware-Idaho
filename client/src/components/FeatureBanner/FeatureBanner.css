@@ -12,13 +12,11 @@
 .feature-banner {
 	background: rgb(217, 217, 217);
 	width: 100%;
-	max-width: 1200px;
-	min-height: 210px;
+	max-width: 80%;
 	box-shadow: 2px 3px 4px 1px rgba(0, 0, 0, 0.15);
 }
 
 .feature-cta {
-	/* max-width: 280px; */
 	width: 100%;
 }
 
@@ -104,19 +102,19 @@
 }
 
 
-@media (min-width: 2000px) {
+/* @media (min-width: 2000px) {
 	.feature-banner {
-		max-width: 1400px;
+		max-width: 1700px;
 	}
-}
+} */
 
 @media (min-width: 2500px) {
 	.feature-banner {
-		max-width: 1800px;
+		max-width: 80%;
 	}
-	.btn-main-cta {
+	/* .btn-main-cta {
 		width: 100%;
 		margin: auto;
 		height: 100px;
-	}
+	} */
 }
