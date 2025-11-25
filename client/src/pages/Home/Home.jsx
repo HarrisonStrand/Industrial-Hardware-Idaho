@@ -4,6 +4,7 @@ import { useContext } from "react";
 import { DataContext } from "../../context/DataContext";
 import FeatureBanner from "../../components/FeatureBanner/FeatureBanner";
 import LogoSlider from "../../components/LogoSlider/LogoSlider";
+import DualFeatureCards from "../../components/DualFeatureCards/DualFeatureCards";
 
 export default function Home() {
   const brand = useContext(DataContext);
@@ -22,6 +23,7 @@ export default function Home() {
 						</div>
 					</div>
 					<LogoSlider/>
+					<DualFeatureCards/>
     </div>
   );
 }
