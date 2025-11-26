@@ -54,9 +54,9 @@
 /* CTA Button */
 .dual-card-btn {
 	cursor: pointer;
-	background:rgba(73, 90, 166, 0.15);
+	background: var(--main-color)26;
 	letter-spacing: 2px;
-	border: 4px solid rgba(73, 90, 66, .80);
+	border: 4px solid rgba(from var(--main-color) r g b / 0.8);
 	box-shadow: 3px 2px 4px rgba(0, 0, 0, 0.3);
 	text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 	width: 80%;
@@ -65,9 +65,8 @@
 
 .dual-card-btn:hover {
 	border: 4px solid transparent;
-	background: rgba(73, 90, 66, .80);
-	color: #d7d7d7;
-	filter: brightness(0.9);
+    background: rgba(from var(--main-color) r g b / 0.8); /* 80% opacity */
+    color: var(--main-light);      /* 50% opacity */
 	box-shadow: inset 1px 1px 1px 1px rgba(0, 0, 0, 0.5);
 	box-sizing: border-box;
 }
