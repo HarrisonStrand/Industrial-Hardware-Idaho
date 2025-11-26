@@ -118,7 +118,7 @@
 .search-bar {
   height: 30px;
   border-radius: 10px;
-  background-color: rgb(217,217,217);
+  background-color: var(--main-light);
   border: 1px solid rgba(0,0,0,0.7);
   letter-spacing: 1px;
   box-shadow: inset 0 0 5px 2px rgba(0,0,0,0.25);
@@ -150,7 +150,7 @@
   backdrop-filter: blur(5px);
   border-radius: 16px;
   box-shadow: 3px 4px 6px rgba(0,0,0,0.25);
-  border: 1px solid rgba(231,231,231,0.55);
+  border: 1px solid rgba(from var(--accent-light) r g b / 0.55);
   padding: 1.5rem;
   max-width: 950px;
   min-width: 600px;

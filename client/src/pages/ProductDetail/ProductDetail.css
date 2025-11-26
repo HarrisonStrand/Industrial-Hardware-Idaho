@@ -23,7 +23,7 @@
 
 .option-select:focus {
   border-color: var(--main-color);
-  box-shadow: 0 0 0 0.2rem rgba(73, 90, 66, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(var(main-color));
 }
 
 .btn-main {

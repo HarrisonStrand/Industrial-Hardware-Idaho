@@ -16,6 +16,7 @@ import ProductDetail from "./pages/ProductDetail/ProductDetail.jsx";
 import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Footer from "./components/Footer/Footer.jsx"
 
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
@@ -69,7 +70,7 @@ export default function App() {
 					</Routes>
 				</motion.div>
 			</AnimatePresence>
-			{/* <Footer /> */}
+			<Footer />
 		</main>
 	);
 }
