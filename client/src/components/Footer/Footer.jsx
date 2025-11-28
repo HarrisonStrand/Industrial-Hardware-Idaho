@@ -2,10 +2,12 @@ import { useEffect, useState, useContext } from "react";
 import { ThemeContext } from "../../context/ThemeContext.jsx";
 import { Link } from "react-router-dom";
 import { DataContext } from "../../context/DataContext";
+import { footerData } from "../../data/footerData.js";
 import "./Footer.css";
 
 export default function Footer() {
 	const brand = useContext(DataContext);
+	const sections = footerData(brand);
 
 	/* ---------------------------------------------
 	 * THEME HANDLING
@@ -22,161 +24,80 @@ export default function Footer() {
 
 	useEffect(() => {
 		updateLogoSrc();
-	}, []);
-
-	useEffect(() => {
-		updateLogoSrc();
 	}, [theme]);
 
-	const handleToggleTheme = () => {
-		toggleTheme();
-		setTimeout(updateLogoSrc, 0);
-	};
-
 	return (
-		<div className='footer-container container-fluid bg-secondary py-5 px-3'>
-			<div className='d-flex flex-row justify-content-between'>
-				<div className='col col-lg-3 text-end'>
+		<footer className='footer-container container-fluid bg-secondary pt-3 px-3 pt-lg-5 px-lg-5'>
+			<div className='row justify-content-between'>
+				{/* ---------- Section 1: Brand / Address / Newsletter ---------- */}
+				<div className='col-12 col-lg-3 mb-4'>
 					<div className='row justify-content-between'>
-						<div className='col col-lg-6 align-items-top'>
-							<img src={logoSrc} className='footer-logo' />
+						<div className='col col-lg-2 align-items-top'>
+							<img src={logoSrc} className='footer-logo mb-4' />
 						</div>
-						<div className='col col-lg-6 align-items-top'>
-							<div className='section-header fw-bold text-main-light'>
-								Location
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								{brand.address}
-							</div>
-							<div className='section-header fw-bold text-main-light'>
-								Phone
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								{brand.phone}
-							</div>
-							<div className='section-header fw-bold text-main-light'>
-								Hours
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								{brand.hours}
-							</div>
-						</div>
-						<div className="newsletter-container col-12">
-							<label htmlFor="newsletter" className="text-main-light">Join</label>
-							<input id="newsletter" placeholder="email address" type="text" className="newsletter form-control"/>
+						<div className='col col-lg-8 align-items-top text-end'>
+							{sections.section1.items.map((item, i) => (
+								<div key={i} className='mb-3'>
+									<div className='section-header fw-bold text-main-light mb-2'>
+										{item.label}
+									</div>
+									{item.path ? (
+										<Link
+											to={item.path}
+											className='section-item text-main-light fw-light text-decoration-none'>
+											{item.text}
+										</Link>
+									) : (
+										<div className='section-item text-main-light fw-light'>
+											{item.text}
+										</div>
+									)}
+								</div>
+							))}
 						</div>
 					</div>
+
+					{/* Newsletter */}
+					{sections.section1.showNewsletter && (
+						<div className='newsletter-container col-12 mt-3'>
+								<label htmlFor="newsletter-bar" className="text-main-light ps-2">Join Our Newsletter</label>
+							<form className='d-flex position-relative w-100'>
+								<input
+									id="newsletter-bar"
+									type='text'
+									className='newsletter-bar d-flex w-100 fw-lighter ps-3 pe-5 align-items-center'
+									placeholder='Email Address'
+								/>
+								<button type='submit' className='newsletter-arrow btn position-absolute end-0 top-0 pt-0 pe-1 me-1 border-0 bg-transparent'>
+									<i className='bi bi-arrow-right fs-5'></i>
+									</button>
+							</form>
+						</div>
+					)}
 				</div>
-				<div className='col col-lg-3 text-center'>
-					<ul>
-						<div className='section-header fw-bold text-main-light'>
-							Company Info
+
+				{/* ---------- Other Sections ---------- */}
+				{["section2", "section3", "section4"].map((key) => {
+					const section = sections[key];
+					return (
+						<div key={key} className='col-12 col-lg-3 mb-4 text-center'>
+							<div className='section-header fw-bold text-main-light mb-2'>
+								{section.title}
+							</div>
+
+							{section.items.map((item, i) => (
+								<div key={i} className='section-item mb-3'>
+									<Link
+										to={item.path}
+										className='text-decoration-none fw-light text-main-light'>
+										{item.text}
+									</Link>
+								</div>
+							))}
 						</div>
-						<div className='section-item text-main-light fw-light'>
-							<Link
-								to={"/about"}
-								className='text-decoration-none fw-light text-main-light'>
-								About Us
-							</Link>
-						</div>
-						<div className='section-item text-main-light fw-light'>
-							<Link
-								to={"/privacy"}
-								className='text-decoration-none fw-light text-main-light'>
-								Privacy Policy
-							</Link>
-						</div>
-						<div className='section-item text-main-light fw-light'>
-							<Link
-								to={"/contact"}
-								className='text-decoration-none fw-light text-main-light'>
-								Contact Our Team
-							</Link>
-						</div>
-						<div className='section-item text-main-light fw-light'>
-							<Link
-								to={"/terms"}
-								className='text-decoration-none fw-light text-main-light'>
-								Terms & Conditions
-							</Link>
-						</div>
-					</ul>
-				</div>
-				<div className='col col-lg-3 text-center'>
-					<div className='section-header fw-bold text-main-light'>
-						<ul>
-							<div className='section-header fw-bold text-main-light'>
-								Customer Service
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								<Link
-									to={"/returns"}
-									className='text-decoration-none fw-light text-main-light'>
-									Returns & Exchanges
-								</Link>
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								<Link
-									to={"/request"}
-									className='text-decoration-none fw-light text-main-light'>
-									Special Requests
-								</Link>
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								<Link
-									to={"/orders"}
-									className='text-decoration-none fw-light text-main-light'>
-									Order Status
-								</Link>
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								<Link
-									to={"/shipping"}
-									className='text-decoration-none fw-light text-main-light'>
-									Shipping Information
-								</Link>
-							</div>
-						</ul>
-					</div>
-				</div>
-				<div className='col col-lg-3 text-center'>
-					<div className='section-header fw-bold text-main-light'>
-						<ul>
-							<div className='section-header fw-bold text-main-light'>
-								Resources
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								<Link
-									to={"/forms"}
-									className='text-decoration-none fw-light text-main-light'>
-									Customer Forms
-								</Link>
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								<Link
-									to={"/login"}
-									className='text-decoration-none fw-light text-main-light'>
-									Account Login
-								</Link>
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								<Link
-									to={"/vendors"}
-									className='text-decoration-none fw-light text-main-light'>
-									Vendor Information
-								</Link>
-							</div>
-							<div className='section-item text-main-light fw-light'>
-								<Link
-									to={"/careers"}
-									className='text-decoration-none fw-light text-main-light'>
-									Join Our Team
-								</Link>
-							</div>
-						</ul>
-					</div>
-				</div>
+					);
+				})}
 			</div>
-		</div>
+		</footer>
 	);
 }

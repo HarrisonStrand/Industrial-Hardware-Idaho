@@ -12,16 +12,16 @@ export default function DualFeatureCards() {
 			text: brand.dualCard1Text,
 			cta: brand.dualCard1CTA,
 			link: "/contact",
-			textAlign: "text-start",
-			imgOrder: "order-0",
+			textAlign: "text-center text-lg-start",
+			imgOrder: "",
 		},
 		{
 			img: brand.dualCard2Img,
 			text: brand.dualCard2Text,
 			cta: brand.dualCard2CTA,
 			link: "/products",
-			textAlign: "text-center",
-			imgOrder: "order-1 order-lg-0",
+			textAlign: "text-start",
+			imgOrder: "",
 		},
 	];
 
@@ -31,36 +31,26 @@ export default function DualFeatureCards() {
 				<div className='row g-4 card-row'>
 					{cards.map((card, i) => (
 						<div key={i} className='col-12 col-lg-6'>
-							<div className='dual-card d-flex flex-column rounded-4 overflow-hidden h-100'>
-								<div className='row g-0 h-100'>
-									<div className={`col-6 ${card.imgOrder}`}>
+							<div className='dual-card rounded-4 overflow-hidden h-100'>
+								<div className='row g-0'>
+									<div className={`col-12 col-lg-6 p-0 ${card.imgOrder}`}>
 										<img
 											src={card.img}
 											alt=''
-											className='w-100 h-100 object-fit-cover dual-card-img'
+											className='dual-card-img w-100 h-100'
 										/>
 									</div>
-
-									<div className='col-6 d-flex flex-column p-4 h-100'>
-										<div className='flex-grow-1 d-none d-lg-block'></div>
-
-										<div
-											className={`d-flex flex-column justify-content-center align-items-center ${card.textAlign} my-auto w-100`}>
-											<div
-												className={`dual-card-text fs-3 text-main text-uppercase mb-4 ${card.textAlign}`}>
-												{card.text}
-											</div>
-
+									<div className='col-12 col-lg-6 dual-card-body px-4'>
+										<div className='mt-auto w-100 d-flex justify-content-center row'>
+											<div className={`mb-4 dual-card-text fs-3 text-main text-uppercase ${card.textAlign}`}>{card.text}</div>
 											<Link
-												className='text-decoration-none w-100'
+												className='text-decoration-none'
 												to={card.link}>
-												<button className='dual-card-btn fs-4 text-uppercase w-100 py-4 text-main rounded-4'>
+												<button id="dual-card-btn" className='dual-card-btn fs-4 text-uppercase w-100 py-4 text-main rounded-4'>
 													{card.cta}
 												</button>
 											</Link>
 										</div>
-
-										<div className='flex-grow-1'></div>
 									</div>
 								</div>
 							</div>
