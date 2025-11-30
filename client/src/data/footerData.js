@@ -30,7 +30,8 @@ export const footerData = (brand) => ({
       { text: "Privacy Policy", path: "/privacy" },
       { text: "Contact Our Team", path: "/contact" },
       { text: "Terms & Conditions", path: "/terms" }
-    ]
+    ],
+    textAlign: "text-center text-md-start text-lg-end"
   },
 
   section3: {
@@ -40,7 +41,8 @@ export const footerData = (brand) => ({
       { text: "Special Requests", path: "/request" },
       { text: "Order Status", path: "/orders" },
       { text: "Shipping Information", path: "/shipping" }
-    ]
+    ],
+    textAlign: "text-center text-md-center text-lg-end"
   },
 
   section4: {
@@ -50,6 +52,7 @@ export const footerData = (brand) => ({
       { text: "Account Login", path: "/login" },
       { text: "Vendor Information", path: "/vendors" },
       { text: "Join Our Team", path: "/careers" }
-    ]
+    ],
+    textAlign: "text-center text-md-end text-lg-end"
   }
 });

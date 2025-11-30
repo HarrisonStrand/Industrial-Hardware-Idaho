@@ -9,6 +9,7 @@ import Location from "./pages/Location/Location.jsx";
 import Orders from "./pages/Orders/Orders.jsx";
 import Login from "./pages/Login/Login.jsx";
 import Register from "./pages/Register/Register.jsx";
+import Shipping from "./pages/Shipping/Shipping.jsx";
 import Dashboard from "./pages/Dashboard/Dashboard.jsx";
 import AdminPanel from "./pages/AdminPanel/AdminPanel.jsx";
 import ProductList from "./pages/ProductList/ProductList.jsx";
@@ -42,6 +43,7 @@ export default function App() {
 						<Route path='/' element={<Home />} />
 						<Route path='/about' element={<About />} />
 						<Route path='/contact' element={<Contact />} />
+						<Route path='/shipping' element={<Shipping />} />
 						<Route path='/location' element={<Location />} />
 						<Route path='/orders' element={<Orders />} />
 						<Route path='/login' element={<Login />} />

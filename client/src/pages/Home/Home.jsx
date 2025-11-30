@@ -13,7 +13,7 @@ export default function Home() {
     <div className="home container-fluid g-0 hero-main">
       <Hero/>
 			<FeatureBanner/>
-					<div className='hero-title-container m-5 px-5 align-items-center d-flex row justify-content-center m-auto p-5'>
+					<div className='hero-title-container m-5 align-items-center d-flex row justify-content-center m-auto py-5 px-0 px-lg-5'>
 						<div className='section-title fs-1 text-main text-center text-uppercase mb-0'>
 							{brand.sec2Title}
 						</div>

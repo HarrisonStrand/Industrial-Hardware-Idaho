@@ -35,13 +35,13 @@
 .dual-card-body {
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
 }
 
 /* Text block */
 .dual-card-text {
   letter-spacing: 1px;
   line-height: 1.4;
+  font-size: 1.5rem;
 }
 
 /* Optional: helps normalize text height so buttons are closer to center */
@@ -62,6 +62,7 @@
   width: 80%;
   margin: 0 auto;
   transition: all 0.3s ease;
+  font-size: 1.5rem;
 }
 
 .dual-card-btn:hover {
@@ -86,5 +87,29 @@
 
   .dual-card-btn {
     width: 100%;
+  }
+
+  .card-row {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1200px) {
+  .dual-card-text, .dual-card-btn {
+    font-size: 1rem !important;
+  }
+
+  .card-row, .dual-card-btn {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 1200px) and (max-width: 1568px) {
+  .dual-card-text, .dual-card-btn {
+    font-size: 1.3rem !important;
+  }
+
+  .card-row, .dual-card-btn {
+    max-width: 100%;
   }
 }

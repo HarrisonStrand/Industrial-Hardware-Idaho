@@ -27,7 +27,7 @@ export default function DualFeatureCards() {
 
 	return (
 		<section className='dual-card-container'>
-			<div className='dual-card-overlay container-fluid d-flex justify-content-center align-items-center py-5'>
+			<div className='dual-card-overlay container-fluid d-flex justify-content-center align-items-center py-3 py-lg-5 px-0 px-lg-5'>
 				<div className='row g-4 card-row'>
 					{cards.map((card, i) => (
 						<div key={i} className='col-12 col-lg-6'>
@@ -40,13 +40,13 @@ export default function DualFeatureCards() {
 											className='dual-card-img w-100 h-100'
 										/>
 									</div>
-									<div className='col-12 col-lg-6 dual-card-body px-4'>
+									<div className='col-12 col-lg-6 dual-card-body ps-3 ps-lg-4 py-3 py-lg-4'>
 										<div className='mt-auto w-100 d-flex justify-content-center row'>
-											<div className={`mb-4 dual-card-text fs-3 text-main text-uppercase ${card.textAlign}`}>{card.text}</div>
+											<div className={`mb-4 dual-card-text text-main text-uppercase ${card.textAlign}`}>{card.text}</div>
 											<Link
 												className='text-decoration-none'
 												to={card.link}>
-												<button id="dual-card-btn" className='dual-card-btn fs-4 text-uppercase w-100 py-4 text-main rounded-4'>
+												<button id="dual-card-btn" className='dual-card-btn text-uppercase w-100 py-2 py-xl-4 text-main rounded-4'>
 													{card.cta}
 												</button>
 											</Link>
