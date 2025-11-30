@@ -1,12 +1,12 @@
 import { useEffect, useState, useContext } from "react";
 import { ThemeContext } from "../../context/ThemeContext.jsx";
 import { Link } from "react-router-dom";
-import { DataContext } from "../../context/DataContext";
+import { BrandContext } from "../../context/BrandContext";
 import { footerData } from "../../data/footerData.js";
 import "./Footer.css";
 
 export default function Footer() {
-	const brand = useContext(DataContext);
+	const brand = useContext(BrandContext);
 	const sections = footerData(brand);
 
 	/* ---------------------------------------------

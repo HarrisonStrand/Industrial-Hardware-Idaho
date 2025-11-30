@@ -7,7 +7,8 @@ export const footerData = (brand) => ({
         text: brand.address,
         path: brand.address
           ? "https://maps.app.goo.gl/DhSrjLydLQ5VPy3e7"
-          : null
+          : null,
+        target: "_blank"
       },
       {
         label: "Phone",

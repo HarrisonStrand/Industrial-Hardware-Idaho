@@ -1,13 +1,13 @@
 import Hero from "../../components/Hero/Hero"
 import "./Home.css";
 import { useContext } from "react";
-import { DataContext } from "../../context/DataContext";
+import { BrandContext } from "../../context/BrandContext";
 import FeatureBanner from "../../components/FeatureBanner/FeatureBanner";
 import LogoSlider from "../../components/LogoSlider/LogoSlider";
 import DualFeatureCards from "../../components/DualFeatureCards/DualFeatureCards";
 
 export default function Home() {
-  const brand = useContext(DataContext);
+  const brand = useContext(BrandContext);
 
   return (
     <div className="home container-fluid g-0 hero-main">

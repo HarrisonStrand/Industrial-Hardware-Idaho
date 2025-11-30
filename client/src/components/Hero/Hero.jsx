@@ -1,10 +1,10 @@
 import "./Hero.css";
 import { useContext } from "react";
 import CategorySection from "../CategorySection/CategorySection";
-import { DataContext } from "../../context/DataContext";
+import { BrandContext } from "../../context/BrandContext";
 
 export default function Hero() {
-	const brand = useContext(DataContext);
+	const brand = useContext(BrandContext);
 
 	return (
 		<section className='hero-container'>

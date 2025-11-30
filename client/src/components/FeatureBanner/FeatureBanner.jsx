@@ -1,10 +1,10 @@
 import { useContext } from "react";
-import { DataContext } from "../../context/DataContext";
+import { BrandContext } from "../../context/BrandContext";
 import { Link } from "react-router-dom";
 import "./FeatureBanner.css";
 
 export default function FeatureBanner() {
-	const brand = useContext(DataContext);
+	const brand = useContext(BrandContext);
 
 	const features = [
 		{

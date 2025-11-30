@@ -1,13 +1,13 @@
 import { useEffect, useState, useContext } from "react";
 import { ThemeContext } from "../../context/ThemeContext.jsx";
-import { DataContext } from "../../context/DataContext";
+import { BrandContext } from "../../context/BrandContext";
 import { SearchContext } from "../../context/SearchContext.jsx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import ShopNowItems from "../../data/shop-now-items.json";
 import "./Header.css";
 
 export default function Header() {
-	const brand = useContext(DataContext);
+	const brand = useContext(BrandContext);
 	const navigate = useNavigate();
 	const location = useLocation();
 
@@ -231,22 +231,22 @@ export default function Header() {
 			 * ====================================================== */}
 			<nav className='navbar navbar-expand-lg container-fluid title-banner'>
 				<div className='container-fluid flex-row g-0 justify-content-between px-3 py-2 align-items-center'>
-					<div className='col-6 col-lg-10'>
+					<div className='col col-md-9 col-lg-10'>
 						<Link
 							className='text-decoration-none fw-bolder fs-5 text-uppercase d-flex flex-row text-main-light'
 							to='/'>
 							<img
 								src={logoSrc}
-								className='header-logo col-4 col-lg-2 d-flex mx-0 mx-md-4'
+								className='header-logo col-2 col-lg-2 d-flex mx-0 mx-md-4'
 								alt={brand.brandName}
 							/>
-							<h2 className='d-none d-md-flex text-main-light align-items-center company-title py-0 my-0 px-2 d-flex'>
+							<h2 className='d-flex text-main-light align-items-center company-title py-0 my-0 px-3 px-md-2'>
 								{brand.brandName}
 							</h2>
 						</Link>
 					</div>
 
-					<div className='col-4 col-lg-2 align-items-center d-flex justify-content-end mx-0'>
+					<div className='col col-lg-2 align-items-center d-flex justify-content-end mx-0'>
 						<Link className='account-link rounded-circle mx-4' to='/register'>
 							<div className='account-thumb rounded-circle' />
 						</Link>

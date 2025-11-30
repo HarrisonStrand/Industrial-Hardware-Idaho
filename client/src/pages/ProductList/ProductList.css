@@ -1,0 +1,7 @@
+.contact-banner-container {
+  width: 85%;
+}
+
+.contact-banner-card {
+  background: rgb(from var(--main-color) r g b / 0.25);
+}

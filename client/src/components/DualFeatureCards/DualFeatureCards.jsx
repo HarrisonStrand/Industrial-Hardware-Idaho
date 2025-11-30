@@ -1,10 +1,10 @@
 import { useContext } from "react";
-import { DataContext } from "../../context/DataContext";
+import { BrandContext } from "../../context/BrandContext";
 import { Link } from "react-router-dom";
 import "./DualFeatureCards.css";
 
 export default function DualFeatureCards() {
-	const brand = useContext(DataContext);
+	const brand = useContext(BrandContext);
 
 	const cards = [
 		{
