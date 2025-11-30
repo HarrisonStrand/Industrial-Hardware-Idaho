@@ -258,8 +258,8 @@ export default function Header() {
 			{/* ========================================================
 			 * SEARCH BAR + SHOP NOW MEGA MENU
 			 * ====================================================== */}
-			<div className='container-fluid row g-0 d-flex justify-content-center justify-content-sm-between px-3 py-2 align-items-center search-bar-container bg-secondary'>
-				<div className='col-12 col-lg-6 d-flex text-start justify-content-center justify-content-md-start'>
+			<div className='container-fluid row g-0 d-flex justify-content-center justify-content-sm-between px-4 px-lg-3 py-2 align-items-center search-bar-container bg-secondary'>
+				<div className='col-12 col-lg-6 d-flex text-start justify-content-center py-2 py-lg-0 justify-content-md-start'>
 					<div className='ms-0 ms-md-4 d-flex text-decoration-none text-secondary-light align-items-center'>
 						<div
 							className='shop-now-wrapper position-relative'
@@ -325,20 +325,20 @@ export default function Header() {
 					</Link>
 				</div>
 
-				<div className='col-6 d-flex text-end justify-content-end'>
+				<div className='col-12 col-lg-6 d-flex text-end justify-content-end px-2 px-md-4 px-lg-0'>
 					<form
 						onSubmit={handleSearchSubmit}
 						className='d-flex position-relative w-100'>
 						<input
 							type='text'
-							className='search-bar me-4 d-flex w-100 fw-lighter ps-3 pe-5 align-items-center'
+							className='search-bar me-lg-4 d-flex w-100 fw-lighter ps-3 pe-lg-5 align-items-center'
 							value={searchQuery}
 							onChange={handleSearchChange}
 							placeholder='Search Products'
 						/>
 						<button
 							type='submit'
-							className='btn position-absolute end-0 top-50 translate-middle pt-0 pe-2 me-1 border-0 bg-transparent'>
+							className='search-bar-magnifier btn position-absolute end-0 top-50 pt-0 pe-2 me-1 border-0 bg-transparent'>
 							<i className='bi bi-search fs-5'></i>
 						</button>
 					</form>

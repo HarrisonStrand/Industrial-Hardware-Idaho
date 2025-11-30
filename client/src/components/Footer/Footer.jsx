@@ -85,7 +85,7 @@ export default function Footer() {
 			{/* Newsletter */}
 			{sections.section1.showNewsletter && (
 				<div className='order-0 row justify-content-between px-2'>
-					<div className='newsletter-container col col-lg-3 mt-0 mb-3 pe-1'>
+					<div className='newsletter-container col-8 col-md col-lg-3 mt-0 mb-3 pe-1'>
 						<label htmlFor='newsletter-bar' className='text-main-light ps-2'>
 							Join Our Newsletter
 						</label>
@@ -103,7 +103,7 @@ export default function Footer() {
 							</button>
 						</form>
 					</div>
-					<div className="social-icon-container col-3 align-items-center d-flex justify-content-end text-end px-0 pt-3">
+					<div className="social-icon-container col-2 align-items-center d-flex justify-content-end text-end px-0 pt-3">
 						<div className="social-icon">
 							<i className="bi bi-facebook fs-2 text-main-light ps-3"></i>
 						</div>

@@ -13,7 +13,7 @@ export default function Hero() {
 					<div className='hero-categories-wrapper'>
 						<CategorySection />
 					</div>
-					<div className='hero-title-container m-5 align-items-center d-flex row justify-content-center m-auto py-5 px-0 px-lg-5'>
+					<div className='hero-title-container m-5 align-items-center d-flex row justify-content-center m-auto pb-5 py-0 pt-3 pb-xl-5 px-0 px-lg-5'>
 						<div className='section-title fs-1 text-main text-center text-uppercase mb-0'>
 							{brand.sec1Title}
 						</div>
