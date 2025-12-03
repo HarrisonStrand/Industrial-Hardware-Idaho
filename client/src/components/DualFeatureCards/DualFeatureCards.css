@@ -12,7 +12,7 @@
 
 /* Center the inner row and limit width */
 .card-row {
-  max-width: 80%;
+  max-width: 85%;
   margin: 0 auto;
 }
 
@@ -99,8 +99,12 @@
     font-size: 1rem !important;
   }
 
-  .card-row, .dual-card-btn {
+  .dual-card-btn {
     max-width: 100%;
+  }
+
+  .card-row {
+    max-width: 85%;
   }
 }
 
@@ -109,7 +113,12 @@
     font-size: 1.3rem !important;
   }
 
-  .card-row, .dual-card-btn {
+
+  .dual-card-btn {
     max-width: 100%;
+  }
+
+  .card-row {
+    max-width: 85%;
   }
 }

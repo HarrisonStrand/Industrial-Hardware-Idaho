@@ -12,6 +12,7 @@
 	--transition-base: all 0.3s ease-in-out;
 	--font-secondary: 'Open Sans', sans-serif;
 	--logo: url('../assets/images/IHI-stamp-white.png');
+	--logo-mobile: url('../assets/images/IHI-stamp-darkgreen.png');
 	--account-thumb: url('../assets/images/profile-placeholder.jpg');
 	--hero-main: url('../assets/images/hero-main.jph');
 }
@@ -23,5 +24,6 @@
   --accent-dark: #b07f67; 
   --body-light: #1b1b1b;
   --text-color: #e7e7e7;
-	--logo: url('../assets/images/IHI-stamp-green.png');
+	--logo: url('../assets/images/IHI-stamp-darkgreen.png');
+	--logo-mobile: url('../assets/images/IHI-stamp-white.png');
 }

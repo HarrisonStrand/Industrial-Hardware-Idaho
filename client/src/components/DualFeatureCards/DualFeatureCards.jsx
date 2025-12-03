@@ -20,7 +20,7 @@ export default function DualFeatureCards() {
 			text: brand.dualCard2Text,
 			cta: brand.dualCard2CTA,
 			link: "/products",
-			textAlign: "text-start",
+			textAlign: "text-center text-lg-start",
 			imgOrder: "",
 		},
 	];

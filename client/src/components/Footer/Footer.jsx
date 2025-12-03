@@ -27,7 +27,7 @@ export default function Footer() {
 	}, [theme]);
 
 	return (
-		<footer className='footer-container container-fluid bg-secondary pt-4 px-5 pt-md-5'>
+		<footer className='footer-container container-fluid bg-secondary pt-4 px-3 px-sm-4 pt-md-5'>
 			<div className='row justify-content-center justify-content-lg-between'>
 				{/* ---------- Section 1: Brand / Address / Newsletter ---------- */}
 				<div className='col-12 col-lg-3'>
@@ -64,7 +64,7 @@ export default function Footer() {
 					return (
 						<div
 						key={key}
-						className={`order-1 order-lg-0 col-6 col-md col-lg-3 px-3 pb-3 ${section.textAlign}`}>
+						className={`order-1 order-lg-0 col-sm col-md col-lg-3 px-3 pb-3 ${section.textAlign}`}>
 							<div className='section-header fw-bold text-main-light mb-2'>
 								{section.title}
 							</div>
@@ -85,7 +85,7 @@ export default function Footer() {
 			{/* Newsletter */}
 			{sections.section1.showNewsletter && (
 				<div className='order-0 row justify-content-between px-2'>
-					<div className='newsletter-container col-8 col-md col-lg-3 mt-0 mb-3 pe-1'>
+					<div className='newsletter-container col-12 col-sm-8 col-md col-lg-3 mt-0 mb-3 pe-1'>
 						<label htmlFor='newsletter-bar' className='text-main-light ps-2'>
 							Join Our Newsletter
 						</label>
@@ -103,7 +103,7 @@ export default function Footer() {
 							</button>
 						</form>
 					</div>
-					<div className="social-icon-container col-2 align-items-center d-flex justify-content-end text-end px-0 pt-3">
+					<div className="social-icon-container col-12 col-sm-2 align-items-center d-flex justify-content-center justify-content-sm-end text-end px-0 pb-3 pb-sm-0 pt-0 pt-sm-3">
 						<div className="social-icon">
 							<i className="bi bi-facebook fs-2 text-main-light ps-3"></i>
 						</div>

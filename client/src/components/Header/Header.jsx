@@ -20,6 +20,14 @@ export default function Header() {
 
 	const tabs = Object.keys(ShopNowItems);
 
+	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+
+	useEffect(() => {
+		const handleResize = () => setScreenWidth(window.innerWidth);
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, []);
+
 	/* ---------------------------------------------
 	 * SEARCH SYNC WITH /products
 	 * ------------------------------------------ */
@@ -63,12 +71,22 @@ export default function Header() {
 	 * ------------------------------------------ */
 	const { theme, toggleTheme } = useContext(ThemeContext);
 	const [logoSrc, setLogoSrc] = useState("");
+	const [logoSrcMobile, setLogoSrcMobile] = useState("");
 
 	const updateLogoSrc = () => {
 		const root = document.documentElement;
+
+		// Desktop logo
 		const logoValue = getComputedStyle(root).getPropertyValue("--logo").trim();
 		const match = logoValue.match(/url\((['"]?)(.*?)\1\)/);
 		if (match) setLogoSrc(match[2]);
+
+		// Mobile logo
+		const logoMobileValue = getComputedStyle(root)
+			.getPropertyValue("--logo-mobile")
+			.trim();
+		const matchMobile = logoMobileValue.match(/url\((['"]?)(.*?)\1\)/);
+		if (matchMobile) setLogoSrcMobile(matchMobile[2]);
 	};
 
 	useEffect(() => {
@@ -116,9 +134,9 @@ export default function Header() {
 			 * TOP BAR
 			 * ====================================================== */}
 			<div className='container-fluid row g-0 justify-content-between px-sm-3 px-3 py-2 align-items-center top-bar bg-secondary-light'>
-				<div className='col-6 d-flex text-start justify-content-start'>
+				<div className='col-4 col-sm-6 d-flex text-start justify-content-start'>
 					<Link
-						className='ms-0 ms-md-4 d-flex text-decoration-none text-main align-items-center'
+						className='ms-sm-2 ms-md-4 d-flex text-decoration-none text-main align-items-center'
 						to={`tel:${brand.phone}`}>
 						<div className='bi bi-telephone phone-icon h5 m-0' />
 						<h5 className='d-none d-md-block top-bar-text font-secondary m-0 px-2'>
@@ -127,7 +145,7 @@ export default function Header() {
 					</Link>
 
 					<Link
-						className='ms-4 ms-md-4 d-flex text-decoration-none text-main align-items-center'
+						className='ms-3 ms-md-4 d-flex text-decoration-none text-main align-items-center'
 						to={`mailto:${brand.email}`}>
 						<div className='bi bi-envelope-open mail-icon h5 m-0' />
 						<h5 className='d-none d-md-block top-bar-text font-secondary m-0 px-2'>
@@ -135,8 +153,20 @@ export default function Header() {
 						</h5>
 					</Link>
 				</div>
+				<div className='col-4 d-flex justify-content-center d-flex d-sm-none'>
+					<Link
+						className='text-decoration-none fw-bolder fs-5 text-uppercase flex-row text-main-light'
+						to='/'>
+						<img
+							src={logoSrcMobile}
+							className='header-logo-mobile'
+							alt={brand.brandName}
+						/>
+					</Link>
+				</div>
 
-				<div className='col-6 d-flex text-end justify-content-end'>
+				
+				<div className='col-4 col-sm-6 d-flex text-end justify-content-end'>
 					<Link
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
 						to='/location'>
@@ -161,7 +191,7 @@ export default function Header() {
 					<Link
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
 						to='/careers'>
-						<p className='d-none d-sm-block d-md-block top-bar-text font-secondary text-uppercase me-0 me-md-4 mb-0'>
+						<p className='d-none d-sm-block d-md-block top-bar-text font-secondary text-uppercase me-0 me-sm-2 me-md-4 mb-0'>
 							Careers
 						</p>
 					</Link>
@@ -231,23 +261,25 @@ export default function Header() {
 			 * ====================================================== */}
 			<nav className='navbar navbar-expand-lg container-fluid title-banner'>
 				<div className='container-fluid flex-row g-0 justify-content-between px-3 py-2 align-items-center'>
-					<div className='col col-md-9 col-lg-10'>
+					<div className='col-6 col-md-9 col-lg-10'>
 						<Link
 							className='text-decoration-none fw-bolder fs-5 text-uppercase d-flex flex-row text-main-light'
 							to='/'>
 							<img
 								src={logoSrc}
-								className='header-logo col-2 col-lg-2 d-flex mx-0 mx-md-4'
+								className='header-logo col-2 col-lg-2 d-none d-sm-flex mx-0 mx-md-4'
 								alt={brand.brandName}
 							/>
-							<h2 className='d-flex text-main-light align-items-center company-title py-0 my-0 px-3 px-md-2'>
+							<h2 className='d-flex text-main-light align-items-center company-title py-0 my-0 px-0 px-sm-3 px-md-2'>
 								{brand.brandName}
 							</h2>
 						</Link>
 					</div>
 
-					<div className='col col-lg-2 align-items-center d-flex justify-content-end mx-0'>
-						<Link className='account-link rounded-circle mx-4' to='/register'>
+					<div className='col col-lg-2 align-items-center d-flex justify-content-end mx-sm-0 pe-0 pe-sm-2'>
+						<Link
+							className='account-link rounded-circle mx-sm-4 mx-3'
+							to='/register'>
 							<div className='account-thumb rounded-circle' />
 						</Link>
 						<div className='cart-icon py-0 my-0 d-flex text-main-light bi bi-bag h2 me-0 me-md-4' />
@@ -258,13 +290,22 @@ export default function Header() {
 			{/* ========================================================
 			 * SEARCH BAR + SHOP NOW MEGA MENU
 			 * ====================================================== */}
-			<div className='container-fluid row g-0 d-flex justify-content-center justify-content-sm-between px-4 px-lg-3 py-2 align-items-center search-bar-container bg-secondary'>
+			<div className='container-fluid row g-0 d-flex justify-content-center justify-content-sm-between px-3 px-md-4 px-lg-3 py-2 align-items-center search-bar-container bg-secondary'>
 				<div className='col-12 col-lg-6 d-flex text-start justify-content-center py-2 py-lg-0 justify-content-md-start'>
 					<div className='ms-0 ms-md-4 d-flex text-decoration-none text-secondary-light align-items-center'>
 						<div
-							className='shop-now-wrapper position-relative'
-							onMouseEnter={() => setIsModalOpen(true)}
-							onMouseLeave={() => setIsModalOpen(false)}>
+							className={`shop-now-wrapper position-relative ${
+								screenWidth <= 1350 ? "shop-now-mobile" : "shop-now-desktop"
+							}`}
+							onMouseEnter={() => {
+								if (screenWidth > 1350) setIsModalOpen(true);
+							}}
+							onMouseLeave={() => {
+								if (screenWidth > 1350) setIsModalOpen(false);
+							}}
+							onClick={() => {
+								if (screenWidth <= 1350) navigate("/products");
+							}}>
 							<div className='shop-now-trigger d-flex align-items-center position-relative z-10'>
 								<p className='search-bar-text text-secondary-light font-secondary fw-bold text-uppercase m-0 px-2'>
 									Shop Now
@@ -272,7 +313,7 @@ export default function Header() {
 								<i className='bi bi-chevron-down chevron text-secondary-light fw-bold h5 m-0' />
 							</div>
 
-							{isModalOpen && (
+							{screenWidth > 1350 && isModalOpen && (
 								<div className='category-modal position-absolute rounded-2 py-1'>
 									<div className='modal-hover-bridge'></div>
 
@@ -304,20 +345,20 @@ export default function Header() {
 						</div>
 					</div>
 
-					<div className='search-bar-text-line px-3'></div>
+					<div className='search-bar-text-line px-1 px-sm-3'></div>
 
 					<Link
-						className='bottom-nav-link ms-4 d-flex text-decoration-none text-secondary-light align-items-center'
+						className='bottom-nav-link ms-0 ms-sm-4 d-flex text-decoration-none text-secondary-light align-items-center'
 						to='/products'>
 						<p className='search-bar-text text-secondary-light font-secondary fw-bold text-uppercase m-0 px-2'>
 							Products
 						</p>
 					</Link>
 
-					<div className='search-bar-text-line px-3'></div>
+					<div className='search-bar-text-line px-1 px-sm-3'></div>
 
 					<Link
-						className='bottom-nav-link ms-4 d-flex text-decoration-none text-secondary-light align-items-center'
+						className='bottom-nav-link ms-0 ms-sm-4 d-flex text-decoration-none text-secondary-light align-items-center'
 						to='/contact'>
 						<p className='search-bar-text text-secondary-light font-secondary fw-bold text-uppercase m-0 px-2'>
 							Contact
@@ -325,7 +366,7 @@ export default function Header() {
 					</Link>
 				</div>
 
-				<div className='col-12 col-lg-6 d-flex text-end justify-content-end px-2 px-md-4 px-lg-0'>
+				<div className='col-12 col-lg-6 d-flex text-end justify-content-end px-sm-0 px-md-4 px-lg-0'>
 					<form
 						onSubmit={handleSearchSubmit}
 						className='d-flex position-relative w-100'>

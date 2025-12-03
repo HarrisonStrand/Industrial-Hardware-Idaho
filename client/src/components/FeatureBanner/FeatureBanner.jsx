@@ -45,7 +45,7 @@ export default function FeatureBanner() {
 									<div key={index} className='col mt-0'>
 										<div className='feature-item text-center h-100 d-flex flex-column justify-content-center align-items-center gap-md-2 gap-0 py-3 py-xl-0'>
 											<div className='feature-icon'>{item.icon}</div>
-											<p className='feature-label text-uppercase m-0 text-break px-xl-3'>
+											<p className='feature-label text-uppercase m-0 text-break px-xl-3' style={{ whiteSpace: "pre-line" }}>
 												{item.label}
 											</p>
 										</div>

@@ -52,7 +52,7 @@
 	}
 
 	.feature-label {
-		/* font-size: 0.95rem; */
+		font-size: 0.95rem;
 		letter-spacing: 0.4px;
 	}
 }

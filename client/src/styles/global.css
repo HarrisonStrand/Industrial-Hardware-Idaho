@@ -115,3 +115,32 @@ body {
 	font-family: var(--font-secondary);
 }
 
+
+
+
+
+
+
+
+.section-title {
+  font-size: 2rem;
+}
+
+.section-copy {
+  font-size: 1.25rem;
+}
+
+@media (max-width: 850px) {
+  .section-title {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 690px) {
+  .section-title {
+    font-size: 1.3em;
+  }
+  .section-copy {
+    font-size: 1rem;
+  }
+}

@@ -146,10 +146,10 @@ export default function ProductList() {
 					{variables.contactBannerTitle}
 				</div>
 				<div className="contact-banner-card row align-items-center justify-content-evenly rounded-4 border border-3 border-main py-2 py-xl-3 px-xl-3 fw-semibold">
-					<div className="col-12 col-xl-5 align-items-center contact-banner-left text-main text-uppercase fs-4 text-start py-1 py-xl-0 px-lg-0 px-xl-2">
+					<div className="col-12 col-xl-6 align-items-center contact-banner-left text-main text-uppercase text-center text-xl-end py-1 py-xl-0 px-lg-0 px-xl-5">
 						{variables.contactBannerLeft} <i className="fs-5 px-1 bi bi-telephone"/> {brand.phone}
 					</div>
-					<div className="col-12 col-xl-7 align-items-center contact-banner-right text-main text-uppercase fs-4 text-end py-1 py-xl-0 px-lg-0 px-xl-2">
+					<div className="col-12 col-xl-6 align-items-center contact-banner-right text-main text-uppercase text-center text-xl-start py-1 py-xl-0 px-lg-0 px-xl-5">
 						{variables.contactBannerRight} <i className="fs-5 px-1 bi bi-envelope-open"/> {brand.email}
 					</div>
 				</div>
