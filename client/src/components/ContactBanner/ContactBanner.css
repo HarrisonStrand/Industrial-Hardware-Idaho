@@ -1,0 +1,53 @@
+.contact-banner-container {
+	width: 85%;
+}
+
+@media (max-width: 1200px) {
+	.contact-banner-container {
+		width: 70%;
+	}
+}
+
+.contact-banner-title {
+	font-size: 1.6rem;
+}
+
+@media (max-width: 800px) {
+	.contact-banner-title {
+		font-size: 1.3rem;
+	}
+}
+
+.contact-banner-card {
+	background: rgb(from var(--main-color) r g b / 0.25);
+}
+
+.contact-banner-left,
+.contact-banner-right {
+	font-size: 1.6rem;
+}
+
+@media (max-width: 1731px) {
+	.contact-banner-left,
+	.contact-banner-right {
+		font-size: 1.3rem;
+	}
+}
+
+@media (max-width: 1491px) {
+	.contact-banner-left,
+	.contact-banner-right {
+		font-size: 1.2rem;
+	}
+}
+
+
+@media (max-width: 400px) {
+	.contact-banner-container {
+		width: 85%;
+	}
+	.contact-banner-left,
+	.contact-banner-right {
+		font-size: 1.1rem;
+	}
+}

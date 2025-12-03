@@ -444,3 +444,40 @@
 	bottom: 50%;
 	transform: translateY(50%) rotate(-45deg);
 }
+
+
+
+/* --------------------------------------------------------
+    DISABLE SHOP NOW MEGA MENU BELOW 1350PX
+--------------------------------------------------------- */
+@media (max-width: 1350px) {
+
+	/* Modal cannot show */
+	.category-modal {
+		display: none !important;
+		opacity: 0 !important;
+		pointer-events: none !important;
+	}
+
+	/* Wrapper becomes simple button */
+	.shop-now-mobile .shop-now-trigger {
+		cursor: pointer;
+	}
+
+	/* Remove hover chevron animations */
+	.shop-now-mobile .shop-now-trigger:hover {
+		transform: none !important;
+		opacity: 1 !important;
+	}
+
+	/* Remove hover-triggered modal logic */
+	.shop-now-mobile:hover .category-modal {
+		display: none !important;
+	}
+
+	/* Remove invisible hover bridge */
+	.category-modal::before,
+	.category-modal::after {
+		display: none !important;
+	}
+}
