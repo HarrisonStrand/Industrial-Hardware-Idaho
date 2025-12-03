@@ -7,8 +7,17 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+.product-detail-container {
+  background: rgb(from var(--main-color) r g b / 0.25);
+}
+
+.product-description-card {
+  background: rgb(from var(--main-light) r g b / 0.45);
+}
+
 .product-image-card {
   height: 350px;
+  background: rgb(from var(--main-light) r g b / 0.45);
   transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
 
