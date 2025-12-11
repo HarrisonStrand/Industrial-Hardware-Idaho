@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import categoriesData from "../../data/categories.json";
+import categoriesData from "../../data/product-parameters.json";
 import CategoryCard from "../../components/CategoryCard/CategoryCard";
 import "./ProductList.css";
 import FeatureBanner from "../../components/FeatureBanner/FeatureBanner";

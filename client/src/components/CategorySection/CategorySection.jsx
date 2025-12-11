@@ -1,4 +1,4 @@
-import categoriesData from "../../data/categories.json";
+import categoriesData from "../../data/product-parameters.json";
 import CategoryCard from "../CategoryCard/CategoryCard";
 
 export default function CategorySection() {

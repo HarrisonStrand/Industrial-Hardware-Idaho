@@ -15,6 +15,7 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 import { BrandProvider } from "./context/BrandContext.jsx";
 import { VariablesProvider } from "./context/VariableContext.jsx";
 import { SearchProvider } from "./context/SearchContext.jsx";
+import { CartProvider } from "./context/CartContext";
 
 document.addEventListener("DOMContentLoaded", () => {
 	document.body.classList.add("fade-in");
@@ -27,9 +28,11 @@ createRoot(document.getElementById("root")).render(
 				<BrandProvider value={brand}>
 				<VariablesProvider value={variables}>
 					<SearchProvider>
+						<CartProvider>
 						<AuthProvider>
 							<App />
 						</AuthProvider>
+						</CartProvider>
 					</SearchProvider>
 				</VariablesProvider>
 				</BrandProvider>

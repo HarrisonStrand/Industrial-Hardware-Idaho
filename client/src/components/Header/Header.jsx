@@ -5,11 +5,14 @@ import { SearchContext } from "../../context/SearchContext.jsx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import ShopNowItems from "../../data/shop-now-items.json";
 import "./Header.css";
+import CartIcon from "../Cart/CartIcon/CartIcon.jsx";
+import CartDrawer from "../Cart/CartDrawer/CartDrawer.jsx";
 
 export default function Header() {
 	const brand = useContext(BrandContext);
 	const navigate = useNavigate();
 	const location = useLocation();
+	const [isCartOpen, setCartOpen] = useState(false);
 
 	const { searchQuery, setSearchQuery } = useContext(SearchContext);
 
@@ -121,6 +124,8 @@ export default function Header() {
 
 	return (
 		<div className='header bg-main'>
+			{/* CART MODAL */}
+			<CartDrawer isOpen={isCartOpen} onClose={() => setCartOpen(false)} />
 			{/* THEME BUTTON */}
 			<button
 				onClick={handleToggleTheme}
@@ -165,7 +170,6 @@ export default function Header() {
 					</Link>
 				</div>
 
-				
 				<div className='col-4 col-sm-6 d-flex text-end justify-content-end'>
 					<Link
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
@@ -282,7 +286,7 @@ export default function Header() {
 							to='/register'>
 							<div className='account-thumb rounded-circle' />
 						</Link>
-						<div className='cart-icon py-0 my-0 d-flex text-main-light bi bi-bag h2 me-0 me-md-4' />
+						<CartIcon onClick={() => setCartOpen(true)}/>
 					</div>
 				</div>
 			</nav>
