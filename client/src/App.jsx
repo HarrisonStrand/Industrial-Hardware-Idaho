@@ -1,7 +1,9 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import Header from "./components/Header/Header.jsx";
+import CartDrawer from "./components/Cart/CartDrawer/CartDrawer.jsx";
 import Home from "./pages/Home/Home.jsx";
 import About from "./pages/About/About.jsx";
 import Contact from "./pages/Contact/Contact.jsx";
@@ -17,7 +19,7 @@ import ProductDetail from "./pages/ProductDetail/ProductDetail.jsx";
 import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Footer from "./components/Footer/Footer.jsx"
+import Footer from "./components/Footer/Footer.jsx";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
@@ -28,10 +30,16 @@ library.add(fab, fas, far);
 
 export default function App() {
 	const location = useLocation();
+	const [cartOpen, setCartOpen] = useState(false);
+
 
 	return (
 		<main className='main container-fluid position-relative p-0'>
-			<Header />
+			<Header onCartOpen={() => setCartOpen(true)} />
+				<CartDrawer
+				isOpen={cartOpen}
+				onClose={() => setCartOpen(false)}
+				/>
 			<AnimatePresence mode='wait'>
 				<motion.div
 					key={location.pathname + location.search}

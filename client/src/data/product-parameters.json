@@ -1,771 +1,273 @@
 {
-	"categories": [
-		{
-			"id": "bolts",
-			"name": "Bolts",
-			"image": "images/categories/BOLTS.png",
-			"subcategories": [
-				{
-					"id": "hex-head-bolts",
-					"name": "Hex Head Bolts",
-          "description": "Hex Head Bolts Description",
-					"attributes": {
-            "measurement_type": ["Standard", "Metric"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-            "drive_type": ["Hex Head"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					},
-					"image": "/images/categories/hex-head-bolts.jpg"
-				},
-				{
-					"id": "socket-head-bolts",
-					"name": "Socket Head Bolts",
-          "description": "Socket Head Bolts Description",
-					"attributes": {
-            "measurement_type": ["Standard", "Metric"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-            "drive_type": ["Socket Head"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					},
-					"image": "/images/categories/socket-head-bolts.jpg"
-				},
-				{
-					"id": "flathead-socket-bolts",
-					"name": "Flat Head Socket Bolts",
-          "description": "Flat Head Socket Bolts Description",
-					"attributes": {
-            "measurement_type": ["Standard", "Metric"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-            "drive_type": ["Flat Head Socket"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					},
-					"image": "/images/categories/flathead-socket-bolts.jpg"
-				},
-				{
-					"id": "carriage-bolts",
-					"name": "Carriage Bolts",
-          "description": "Carriage Bolts Description",
-					"attributes": {
-            "measurement_type": ["Standard", "Metric"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-            "drive_type": ["Carriage Round"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					},
-					"image": "/images/categories/carriage-bolts.jpg"
-				}
-			]
-		},
-		{
-			"id": "screws",
-			"name": "Screws",
-			"image": "/images/categories/SCREWS.png",
-			"subcategories": [
-				{
-					"id": "wood-screws",
-					"name": "Wood Screws",
-          "description": "Wood Screws Description",
-					"attributes": {
-            "measurement_type": ["Standard", "Metric"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-            "drive_type": ["Philips, Slotted, Hex, Torx"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					},
-					"image": "/images/categories/wood-screws.jpg"
-				},
-				{
-					"id": "machine-screws",
-					"name": "Machine Screws",
-          "description": "Machine Screws Description",
-					"attributes": {
-            "measurement_type": ["Standard", "Metric"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-            "drive_type": ["Philips, Slotted, Hex, Torx"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					},
-					"image": "/images/categories/machine-screws.jpg"
-				}
-			]
-		},
-		{
-			"id": "nuts",
-			"name": "Nuts",
-			"image": "/images/categories/NUTS.png",
-			"subcategories": [
-				{
-					"id": "",
-					"name": "",
-					"image": "",
-          "description": "Description",
-					"attributes": {}
-				}
-			]
-		},
-		{
-			"id": "washers",
-			"name": "Washers",
-			"image": "/images/categories/WASHERS.png",
-			"subcategories": [
-				{
-					"id": "flat-washers",
-					"name": "Flat Washers",
-          "description": "Flat Washers Description",
-					"attributes": {
-						"measurement_type": ["Standard", "Metric"],
-						"finish": [
-							"Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-						"grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-						"type": ["USS", "SAE", "AN"],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"brand": ["brand1", "brand2"],
-            "quantity": []
-					},
-					"image": "/images/categories/WASHERS.png"
-				},
-				{
-					"id": "lock-washers",
-					"name": "Lock Washers",
-          "description": "Lock Washers Description",
-					"attributes": {
-						"measurement_type": ["Standard", "Metric"],
-						"finish": [
-							"Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-						"grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-						"type": ["USS", "SAE", "AN"],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"brand": ["brand1", "brand2"],
-            "quantity": []
-					},
-					"image": "/images/categories/lock-washers.jpg"
-				}
-			]
-		},
-		{
-			"id": "electrical",
-			"name": "Electrical",
-			"image": "/images/categories/ELECTRICAL.png",
-			"subcategories": [
-				{
-					"id": "",
-					"name": "",
-					"image": "",
-          "description": "Description",
-					"attributes": {
-						"measurement_type": ["Standard", "Metric"],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "drive_type": ["Hex Head"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					}
-				}
-			]
-		},
-		{
-			"id": "strut",
-			"name": "Strut",
-			"image": "/images/categories/STRUTS.png",
-			"subcategories": [
-				{
-					"id": "",
-					"name": "",
-					"image": "",
-          "description": "Description",
-					"attributes": {
-						"measurement_type": ["Standard", "Metric"],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "drive_type": ["Hex Head"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					}
-				}
-			]
-		},
-		{
-			"id": "tools",
-			"name": "Tools",
-			"image": "/images/categories/TOOLS.png",
-			"subcategories": [
-				{
-					"id": "",
-					"name": "",
-					"image": "",
-          "description": "Description",
-					"attributes": {
-						"measurement_type": ["Standard", "Metric"],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "drive_type": ["Hex Head"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					}
-				}
-			]
-		},
-		{
-			"id": "utilities",
-			"name": "Utilities",
-			"image": "/images/categories/UTILITIES.png",
-			"subcategories": [
-				{
-					"id": "",
-					"name": "",
-					"image": "",
-          "description": "Description",
-					"attributes": {
-						"measurement_type": ["Standard", "Metric"],
-            "grade": ["Grade 2", "Grade 5", "Grade 8", "A307", "A325", "316SS"],
-            "thread": ["Coarse (UNC)", "Fine (UNF)"],
-						"finish": [
-              "Plain",
-							"Zinc Plated",
-							"Hot-Dip Galvanized",
-							"Black Oxide",
-							"Stainless"
-						],
-            "drive_type": ["Hex Head"],
-						"brand": ["brand1", "brand2"],
-            "quantity": [],
-						"diameter": [
-							"2/56",
-							"4/40",
-							"6/32",
-							"8/32",
-							"10/32",
-							"10/24",
-							"1/4",
-							"5/16",
-							"3/8",
-							"7/16",
-							"1/2",
-							"9/16",
-							"5/8",
-							"3/4",
-							"1"
-						],
-						"length": [
-							"1/2",
-							"3/4",
-							"1",
-							"1-1/4",
-							"1-1/2",
-							"1-3/4",
-							"2",
-							"2-1/4",
-							"2-1/2",
-							"2-3/4",
-							"3",
-							"3-1/4",
-							"3-1/2",
-							"3-3/4",
-							"4",
-							"4-1/4",
-							"4-1/2",
-							"4-3/4",
-							"5",
-							"5-1/4",
-							"5-1/2",
-							"5-3/4",
-							"6"
-						]
-					}
-				}
-			]
-		}
-	]
+  "categories": [
+    {
+      "id": "bolts",
+      "name": "Bolts",
+      "subcategories": [
+        {
+          "id": "hex-cap-screws",
+          "name": "Hex Cap Screws",
+          "prefix": "CS",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8", "7/16", "1/2", "9/16", "5/8", "3/4"],
+            "length": ["1", "1 1/2", "2", "2 1/2", "3", "3 1/2", "4", "5", "6"],
+            "grade": ["Grade 2", "Grade 5", "Grade 8"],
+            "thread": ["Coarse", "Fine"],
+            "finish": ["Plain", "Zinc Plated", "Black Oxide", "HDG"],
+            "drive_type": ["Hex Cap"]
+          }
+        },
+        {
+          "id": "socket-head-cap-screws",
+          "name": "Socket Head Cap Screws",
+          "prefix": "SHCS",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8", "1/2"],
+            "length": ["1", "1 1/2", "2", "3", "4"],
+            "grade": ["8, 5, 407"],
+            "thread": ["Coarse"],
+            "finish": ["Plain", "Black Oxide"],
+            "drive_type": ["Hex Drive"]
+          }
+        },
+        {
+          "id": "button-head-cap-screws",
+          "name": "Button Head Cap Screws",
+          "prefix": "BHCS",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8"],
+            "length": ["1", "1 1/2", "2", "2 1/2"],
+            "grade": ["8, 5, 407"],
+            "thread": ["Coarse"],
+            "finish": ["Plain", "Black Oxide", "Stainless Steel"],
+            "drive_type": ["Hex Drive"]
+          }
+        },
+        {
+          "id": "flat-head-cap-screws",
+          "name": "Flat Head Cap Screws",
+          "prefix": "FHCS",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8"],
+            "length": ["1", "1 1/2", "2"],
+            "grade": ["8, 5, 407"],
+            "thread": ["Coarse"],
+            "finish": ["Plain", "Stainless Steel"],
+            "drive_type": ["Hex Drive"]
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "machine-screws",
+      "name": "Machine Screws",
+      "subcategories": [
+        {
+          "id": "machine-screw-pan",
+          "name": "Machine Screw Pan",
+          "prefix": "MSP",
+          "attributes": {
+            "diameter": ["#4", "#6", "#8", "#10", "#12"],
+            "length": ["1/4", "3/8", "1/2", "3/4", "1", "1 1/2", "2"],
+            "drive_type": ["Phillips", "Square"],
+            "finish": ["Zinc Plated", "Black Oxide", "Stainless Steel"]
+          }
+        },
+        {
+          "id": "machine-screw-oval",
+          "name": "Machine Screw Oval",
+          "prefix": "MSO",
+          "attributes": {
+            "diameter": ["#4", "#6", "#8"],
+            "length": ["1/4", "3/8", "1/2", "3/4", "1"],
+            "drive_type": ["Phillips", "Square"],
+            "finish": ["Zinc Plated", "Stainless Steel"]
+          }
+        },
+        {
+          "id": "machine-screw-truss",
+          "name": "Machine Screw Truss",
+          "prefix": "MST",
+          "attributes": {
+            "diameter": ["#6", "#8", "#10"],
+            "length": ["1/4", "3/8", "1/2", "3/4", "1", "1 1/2"],
+            "drive_type": ["Phillips", "Square"],
+            "finish": ["Zinc Plated", "Stainless Steel"]
+          }
+        },
+        {
+          "id": "machine-screw-flat",
+          "name": "Machine Screw Flat",
+          "prefix": "MSF",
+          "attributes": {
+            "diameter": ["#4", "#6", "#8", "#10"],
+            "length": ["1/4", "3/8", "1/2", "3/4", "1"],
+            "drive_type": ["Phillips", "Square"],
+            "finish": ["Zinc Plated", "Black Oxide", "Stainless Steel"]
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "sheet-metal-screws",
+      "name": "Sheet Metal Screws",
+      "subcategories": [
+        {
+          "id": "sheet-metal-pan",
+          "name": "Sheet Metal Screw Pan",
+          "prefix": "SMSP",
+          "attributes": {
+            "diameter": ["#6", "#8", "#10", "#12", "#14"],
+            "length": ["1/2", "3/4", "1", "1 1/4", "1 1/2", "2"],
+            "drive_type": ["Phillips", "Square"],
+            "finish": ["Zinc Plated", "Black Oxide", "Stainless Steel"]
+          }
+        },
+        {
+          "id": "sheet-metal-oval",
+          "name": "Sheet Metal Screw Oval",
+          "prefix": "SMSO",
+          "attributes": {
+            "diameter": ["#6", "#8", "#10"],
+            "length": ["1/2", "3/4", "1", "1 1/2"],
+            "drive_type": ["Phillips", "Square"],
+            "finish": ["Zinc Plated", "Stainless Steel"]
+          }
+        },
+        {
+          "id": "sheet-metal-truss",
+          "name": "Sheet Metal Screw Truss",
+          "prefix": "SMST",
+          "attributes": {
+            "diameter": ["#6", "#8"],
+            "length": ["1/2", "3/4", "1", "1 1/2"],
+            "drive_type": ["Phillips", "Square"],
+            "finish": ["Zinc Plated", "Stainless Steel"]
+          }
+        },
+        {
+          "id": "sheet-metal-flat",
+          "name": "Sheet Metal Screw Flat",
+          "prefix": "SMSF",
+          "attributes": {
+            "diameter": ["#6", "#8", "#10"],
+            "length": ["1/2", "3/4", "1"],
+            "drive_type": ["Phillips", "Square"],
+            "finish": ["Zinc Plated", "Stainless Steel"]
+          }
+        },
+        {
+          "id": "sheet-metal-hex-washer-head",
+          "name": "Sheet Metal Screw Hex Washer Head",
+          "prefix": "SMSH",
+          "attributes": {
+            "diameter": ["#8", "#10", "#12"],
+            "length": ["1/2", "3/4", "1", "1 1/2"],
+            "drive_type": ["Hex"],
+            "finish": ["Zinc Plated", "Stainless Steel"]
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "washers",
+      "name": "Washers",
+      "subcategories": [
+        {
+          "id": "flat-washers",
+          "name": "Flat Washers",
+          "prefix": "FW",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8", "1/2", "5/8"],
+            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
+            "grade": ["Low Carbon", "18-8", "316"]
+          }
+        },
+        {
+          "id": "lock-washers",
+          "name": "Lock Washers",
+          "prefix": "LW",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8", "1/2"],
+            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
+            "grade": ["Low Carbon", "18-8"]
+          }
+        },
+        {
+          "id": "split-washers",
+          "name": "Split Lock Washers",
+          "prefix": "SW",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8", "1/2"],
+            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
+            "grade": ["Low Carbon"]
+          }
+        },
+        {
+          "id": "fender-washers",
+          "name": "Fender Washers",
+          "prefix": "FEW",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8", "1/2"],
+            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
+            "grade": ["Low Carbon"]
+          }
+        }
+      ]
+    },
+
+    {
+      "id": "nuts",
+      "name": "Nuts",
+      "subcategories": [
+        {
+          "id": "hex-nuts",
+          "name": "Hex Nuts",
+          "prefix": "HN",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8", "1/2"],
+            "thread": ["Coarse", "Fine"],
+            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
+            "grade": ["Grade 2", "Grade 5", "18-8"]
+          }
+        },
+        {
+          "id": "lock-nuts",
+          "name": "Lock Nuts",
+          "prefix": "LN",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8"],
+            "thread": ["Coarse"],
+            "finish": ["Plain", "Zinc Plated"],
+            "grade": ["Grade 2"]
+          }
+        },
+        {
+          "id": "jam-nuts",
+          "name": "Jam Nuts",
+          "prefix": "JN",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8"],
+            "thread": ["Coarse"],
+            "finish": ["Plain", "Zinc Plated"],
+            "grade": ["Grade 2"]
+          }
+        },
+        {
+          "id": "cap-nuts",
+          "name": "Cap Nuts",
+          "prefix": "CN",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8"],
+            "thread": ["Coarse"],
+            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
+            "grade": ["18-8"]
+          }
+        }
+      ]
+    }
+  ]
 }

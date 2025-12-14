@@ -8,11 +8,10 @@ import "./Header.css";
 import CartIcon from "../Cart/CartIcon/CartIcon.jsx";
 import CartDrawer from "../Cart/CartDrawer/CartDrawer.jsx";
 
-export default function Header() {
+export default function Header({ onCartOpen }) {
 	const brand = useContext(BrandContext);
 	const navigate = useNavigate();
 	const location = useLocation();
-	const [isCartOpen, setCartOpen] = useState(false);
 
 	const { searchQuery, setSearchQuery } = useContext(SearchContext);
 
@@ -124,8 +123,6 @@ export default function Header() {
 
 	return (
 		<div className='header bg-main'>
-			{/* CART MODAL */}
-			<CartDrawer isOpen={isCartOpen} onClose={() => setCartOpen(false)} />
 			{/* THEME BUTTON */}
 			<button
 				onClick={handleToggleTheme}
@@ -266,7 +263,7 @@ export default function Header() {
 			<nav className='navbar navbar-expand-lg container-fluid title-banner'>
 				<div className='container-fluid flex-row g-0 justify-content-between px-3 py-2 align-items-center'>
 					<div className='col-6 col-md-9 col-lg-10'>
-						<Link
+						{/* <Link
 							className='text-decoration-none fw-bolder fs-5 text-uppercase d-flex flex-row text-main-light'
 							to='/'>
 							<img
@@ -277,7 +274,21 @@ export default function Header() {
 							<h2 className='d-flex text-main-light align-items-center company-title py-0 my-0 px-0 px-sm-3 px-md-2'>
 								{brand.brandName}
 							</h2>
-						</Link>
+						</Link> */}
+						<div className='d-flex flex-row text-main-light align-items-center'>
+							<Link to='/'>
+								<img
+									src={logoSrc}
+									className='header-logo col-2 col-lg-2 d-none d-sm-flex mx-0 mx-md-4'
+									alt={brand.brandName}
+								/>
+							</Link>
+							<Link to='/' className='text-decoration-none'>
+								<h2 className='text-uppercase d-flex text-main-light company-title py-0 my-0 px-0 px-sm-3 px-md-2'>
+									{brand.brandName}
+								</h2>
+							</Link>
+						</div>
 					</div>
 
 					<div className='col col-lg-2 align-items-center d-flex justify-content-end mx-sm-0 pe-0 pe-sm-2'>
@@ -286,7 +297,7 @@ export default function Header() {
 							to='/register'>
 							<div className='account-thumb rounded-circle' />
 						</Link>
-						<CartIcon onClick={() => setCartOpen(true)}/>
+						<CartIcon onClick={onCartOpen} />
 					</div>
 				</div>
 			</nav>
