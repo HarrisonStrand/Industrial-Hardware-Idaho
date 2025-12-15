@@ -6,7 +6,6 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import ShopNowItems from "../../data/shop-now-items.json";
 import "./Header.css";
 import CartIcon from "../Cart/CartIcon/CartIcon.jsx";
-import CartDrawer from "../Cart/CartDrawer/CartDrawer.jsx";
 
 export default function Header({ onCartOpen }) {
 	const brand = useContext(BrandContext);
@@ -23,6 +22,7 @@ export default function Header({ onCartOpen }) {
 	const tabs = Object.keys(ShopNowItems);
 
 	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+	const isMobileCart = screenWidth < 800;
 
 	useEffect(() => {
 		const handleResize = () => setScreenWidth(window.innerWidth);
@@ -297,7 +297,15 @@ export default function Header({ onCartOpen }) {
 							to='/register'>
 							<div className='account-thumb rounded-circle' />
 						</Link>
-						<CartIcon onClick={onCartOpen} />
+						<CartIcon
+							onClick={() => {
+								if (isMobileCart) {
+									navigate("/cart");
+								} else {
+									onCartOpen();
+								}
+							}}
+						/>
 					</div>
 				</div>
 			</nav>

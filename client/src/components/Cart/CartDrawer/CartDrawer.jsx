@@ -2,6 +2,7 @@ import React from "react";
 import "./CartDrawer.css";
 import CartItem from "../CartItem/CartItem";
 import { useCart } from "../../../context/CartContext";
+import { Link } from "react-router-dom";
 
 export default function CartDrawer({ isOpen, onClose }) {
 	const { cartItems, cartTotal } = useCart();
@@ -10,7 +11,7 @@ export default function CartDrawer({ isOpen, onClose }) {
 		<div className={`cart-drawer-overlay ${isOpen ? "open" : ""}`}>
 			<div className='cart-drawer'>
 				<div className='cart-drawer-title-banner py-2 bg-main'>
-					<div className='cart-drawer-title text-main-light text-uppercase fs-3 text-center'>
+					<div className='cart-drawer-title text-main-light text-uppercase text-center'>
 						Cart Summary
 					</div>
 					<div
@@ -37,22 +38,22 @@ export default function CartDrawer({ isOpen, onClose }) {
 						</div>
 					</div>
 					<div className='cta-container container px-0 bg-main-light overflow-hidden'>
-            <div className="row px-3 gx-4">
-            <div className="col-12 col-sm-6">
-						<button
-							className='continue-btn text-uppercase font-secondary fw-light rounded-3 text-main fs-5 p-3 w-100'
-							onClick={() => (window.location.href = "/cart")}>
-							Continue Shopping
-						</button>
-                </div>
-            <div className="col-12 col-sm-6">
-						<button
-							className='checkout-btn text-uppercase font-secondary fw-regular rounded-3 text-main-light fs-5 p-3 w-100'
-							onClick={() => (window.location.href = "/checkout")}>
-							Checkout
-						</button>
-                </div>
-                </div>
+						<div className='row px-3 gx-4'>
+							<div className='col-12 col-lg-6'>
+								<Link to={"/products"}>
+									<button className='continue-btn text-uppercase font-secondary fw-light rounded-3 text-main p-3 w-100'>
+										Continue Shopping
+									</button>
+								</Link>
+							</div>
+							<div className='col-12 col-lg-6'>
+								<Link to={"/checkout"}>
+									<button className='checkout-btn text-uppercase font-secondary fw-regular rounded-3 text-main-light p-3 w-100'>
+										Checkout
+									</button>
+								</Link>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

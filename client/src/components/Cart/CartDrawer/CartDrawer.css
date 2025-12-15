@@ -42,6 +42,25 @@
 .cart-drawer-title {
 	filter: drop-shadow(1px 2px 4px rgba(0, 0, 0, 0.5));
 	letter-spacing: 1px;
+  font-size: 1.8rem;
+}
+
+@media (max-width: 1300px) {
+  .cart-drawer-title {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 990px) {
+  .cart-drawer-title {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 830px) {
+  .cart-drawer-title {
+    font-size: 1.0rem;
+  }
 }
 
 .close-btn {
@@ -63,6 +82,14 @@
   box-shadow: 0 -2px 8px 0 rgba(0, 0, 0, 0.15);
 }
 
+.subtotal-text {
+  filter: drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.5));
+}
+
+.subtotal-number {
+  filter: drop-shadow(1px 1px 0px rgba(0, 0, 0, 0.5));
+}
+
 .cta-container {
   border: 1px solid rgba(from var(--secondary-light) r g b / 1);
   box-shadow: 0 -2px 6px 0 rgba(0, 0, 0, 0.2);
@@ -79,6 +106,19 @@
   border: 1px solid rgba(from var(--main-color) r g b / 1);
   box-shadow: 2px 2px 3px 0 rgba(0, 0, 0, 0.35);
 }
+
+@media (max-width: 1489px) {
+  .continue-btn, .checkout-btn {
+    font-size: .8rem;
+  }
+}
+
+@media ((min-width: 992px) and (max-width: 1276px)) {
+  .continue-btn, .checkout-btn {
+    height: 70px;
+  }
+}
+
 
 .continue-btn:hover {
   box-shadow: inset 1px 1px 2px 1px rgba(0, 0, 0, 0.5);
