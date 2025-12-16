@@ -50,12 +50,12 @@ export default function CartDrawer({ isOpen, onClose }) {
               <div className="col-12 col-lg-6">
                 <Link to="/products">
                   <button className="continue-btn text-uppercase font-secondary fw-light rounded-3 text-main p-3 w-100">
-                    Continue Shopping
+                    Browse Products
                   </button>
                 </Link>
               </div>
               <div className="col-12 col-lg-6">
-                <Link to="/checkout">
+                <Link to="/cart">
                   <button className="checkout-btn text-uppercase font-secondary fw-regular rounded-3 text-main-light p-3 w-100">
                     Checkout
                   </button>

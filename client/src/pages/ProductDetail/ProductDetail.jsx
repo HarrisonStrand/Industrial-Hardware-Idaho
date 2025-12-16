@@ -7,7 +7,7 @@ import "./ProductDetail.css";
 
 export default function ProductDetail() {
 	const { categoryId, subcategoryId } = useParams();
-	const { addToCart } = useCart();
+	const { addToCart, openCart } = useCart();
 
 	const [subcategory, setSubcategory] = useState(null);
 
@@ -109,6 +109,8 @@ export default function ProductDetail() {
 		}
 
 		addToCart(matchingSku.partNumber, Number(selected.quantity || 1));
+
+		openCart(); // 👈 THIS triggers App drawer
 	};
 
 	// --------------------------------------------------
@@ -234,7 +236,14 @@ export default function ProductDetail() {
 					</div>
 
 					<div className='col-4 price-container text-end fs-1 text-main'>
-						{matchingSku ? `$${matchingSku.price.toFixed(2)}` : "$0.00"}
+						{matchingSku && selected.quantity
+							? `$${(matchingSku.price * Number(selected.quantity)).toFixed(2)}`
+							: "$0.00"}
+						<div className='fs-6 text-muted'>
+					{matchingSku && selected.quantity 
+					? `$${matchingSku.price.toFixed(2)} each`
+					: "$0.00"}
+						</div>
 					</div>
 				</div>
 			</div>

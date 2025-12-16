@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "./components/Header/Header.jsx";
 import CartDrawer from "./components/Cart/CartDrawer/CartDrawer.jsx";
 import MobileCartBar from "./components/Cart/MobileCartBar/MobileCartBar.jsx";
+import { CartProvider } from "./context/CartContext";
 import Home from "./pages/Home/Home.jsx";
 import About from "./pages/About/About.jsx";
 import Contact from "./pages/Contact/Contact.jsx";
@@ -44,56 +45,58 @@ export default function App() {
 	const isMobileCart = screenWidth < 800;
 
 	return (
-		<main className='main container-fluid position-relative p-0'>
-			<Header onCartOpen={() => setCartOpen(true)} />
-			{!isMobileCart && (
-				<CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
-			)}
-			{isMobileCart && <MobileCartBar />}
-			<AnimatePresence mode='wait'>
-				<motion.div
-					key={location.pathname + location.search}
-					initial={{ opacity: 0 }}
-					animate={{ opacity: 1 }}
-					exit={{ opacity: 0 }}
-					transition={{ duration: 0.4 }}>
-					<Routes location={location} key={location.pathname}>
-						<Route path='/' element={<Home />} />
-						<Route path='/about' element={<About />} />
-						<Route path='/contact' element={<Contact />} />
-						<Route path='/shipping' element={<Shipping />} />
-						<Route path='/location' element={<Location />} />
-						<Route path='/orders' element={<Orders />} />
-						<Route path='/login' element={<Login />} />
-						<Route path='/register' element={<Register />} />
-						<Route path='/products/' element={<ProductList />} />
-						<Route path='/products/:id' element={<ProductDetail />} />
-						<Route
-							path='/products/:categoryId/:subcategoryId'
-							element={<ProductDetail />}
-						/>
-						<Route path='/cart' element={<Cart />} />
-						<Route path='/checkout' element={<Checkout />} />
-						<Route
-							path='/dashboard'
-							element={
-								<ProtectedRoute>
-									<Dashboard />
-								</ProtectedRoute>
-							}
-						/>
-						<Route
-							path='/admin'
-							element={
-								<ProtectedRoute requireAdmin={true}>
-									<AdminPanel />
-								</ProtectedRoute>
-							}
-						/>
-					</Routes>
-				</motion.div>
-			</AnimatePresence>
-			<Footer />
-		</main>
+		<CartProvider openCart={() => setCartOpen(true)}>
+			<main className='main container-fluid position-relative p-0'>
+				<Header onCartOpen={() => setCartOpen(true)} />
+				{!isMobileCart && (
+					<CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
+				)}
+				{isMobileCart && <MobileCartBar />}
+				<AnimatePresence mode='wait'>
+					<motion.div
+						key={location.pathname + location.search}
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 1 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: 0.4 }}>
+						<Routes location={location} key={location.pathname}>
+							<Route path='/' element={<Home />} />
+							<Route path='/about' element={<About />} />
+							<Route path='/contact' element={<Contact />} />
+							<Route path='/shipping' element={<Shipping />} />
+							<Route path='/location' element={<Location />} />
+							<Route path='/orders' element={<Orders />} />
+							<Route path='/login' element={<Login />} />
+							<Route path='/register' element={<Register />} />
+							<Route path='/products/' element={<ProductList />} />
+							<Route path='/products/:id' element={<ProductDetail />} />
+							<Route
+								path='/products/:categoryId/:subcategoryId'
+								element={<ProductDetail />}
+							/>
+							<Route path='/cart' element={<Cart />} />
+							<Route path='/checkout' element={<Checkout />} />
+							<Route
+								path='/dashboard'
+								element={
+									<ProtectedRoute>
+										<Dashboard />
+									</ProtectedRoute>
+								}
+							/>
+							<Route
+								path='/admin'
+								element={
+									<ProtectedRoute requireAdmin={true}>
+										<AdminPanel />
+									</ProtectedRoute>
+								}
+							/>
+						</Routes>
+					</motion.div>
+				</AnimatePresence>
+				<Footer />
+			</main>
+		</CartProvider>
 	);
 }

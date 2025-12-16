@@ -1,11 +1,34 @@
-import { createContext, useContext, useState, useMemo } from "react";
+import { createContext, useContext, useState, useMemo, useEffect } from "react";
 import skuData from "../data/product-skus.json";
 
-const CartContext = createContext();
+const CartContext = createContext({
+  openCart: () => {}
+});
+const STORAGE_KEY = "ihid_cart";
 
-export function CartProvider({ children }) {
-  const [items, setItems] = useState([]);
+export function CartProvider({ children, openCart }) {
+  // --------------------------------------------------
+  // LOAD FROM LOCAL STORAGE (ONCE)
+  // --------------------------------------------------
+  const [items, setItems] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
 
+  // --------------------------------------------------
+  // SAVE TO LOCAL STORAGE (ON CHANGE)
+  // --------------------------------------------------
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }, [items]);
+
+  // --------------------------------------------------
+  // CART ACTIONS
+  // --------------------------------------------------
   const addToCart = (partNumber, quantity = 1) => {
     setItems((prev) => {
       const existing = prev.find(
@@ -31,6 +54,8 @@ export function CartProvider({ children }) {
   };
 
   const updateQuantity = (partNumber, quantity) => {
+    if (quantity <= 0) return;
+
     setItems((prev) =>
       prev.map((i) =>
         i.partNumber === partNumber
@@ -40,23 +65,30 @@ export function CartProvider({ children }) {
     );
   };
 
-  const clearCart = () => setItems([]);
+  const clearCart = () => {
+    setItems([]);
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
-  // Attach SKU details + price
+  // --------------------------------------------------
+  // ENRICH CART ITEMS WITH SKU DATA
+  // --------------------------------------------------
   const detailedItems = useMemo(() => {
-    return items.map((item) => {
-      const sku = skuData.find(
-        (s) => s.partNumber === item.partNumber
-      );
+    return items
+      .map((item) => {
+        const sku = skuData.find(
+          (s) => s.partNumber === item.partNumber
+        );
 
-      return {
-        ...item,
-        sku,
-        lineTotal: sku
-          ? sku.price * item.quantity
-          : 0
-      };
-    });
+        if (!sku) return null;
+
+        return {
+          ...item,
+          sku,
+          lineTotal: sku.price * item.quantity
+        };
+      })
+      .filter(Boolean);
   }, [items]);
 
   const cartTotal = detailedItems.reduce(
@@ -72,7 +104,8 @@ export function CartProvider({ children }) {
         removeFromCart,
         updateQuantity,
         clearCart,
-        cartTotal
+        cartTotal,
+        openCart
       }}
     >
       {children}
