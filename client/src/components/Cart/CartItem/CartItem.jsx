@@ -5,47 +5,61 @@ import "./CartItem.css";
 export default function CartItem({ item, detailed = false }) {
   const { updateQuantity, removeFromCart } = useCart();
 
+  if (!item.sku) return null;
+
+  const { partNumber, quantity, sku, lineTotal } = item;
+
   const handleQtyChange = (type) => {
-    const newQty = type === "inc" ? item.quantity + 1 : item.quantity - 1;
-    if (newQty > 0) updateQuantity(item.sku, newQty);
+    const newQty =
+      type === "inc" ? quantity + 1 : quantity - 1;
+
+    if (newQty > 0) {
+      updateQuantity(partNumber, newQty);
+    }
   };
 
   return (
     <div className={`cart-item ${detailed ? "detailed" : ""}`}>
-      {/* Image */}
-      {item.image && (
-        <img src={item.image} alt={item.name} className="cart-item-img" />
-      )}
-
       <div className="cart-item-info">
-        {/* Title */}
-        <h3 className="cart-item-title">{item.name}</h3>
+        {/* TITLE */}
+        <h3 className="cart-item-title">
+          {partNumber}
+        </h3>
 
-        {/* Attributes (Diameter, Length, Finish, Grade, etc.) */}
+        {/* ATTRIBUTES */}
         <div className="cart-item-attributes">
-          {Object.entries(item.attributes || {}).map(([key, value]) => (
-            <p key={key}>
-              <strong>{key.replace("_", " ")}:</strong> {value}
-            </p>
-          ))}
+          {Object.entries(sku.attributes || {}).map(
+            ([key, value]) => (
+              <p key={key}>
+                <strong>
+                  {key.replace("_", " ")}:
+                </strong>{" "}
+                {value}
+              </p>
+            )
+          )}
         </div>
 
-        {/* Quantity Controls */}
+        {/* QUANTITY CONTROLS */}
         <div className="cart-item-qty">
-          <button onClick={() => handleQtyChange("dec")}>−</button>
-          <span>{item.quantity}</span>
-          <button onClick={() => handleQtyChange("inc")}>+</button>
+          <button onClick={() => handleQtyChange("dec")}>
+            −
+          </button>
+          <span>{quantity}</span>
+          <button onClick={() => handleQtyChange("inc")}>
+            +
+          </button>
         </div>
 
-        {/* Price */}
+        {/* PRICE */}
         <div className="cart-item-price">
-          ${Number(item.price * item.quantity).toFixed(2)}
+          ${lineTotal.toFixed(2)}
         </div>
 
-        {/* Remove */}
+        {/* REMOVE */}
         <button
           className="cart-item-remove"
-          onClick={() => removeFromCart(item.sku)}
+          onClick={() => removeFromCart(partNumber)}
         >
           Remove
         </button>

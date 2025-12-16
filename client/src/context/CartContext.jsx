@@ -1,146 +1,85 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState, useMemo } from "react";
+import skuData from "../data/product-skus.json";
 
-// Create React context
 const CartContext = createContext();
-export const useCart = () => useContext(CartContext);
 
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState([]);
-  const [cartTotal, setCartTotal] = useState(0);
-  const [cartQuantity, setCartQuantity] = useState(0);
+  const [items, setItems] = useState([]);
 
-  // ----------------------------------------
-  // Load from localStorage on first render
-  // ----------------------------------------
-  useEffect(() => {
-    const saved = localStorage.getItem("ihi-cart");
-    if (saved) {
-      setCartItems(JSON.parse(saved));
-    }
-  }, []);
-
-  // ----------------------------------------
-  // Recalculate totals & sync localStorage
-  // ----------------------------------------
-  useEffect(() => {
-    const quantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    const total = cartItems.reduce(
-      (sum, item) => sum + item.quantity * item.price,
-      0
-    );
-
-    setCartQuantity(quantity);
-    setCartTotal(total);
-
-    localStorage.setItem("ihi-cart", JSON.stringify(cartItems));
-  }, [cartItems]);
-
-  // ----------------------------------------
-  // Generate a SKU for attributes
-  // Example: BOLT-HEX-1/4-3in-Grade8
-  // ----------------------------------------
-  const generateSKU = (product) => {
-    const base = product.id || product.name.replace(/\s+/g, "-").toUpperCase();
-    const attrs = Object.values(product.attributes || {})
-      .join("-")
-      .replace(/\s+/g, "-")
-      .toUpperCase();
-
-    return `${base}-${attrs}`;
-  };
-
-  // ----------------------------------------
-  // Add item to cart
-  // ----------------------------------------
-  const addToCart = (product) => {
-    const sku = generateSKU(product);
-
-    const existing = cartItems.find((item) => item.sku === sku);
-
-    if (existing) {
-      // Increase quantity if product already exists
-      setCartItems((prev) =>
-        prev.map((item) =>
-          item.sku === sku
-            ? { ...item, quantity: item.quantity + (product.quantity || 1) }
-            : item
-        )
+  const addToCart = (partNumber, quantity = 1) => {
+    setItems((prev) => {
+      const existing = prev.find(
+        (i) => i.partNumber === partNumber
       );
-    } else {
-      // Add new product
-      setCartItems((prev) => [
-        ...prev,
-        {
-          ...product,
-          sku,
-          quantity: product.quantity || 1,
-        },
-      ]);
-    }
+
+      if (existing) {
+        return prev.map((i) =>
+          i.partNumber === partNumber
+            ? { ...i, quantity: i.quantity + quantity }
+            : i
+        );
+      }
+
+      return [...prev, { partNumber, quantity }];
+    });
   };
 
-  // ----------------------------------------
-  // Remove from cart
-  // ----------------------------------------
-  const removeFromCart = (sku) => {
-    setCartItems((prev) => prev.filter((item) => item.sku !== sku));
+  const removeFromCart = (partNumber) => {
+    setItems((prev) =>
+      prev.filter((i) => i.partNumber !== partNumber)
+    );
   };
 
-  // ----------------------------------------
-  // Update quantity (+ or -)
-  // ----------------------------------------
-  const updateQuantity = (sku, newQty) => {
-    if (newQty <= 0) return;
-
-    setCartItems((prev) =>
-      prev.map((item) =>
-        item.sku === sku ? { ...item, quantity: newQty } : item
+  const updateQuantity = (partNumber, quantity) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        i.partNumber === partNumber
+          ? { ...i, quantity }
+          : i
       )
     );
   };
 
-  // ----------------------------------------
-  // Edit attributes (diameter, length, grade, etc.)
-  // Regenerates SKU to avoid mixing items
-  // ----------------------------------------
-  const updateAttributes = (sku, newAttributes) => {
-    setCartItems((prev) =>
-      prev.map((item) => {
-        if (item.sku !== sku) return item;
+  const clearCart = () => setItems([]);
 
-        const updatedItem = {
-          ...item,
-          attributes: newAttributes,
-        };
+  // Attach SKU details + price
+  const detailedItems = useMemo(() => {
+    return items.map((item) => {
+      const sku = skuData.find(
+        (s) => s.partNumber === item.partNumber
+      );
 
-        updatedItem.sku = generateSKU(updatedItem);
-        return updatedItem;
-      })
-    );
-  };
+      return {
+        ...item,
+        sku,
+        lineTotal: sku
+          ? sku.price * item.quantity
+          : 0
+      };
+    });
+  }, [items]);
 
-  // ----------------------------------------
-  // Clear cart
-  // ----------------------------------------
-  const clearCart = () => setCartItems([]);
+  const cartTotal = detailedItems.reduce(
+    (sum, item) => sum + item.lineTotal,
+    0
+  );
 
-  // ----------------------------------------
-  // Provide everything to the app
-  // ----------------------------------------
   return (
     <CartContext.Provider
       value={{
-        cartItems,
-        cartTotal,
-        cartQuantity,
+        items: detailedItems,
         addToCart,
         removeFromCart,
         updateQuantity,
-        updateAttributes,
         clearCart,
+        cartTotal
       }}
     >
       {children}
     </CartContext.Provider>
   );
+}
+
+export function useCart() {
+  return useContext(CartContext);
 }
