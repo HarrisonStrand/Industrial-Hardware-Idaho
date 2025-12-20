@@ -133,7 +133,6 @@ export default function ProductDetail() {
 				</div>
 
 				<div className='product-description-card row p-3 rounded-4 m-0'>
-					{/* IMAGE */}
 					<div className='col-12 col-lg-4'>
 						<div className='product-image-card rounded-4 overflow-hidden'>
 							<img
@@ -235,7 +234,7 @@ export default function ProductDetail() {
 						</button>
 					</div>
 
-					<div className='col-4 price-container text-end fs-1 text-main'>
+					<div className='col-4 price-container text-end fs-1 text-main font-secondary'>
 						{matchingSku && selected.quantity
 							? `$${(matchingSku.price * Number(selected.quantity)).toFixed(2)}`
 							: "$0.00"}

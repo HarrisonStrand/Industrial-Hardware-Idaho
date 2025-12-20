@@ -12,6 +12,9 @@ export default function Header({ onCartOpen }) {
 	const navigate = useNavigate();
 	const location = useLocation();
 
+	const drawerDisabledRoutes = ["/cart", "/checkout"];
+	const isDrawerDisabled = drawerDisabledRoutes.includes(location.pathname);
+
 	const { searchQuery, setSearchQuery } = useContext(SearchContext);
 
 	const [menuOpen, setMenuOpen] = useState(false);
@@ -299,7 +302,7 @@ export default function Header({ onCartOpen }) {
 						</Link>
 						<CartIcon
 							onClick={() => {
-								if (isMobileCart) {
+								if (isDrawerDisabled || isMobileCart) {
 									navigate("/cart");
 								} else {
 									onCartOpen();

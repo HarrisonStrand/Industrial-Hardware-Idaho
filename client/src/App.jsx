@@ -34,6 +34,10 @@ export default function App() {
 	const location = useLocation();
 	const [cartOpen, setCartOpen] = useState(false);
 
+	useEffect(() => {
+		setCartOpen(false);
+	}, [location.pathname]);
+
 	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
 	useEffect(() => {
@@ -43,15 +47,18 @@ export default function App() {
 	}, []);
 
 	const isMobileCart = screenWidth < 800;
+	const noCartOverlayRoutes = ["/cart", "/checkout"];
+	const hideCartUI = noCartOverlayRoutes.includes(location.pathname);
 
 	return (
-		<CartProvider openCart={() => setCartOpen(true)}>
+		<CartProvider>
 			<main className='main container-fluid position-relative p-0'>
 				<Header onCartOpen={() => setCartOpen(true)} />
-				{!isMobileCart && (
+				{!isMobileCart && !hideCartUI && (
 					<CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
 				)}
-				{isMobileCart && <MobileCartBar />}
+
+				{isMobileCart && !hideCartUI && <MobileCartBar />}
 				<AnimatePresence mode='wait'>
 					<motion.div
 						key={location.pathname + location.search}
@@ -69,6 +76,10 @@ export default function App() {
 							<Route path='/login' element={<Login />} />
 							<Route path='/register' element={<Register />} />
 							<Route path='/products/' element={<ProductList />} />
+							<Route
+								path='/products/:categoryId/:subcategoryId/:typeId'
+								element={<ProductDetail />}
+							/>
 							<Route path='/products/:id' element={<ProductDetail />} />
 							<Route
 								path='/products/:categoryId/:subcategoryId'

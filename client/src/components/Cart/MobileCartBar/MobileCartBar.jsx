@@ -4,7 +4,7 @@ import { useCart } from "../../../context/CartContext";
 import "./MobileCartBar.css";
 
 export default function MobileCartBar() {
-  const { cartItems, cartTotal } = useCart();
+  const { items, cartTotal } = useCart();
   const navigate = useNavigate();
 
   const [visible, setVisible] = useState(true);
@@ -28,7 +28,7 @@ export default function MobileCartBar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  // if (cartItems.length === 0) return null;
+  // if (items.length === 0) return null;
 
   return (
     <div className={`mobile-cart-bar px-3 pb-2 ${visible ? "show" : "hide"}`}>
@@ -37,7 +37,7 @@ export default function MobileCartBar() {
         onClick={() => navigate("/cart")}
       >
         <span className="cart-count fs-5">
-          {cartItems.length} item{cartItems.length > 1 ? "s" : ""}
+          {items.length} item{items.length > 1 ? "s" : ""}
         </span>
         <span className="cart-total fs-5">
           ${cartTotal.toFixed(2)}

@@ -1,69 +1,92 @@
-import React from "react";
+import { Link } from "react-router-dom";
 import { useCart } from "../../../context/CartContext";
 import "./CartItem.css";
 
-export default function CartItem({ item, detailed = false }) {
-  const { updateQuantity, removeFromCart } = useCart();
+export default function CartItem({ item }) {
+	const { updateQuantity, removeFromCart } = useCart();
 
-  if (!item.sku) return null;
+	const { partNumber, quantity, sku, lineTotal } = item;
+	const { attributes } = sku;
 
-  const { partNumber, quantity, sku, lineTotal } = item;
+	// --------------------------------------------------
+	// BUILD DETAIL LINES (clean + readable)
+	// --------------------------------------------------
+	const detailLines = [];
 
-  const handleQtyChange = (type) => {
-    const newQty =
-      type === "inc" ? quantity + 1 : quantity - 1;
+	if (attributes.diameter && attributes.length) {
+		detailLines.push(`${attributes.diameter} × ${attributes.length}`);
+	}
 
-    if (newQty > 0) {
-      updateQuantity(partNumber, newQty);
-    }
-  };
+	if (attributes.thread) {
+		detailLines.push(attributes.thread);
+	}
 
-  return (
-    <div className={`cart-item ${detailed ? "detailed" : ""}`}>
-      <div className="cart-item-info">
-        {/* TITLE */}
-        <h3 className="cart-item-title">
-          {partNumber}
-        </h3>
+	if (attributes.grade) {
+		detailLines.push(attributes.grade);
+	}
 
-        {/* ATTRIBUTES */}
-        <div className="cart-item-attributes">
-          {Object.entries(sku.attributes || {}).map(
-            ([key, value]) => (
-              <p key={key}>
-                <strong>
-                  {key.replace("_", " ")}:
-                </strong>{" "}
-                {value}
-              </p>
-            )
-          )}
-        </div>
+	if (attributes.finish) {
+		detailLines.push(attributes.finish);
+	}
 
-        {/* QUANTITY CONTROLS */}
-        <div className="cart-item-qty">
-          <button onClick={() => handleQtyChange("dec")}>
-            −
-          </button>
-          <span>{quantity}</span>
-          <button onClick={() => handleQtyChange("inc")}>
-            +
-          </button>
-        </div>
+	const handleQtyChange = (delta) => {
+		const newQty = quantity + delta;
+		if (newQty > 0) {
+			updateQuantity(partNumber, newQty);
+		}
+	};
 
-        {/* PRICE */}
-        <div className="cart-item-price">
-          ${lineTotal.toFixed(2)}
-        </div>
+	return (
+		<div className='item-detail-container p-3 rounded-3 m-0 row justify-content-between gap-3'>
+			{/* IMAGE */}
+				<div className='item-image-card col cart-col image rounded-3 overflow-hidden'>
+					<img src='' className='cart-image-placeholder item-image' />
+				</div>
+			<div className='item-detail-card col-11 cart-row row justify-content-center p-3 rounded-3 m-0'>
+				{/* NAME */}
+				<div className='cart-col name col'>
+					<Link
+						to={`/products/${sku.category}/${sku.subcategory}`}
+						className='cart-item-name'>
+						{sku.subcategory.replace(/-/g, " ").toUpperCase()}
+					</Link>
+				</div>
 
-        {/* REMOVE */}
-        <button
-          className="cart-item-remove"
-          onClick={() => removeFromCart(partNumber)}
-        >
-          Remove
-        </button>
-      </div>
-    </div>
-  );
+				{/* DETAIL */}
+				<div className='cart-col detail col'>
+					{detailLines.map((line, i) => (
+						<div key={i} className='cart-detail-line'>
+							{line}
+						</div>
+					))}
+				</div>
+
+				{/* PART NUMBER */}
+				<div className='cart-col part col'>{partNumber}</div>
+
+				{/* QTY */}
+				<div className='cart-col qty d-flex gap-2 col'>
+					<div className='qty-btn' onClick={() => handleQtyChange(-1)}>
+						−
+					</div>
+					<div className='mx-0'>{quantity}</div>
+					<div className='qty-btn' onClick={() => handleQtyChange(1)}>
+						+
+					</div>
+				</div>
+
+				{/* PRICE */}
+				<div className='cart-col price text-end col'>${lineTotal.toFixed(2)}</div>
+
+				{/* REMOVE */}
+				<div className='cart-col remove col'>
+					<div
+						className='remove-btn'
+						onClick={() => removeFromCart(partNumber)}>
+						×
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }

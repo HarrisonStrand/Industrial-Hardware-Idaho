@@ -1,12 +1,79 @@
 {
   "categories": [
     {
+      "id": "screws",
+      "name": "Screws",
+      "subcategories": [
+        {
+          "id": "machine-screws",
+          "name": "Machine Screws",
+          "image": "/images/subcategories/machine-screws.png",
+          "types": [
+            {
+              "id": "machine-screw-pan",
+              "name": "Pan Head",
+              "image": "/images/types/machine-screw-pan.png",
+              "prefix": "MSP",
+              "attributes": {
+                "diameter": ["#4", "#6", "#8", "#10", "#12"],
+                "length": ["1/4", "3/8", "1/2", "3/4", "1", "1 1/2", "2"],
+                "finish": ["Zinc Plated", "Black Oxide", "Stainless Steel"]
+              }
+            },
+            {
+              "id": "machine-screw-flat",
+              "name": "Flat Head",
+              "image": "/images/types/machine-screw-flat.png",
+              "prefix": "MSF",
+              "attributes": {
+                "diameter": ["#4", "#6", "#8", "#10"],
+                "length": ["1/4", "3/8", "1/2", "3/4", "1"],
+                "finish": ["Zinc Plated", "Stainless Steel"]
+              }
+            }
+          ]
+        },
+        {
+          "id": "sheet-metal-screws",
+          "name": "Sheet Metal Screws",
+          "image": "/images/subcategories/sheet-metal-screws.png",
+          "types": [
+            {
+              "id": "sheet-metal-pan",
+              "name": "Pan Head",
+              "image": "/images/types/sheet-metal-pan.png",
+              "prefix": "SMSP",
+              "attributes": {
+                "diameter": ["#6", "#8", "#10", "#12"],
+                "length": ["1/2", "3/4", "1", "1 1/2"],
+                "finish": ["Zinc Plated", "Stainless Steel"]
+              }
+            },
+            {
+              "id": "sheet-metal-hex",
+              "name": "Hex Washer Head",
+              "image": "/images/types/sheet-metal-hex.png",
+              "prefix": "SMSH",
+              "attributes": {
+                "diameter": ["#8", "#10", "#12"],
+                "length": ["1/2", "3/4", "1", "1 1/2"],
+                "finish": ["Zinc Plated", "Stainless Steel"]
+              }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
       "id": "bolts",
       "name": "Bolts",
       "subcategories": [
         {
           "id": "hex-cap-screws",
           "name": "Hex Cap Screws",
+          "group": "Bolts",
+          "image": "/images/subcategories/hex-cap-screws.png",
           "prefix": "CS",
           "attributes": {
             "diameter": ["1/4", "5/16", "3/8", "7/16", "1/2", "9/16", "5/8", "3/4"],
@@ -19,188 +86,13 @@
         {
           "id": "socket-head-cap-screws",
           "name": "Socket Head Cap Screws",
+          "group": "Bolts",
+          "image": "/images/subcategories/socket-head-cap-screws.png",
           "prefix": "SHCS",
           "attributes": {
             "diameter": ["1/4", "5/16", "3/8", "1/2"],
             "length": ["1", "1 1/2", "2", "3", "4"],
-            "grade": ["8", "5", "407"],
-            "thread": ["Coarse"],
             "finish": ["Plain", "Black Oxide"]
-          }
-        },
-        {
-          "id": "button-head-cap-screws",
-          "name": "Button Head Cap Screws",
-          "prefix": "BHCS",
-          "attributes": {
-            "diameter": ["1/4", "5/16", "3/8"],
-            "length": ["1", "1 1/2", "2", "2 1/2"],
-            "grade": ["8", "5", "407"],
-            "thread": ["Coarse"],
-            "finish": ["Plain", "Black Oxide", "Stainless Steel"]
-          }
-        },
-        {
-          "id": "flat-head-cap-screws",
-          "name": "Flat Head Cap Screws",
-          "prefix": "FHCS",
-          "attributes": {
-            "diameter": ["1/4", "5/16", "3/8"],
-            "length": ["1", "1 1/2", "2"],
-            "grade": ["8", "5", "407"],
-            "thread": ["Coarse"],
-            "finish": ["Plain", "Stainless Steel"]
-          }
-        }
-      ]
-    },
-
-    {
-      "id": "machine-screws",
-      "name": "Machine Screws",
-      "subcategories": [
-        {
-          "id": "machine-screw-pan",
-          "name": "Machine Screw Pan",
-          "prefix": "MSP",
-          "attributes": {
-            "diameter": ["#4", "#6", "#8", "#10", "#12"],
-            "length": ["1/4", "3/8", "1/2", "3/4", "1", "1 1/2", "2"],
-            "finish": ["Zinc Plated", "Black Oxide", "Stainless Steel"]
-          }
-        },
-        {
-          "id": "machine-screw-oval",
-          "name": "Machine Screw Oval",
-          "prefix": "MSO",
-          "attributes": {
-            "diameter": ["#4", "#6", "#8"],
-            "length": ["1/4", "3/8", "1/2", "3/4", "1"],
-            "finish": ["Zinc Plated", "Stainless Steel"]
-          }
-        },
-        {
-          "id": "machine-screw-truss",
-          "name": "Machine Screw Truss",
-          "prefix": "MST",
-          "attributes": {
-            "diameter": ["#6", "#8", "#10"],
-            "length": ["1/4", "3/8", "1/2", "3/4", "1", "1 1/2"],
-            "finish": ["Zinc Plated", "Stainless Steel"]
-          }
-        },
-        {
-          "id": "machine-screw-flat",
-          "name": "Machine Screw Flat",
-          "prefix": "MSF",
-          "attributes": {
-            "diameter": ["#4", "#6", "#8", "#10"],
-            "length": ["1/4", "3/8", "1/2", "3/4", "1"],
-            "finish": ["Zinc Plated", "Black Oxide", "Stainless Steel"]
-          }
-        }
-      ]
-    },
-
-    {
-      "id": "sheet-metal-screws",
-      "name": "Sheet Metal Screws",
-      "subcategories": [
-        {
-          "id": "sheet-metal-pan",
-          "name": "Sheet Metal Screw Pan",
-          "prefix": "SMSP",
-          "attributes": {
-            "diameter": ["#6", "#8", "#10", "#12", "#14"],
-            "length": ["1/2", "3/4", "1", "1 1/4", "1 1/2", "2"],
-            "finish": ["Zinc Plated", "Black Oxide", "Stainless Steel"]
-          }
-        },
-        {
-          "id": "sheet-metal-oval",
-          "name": "Sheet Metal Screw Oval",
-          "prefix": "SMSO",
-          "attributes": {
-            "diameter": ["#6", "#8", "#10"],
-            "length": ["1/2", "3/4", "1", "1 1/2"],
-            "finish": ["Zinc Plated", "Stainless Steel"]
-          }
-        },
-        {
-          "id": "sheet-metal-truss",
-          "name": "Sheet Metal Screw Truss",
-          "prefix": "SMST",
-          "attributes": {
-            "diameter": ["#6", "#8"],
-            "length": ["1/2", "3/4", "1", "1 1/2"],
-            "finish": ["Zinc Plated", "Stainless Steel"]
-          }
-        },
-        {
-          "id": "sheet-metal-flat",
-          "name": "Sheet Metal Screw Flat",
-          "prefix": "SMSF",
-          "attributes": {
-            "diameter": ["#6", "#8", "#10"],
-            "length": ["1/2", "3/4", "1"],
-            "finish": ["Zinc Plated", "Stainless Steel"]
-          }
-        },
-        {
-          "id": "sheet-metal-hex-washer-head",
-          "name": "Sheet Metal Screw Hex Washer Head",
-          "prefix": "SMSH",
-          "attributes": {
-            "diameter": ["#8", "#10", "#12"],
-            "length": ["1/2", "3/4", "1", "1 1/2"],
-            "finish": ["Zinc Plated", "Stainless Steel"]
-          }
-        }
-      ]
-    },
-
-    {
-      "id": "washers",
-      "name": "Washers",
-      "subcategories": [
-        {
-          "id": "flat-washers",
-          "name": "Flat Washers",
-          "prefix": "FW",
-          "attributes": {
-            "diameter": ["1/4", "5/16", "3/8", "1/2", "5/8"],
-            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
-            "grade": ["Low Carbon", "18-8", "316"]
-          }
-        },
-        {
-          "id": "lock-washers",
-          "name": "Lock Washers",
-          "prefix": "LW",
-          "attributes": {
-            "diameter": ["1/4", "5/16", "3/8", "1/2"],
-            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
-            "grade": ["Low Carbon", "18-8"]
-          }
-        },
-        {
-          "id": "split-washers",
-          "name": "Split Lock Washers",
-          "prefix": "SW",
-          "attributes": {
-            "diameter": ["1/4", "5/16", "3/8", "1/2"],
-            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
-            "grade": ["Low Carbon"]
-          }
-        },
-        {
-          "id": "fender-washers",
-          "name": "Fender Washers",
-          "prefix": "FEW",
-          "attributes": {
-            "diameter": ["1/4", "5/16", "3/8", "1/2"],
-            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
-            "grade": ["Low Carbon"]
           }
         }
       ]
@@ -213,6 +105,7 @@
         {
           "id": "hex-nuts",
           "name": "Hex Nuts",
+          "image": "/images/subcategories/hex-nuts.png",
           "prefix": "HN",
           "attributes": {
             "diameter": ["1/4", "5/16", "3/8", "1/2"],
@@ -224,6 +117,7 @@
         {
           "id": "lock-nuts",
           "name": "Lock Nuts",
+          "image": "/images/subcategories/lock-nuts.png",
           "prefix": "LN",
           "attributes": {
             "diameter": ["1/4", "5/16", "3/8"],
@@ -231,27 +125,32 @@
             "finish": ["Plain", "Zinc Plated"],
             "grade": ["Grade 2"]
           }
-        },
+        }
+      ]
+    },
+
+    {
+      "id": "washers",
+      "name": "Washers",
+      "subcategories": [
         {
-          "id": "jam-nuts",
-          "name": "Jam Nuts",
-          "prefix": "JN",
+          "id": "flat-washers",
+          "name": "Flat Washers",
+          "image": "/images/subcategories/flat-washers.png",
+          "prefix": "FW",
           "attributes": {
-            "diameter": ["1/4", "5/16", "3/8"],
-            "thread": ["Coarse"],
-            "finish": ["Plain", "Zinc Plated"],
-            "grade": ["Grade 2"]
+            "diameter": ["1/4", "5/16", "3/8", "1/2", "5/8"],
+            "finish": ["Plain", "Zinc Plated", "Stainless Steel"]
           }
         },
         {
-          "id": "cap-nuts",
-          "name": "Cap Nuts",
-          "prefix": "CN",
+          "id": "lock-washers",
+          "name": "Lock Washers",
+          "image": "/images/subcategories/lock-washers.png",
+          "prefix": "LW",
           "attributes": {
-            "diameter": ["1/4", "5/16", "3/8"],
-            "thread": ["Coarse"],
-            "finish": ["Plain", "Zinc Plated", "Stainless Steel"],
-            "grade": ["18-8"]
+            "diameter": ["1/4", "5/16", "3/8", "1/2"],
+            "finish": ["Plain", "Zinc Plated", "Stainless Steel"]
           }
         }
       ]
