@@ -1,0 +1,78 @@
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.contact-section-container {
+  background: rgb(from var(--accent-light) r g b / .25);
+  border: 1px solid rgb(from var(--accent-light) r g b / .35);
+	box-shadow: 3px 6px 6px 0px rgba(0, 0, 0, 0.25);
+}
+
+.contact-detail-container {
+  background: rgb(from var(--main-color) r g b / 0.15);
+  border: 1px solid rgb(from var(--main-color) r g b / 0.15);
+	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+.contact-banner-container {
+	width: 85%;
+}
+
+@media (max-width: 1200px) {
+	.contact-banner-container {
+		width: 70%;
+	}
+}
+
+.contact-banner-title {
+	font-size: 1.6rem;
+}
+
+@media (max-width: 800px) {
+	.contact-banner-title {
+		font-size: 1.3rem;
+	}
+}
+
+.contact-banner-card {
+	background: rgb(from var(--main-color) r g b / 0.25);
+}
+
+.contact-banner-left,
+.contact-banner-right {
+	font-size: 1.6rem;
+}
+
+@media (max-width: 1731px) {
+	.contact-banner-left,
+	.contact-banner-right {
+		font-size: 1.3rem;
+	}
+}
+
+@media (max-width: 1491px) {
+	.contact-banner-left,
+	.contact-banner-right {
+		font-size: 1.2rem;
+	}
+}
+
+
+@media (max-width: 400px) {
+	.contact-banner-container {
+		width: 85%;
+	}
+	.contact-banner-left,
+	.contact-banner-right {
+		font-size: 1.1rem;
+	}
+}
+
+.map-container {
+  height: 450px;
+}

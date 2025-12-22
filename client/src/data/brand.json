@@ -26,6 +26,16 @@
 		"email": "admin@ihidaho.com",
 		"phone": "208-375-5534",
 		"address": "115 E 48th St, Boise ID 83714",
-		"hours": "Monday-Friday 730am - 5pm"
+		"hours": "Monday-Friday 730am - 5pm",
+		"aboutSec1Copy": [
+			"Industrial Hardware Idaho has been proudly serving Idaho's construction, industrial, and contracting communities since 1996. For nearly three decades, we've built our reputation on supplying dependable, high-quality fasteners and specialty hardware that professionals can trust on every job.",
+			"We specialize in industrial-grade bolts, screws, nuts, washers, and structural hardware — including hardened, structural, and stainless options that go far beyond what you'll find at a typical hardware store. Whether you're sourcing everyday fasteners or hard-to-find specialty parts, our inventory is curated to meet the demands of real-world projects.",
+			"As a locally owned and operated business, we believe strong relationships matter just as much as strong materials. Our team takes the time to understand each customer's needs, from preferred product specs to delivery timelines, ensuring every order is accurate, reliable, and on time. Many of our customers have worked with us for years — a trust we don't take lightly.",
+			"At Industrial Hardware Idaho, we're more than a supplier. We're a partner in your work, committed to helping projects move forward efficiently, safely, and successfully."
+		],
+		"contactSec1Copy": [
+			"Have a question about a product, need help sourcing specialty hardware, or looking to set up an account? Our team is here to help.",
+			"Reach out using the form below, give us a call, or stop by our location — we look forward to working with you."
+		]
 	}
 }

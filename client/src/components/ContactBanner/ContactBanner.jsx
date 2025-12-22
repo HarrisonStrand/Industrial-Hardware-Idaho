@@ -1,4 +1,5 @@
 import { useContext } from "react";
+import { Link } from "react-router-dom";
 import { BrandContext } from "../../context/BrandContext";
 import { VariableContext } from "../../context/VariableContext";
 import "./ContactBanner.css";
@@ -14,12 +15,12 @@ export default function ContactBanner() {
 					{variables.contactBannerTitle}
 				</div>
 				<div className="contact-banner-card row align-items-center justify-content-evenly rounded-4 border border-3 border-main py-2 py-xl-3 px-xl-3 fw-semibold">
-					<div className="col-12 col-xl-6 align-items-center contact-banner-left text-main text-uppercase text-center text-xl-end py-1 py-xl-0 px-lg-0 px-xl-5">
+					<Link to={`tel:${brand.phone}`} className="text-decoration-none col-12 col-xl-6 align-items-center contact-banner-left text-main text-uppercase text-center text-xl-end py-1 py-xl-0 px-lg-0 px-xl-5">
 						{variables.contactBannerLeft} <i className="px-1 bi bi-telephone"/> {brand.phone}
-					</div>
-					<div className="col-12 col-xl-6 align-items-center contact-banner-right text-main text-uppercase text-center text-xl-start py-1 py-xl-0 px-lg-0 px-xl-5">
+					</Link>
+					<Link to={`mailto:${brand.email}`} className="text-decoration-none col-12 col-xl-6 align-items-center contact-banner-right text-main text-uppercase text-center text-xl-start py-1 py-xl-0 px-lg-0 px-xl-5">
 						{variables.contactBannerRight} <i className="px-1 bi bi-envelope-open"/> {brand.email}
-					</div>
+					</Link>
 				</div>
 			</div>
 	);

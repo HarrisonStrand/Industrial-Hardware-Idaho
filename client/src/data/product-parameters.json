@@ -94,6 +94,18 @@
             "length": ["1", "1 1/2", "2", "3", "4"],
             "finish": ["Plain", "Black Oxide"]
           }
+        },
+        {
+          "id": "flat-head-cap-screws",
+          "name": "Flat Head Cap Screws",
+          "group": "Bolts",
+          "image": "/images/subcategories/flat-head-cap-screws.png",
+          "prefix": "FHCS",
+          "attributes": {
+            "diameter": ["1/4", "5/16", "3/8", "1/2"],
+            "length": ["1", "1 1/2", "2", "3", "4"],
+            "finish": ["Plain", "Black Oxide"]
+          }
         }
       ]
     },
