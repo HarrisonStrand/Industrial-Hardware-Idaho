@@ -1,3 +1,7 @@
+* {
+  letter-spacing: 1px;
+}
+
 .fade-in {
   animation: fadeIn 0.3s ease-out;
 }
@@ -16,6 +20,11 @@
 .contact-detail-container {
   background: rgb(from var(--main-color) r g b / 0.15);
   border: 1px solid rgb(from var(--main-color) r g b / 0.15);
+	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+.contact-link-box {
+  background: rgb(from var(--main-light) r g b / 0.65);
 	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
@@ -73,6 +82,35 @@
 	}
 }
 
+.contact-link {
+	transition:
+		color 0.25s ease,
+		transform 0.25s ease,
+		opacity 0.25s ease;
+}
+
+.contact-link:hover {
+	color: var(--alt-color) !important;
+	transform: translateY(-1px);
+	opacity: 0.9;
+}
+
 .map-container {
   height: 450px;
+}
+
+.address-text {
+  letter-spacing: 1px;
+  font-size: 1.3rem;
+}
+
+@media (min-width: 580px) and (max-width: 851px) {
+  .address-text {
+    font-size: 1rem;
+  }
+}
+
+.map-embed {
+  border: 3px solid rgb(from var(--main-color) r g b / 0.15);
+  box-shadow: 3px 4px 8px 0px rgba(0, 0, 0, 0.35);
 }
