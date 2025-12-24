@@ -33,9 +33,31 @@
 			"As a locally owned and operated business, we believe strong relationships matter just as much as strong materials. Our team takes the time to understand each customer's needs, from preferred product specs to delivery timelines, ensuring every order is accurate, reliable, and on time. Many of our customers have worked with us for years — a trust we don't take lightly.",
 			"At Industrial Hardware Idaho, we're more than a supplier. We're a partner in your work, committed to helping projects move forward efficiently, safely, and successfully."
 		],
+		"teamPhoto1": "/images/photos/placeholder.png",
+		"teamPhoto2": "/images/photos/placeholder.png",
+		"teamPhoto3": "/images/photos/placeholder.png",
 		"contactSec1Copy": [
-			"Have a question about a product, need help sourcing specialty hardware, or looking to set up an account? Our team is here to help.",
-			"Reach out using the form below, give us a call, or stop by our location — we look forward to working with you."
+			"Have a question about a product, sourcing specialty hardware, or setting up an account? Our team is here to help.",
+			"Give us a call or reach out to us with the form below — we look forward to working with you."
+		],
+		"careerSections": [
+			{
+				"title": "",
+				"copy": [
+					"We believe great work environments are built on respect, trust, and consistency. Our team members play a critical role in keeping projects across Idaho moving forward — and we take that responsibility seriously.",
+					"We take pride in doing things right the first time. From warehouse to counter sales, teamwork matters.",
+					"We are always interested in meeting motivated individuals.",
+					"Experience in hardware or construction is a plus, but not required."
+				]
+			},
+			{
+				"title": "",
+				"copy": [""]
+			},
+			{
+				"title": "",
+				"copy": [""]
+			}
 		]
 	}
 }

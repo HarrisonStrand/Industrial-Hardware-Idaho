@@ -8,28 +8,13 @@ export default function About() {
 
 	const cards = [
 		{
-			img: brand.dualCard1Img,
-			text: brand.dualCard1Text,
-			cta: brand.dualCard1CTA,
-			link: "/contact",
-			textAlign: "text-center text-lg-start",
-			imgOrder: "",
+			img: brand.teamPhoto1,
 		},
 		{
-			img: brand.dualCard2Img,
-			text: brand.dualCard2Text,
-			cta: brand.dualCard2CTA,
-			link: "/products",
-			textAlign: "text-center text-lg-start",
-			imgOrder: "",
+			img: brand.teamPhoto2,
 		},
 		{
-			img: brand.dualCard2Img,
-			text: brand.dualCard2Text,
-			cta: brand.dualCard2CTA,
-			link: "/products",
-			textAlign: "text-center text-lg-start",
-			imgOrder: "",
+			img: brand.teamPhoto3,
 		},
 	];
 

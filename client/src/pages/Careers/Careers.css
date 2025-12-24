@@ -11,106 +11,86 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.location-section-container {
+.career-section-container {
   background: rgb(from var(--accent-light) r g b / .25);
   border: 1px solid rgb(from var(--accent-light) r g b / .35);
 	box-shadow: 3px 6px 6px 0px rgba(0, 0, 0, 0.25);
 }
 
-.location-detail-container {
+.career-detail-container {
   background: rgb(from var(--main-color) r g b / 0.15);
   border: 1px solid rgb(from var(--main-color) r g b / 0.15);
 	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
-.location-link-box {
-  background: rgb(from var(--main-light) r g b / 0.65);
+.career-link-box {
+  background: rgb(from var(--main-light) r g b / 0.25);
 	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
-.location-banner-container {
+.career-banner-container {
 	width: 85%;
 }
 
 @media (max-width: 1200px) {
-	.location-banner-container {
+	.career-banner-container {
 		width: 70%;
 	}
 }
 
-.location-banner-title {
+.career-banner-title {
 	font-size: 1.6rem;
 }
 
 @media (max-width: 800px) {
-	.location-banner-title {
+	.career-banner-title {
 		font-size: 1.3rem;
 	}
 }
 
-.location-banner-card {
+.career-banner-card {
 	background: rgb(from var(--main-color) r g b / 0.25);
 }
 
-.location-banner-left,
-.location-banner-right {
+.career-banner-left,
+.career-banner-right {
 	font-size: 1.6rem;
 }
 
 @media (max-width: 1731px) {
-	.location-banner-left,
-	.location-banner-right {
+	.career-banner-left,
+	.career-banner-right {
 		font-size: 1.3rem;
 	}
 }
 
 @media (max-width: 1491px) {
-	.location-banner-left,
-	.location-banner-right {
+	.career-banner-left,
+	.career-banner-right {
 		font-size: 1.2rem;
 	}
 }
 
 
 @media (max-width: 400px) {
-	.location-banner-container {
+	.career-banner-container {
 		width: 85%;
 	}
-	.location-banner-left,
-	.location-banner-right {
+	.career-banner-left,
+	.career-banner-right {
 		font-size: 1.1rem;
 	}
 }
 
-.location-link {
+.career-link {
 	transition:
 		color 0.25s ease,
 		transform 0.25s ease,
 		opacity 0.25s ease;
 }
 
-.location-link:hover {
+.career-link:hover {
 	color: var(--alt-color) !important;
 	transform: translateY(-1px);
 	opacity: 0.9;
-}
-
-.map-container {
-  height: 450px;
-}
-
-.address-text {
-  letter-spacing: 1px;
-  font-size: 1.3rem;
-}
-
-@media (min-width: 580px) and (max-width: 851px) {
-  .address-text {
-    font-size: 1rem;
-  }
-}
-
-.map-embed {
-  border: 3px solid rgb(from var(--main-color) r g b / 0.15);
-  box-shadow: 3px 4px 8px 0px rgba(0, 0, 0, 0.35);
 }

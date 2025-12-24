@@ -8,6 +8,12 @@
 transition: var(--transition-base);
 }
 
+input:focus {
+	
+	border-color: rgb(from var(--main-color) r g b / 0.25) !important;
+	box-shadow: 0 0 4px 4px rgb(from var(--main-color) r g b / 0.35) !important;
+}
+
 body {
 	opacity: 0;
 	transition: opacity 0.6s ease-in-out;

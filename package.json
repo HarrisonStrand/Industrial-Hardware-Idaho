@@ -12,6 +12,7 @@
     "prettier": "3.6.2"
   },
   "dependencies": {
-    "framer-motion": "^12.23.24"
+    "framer-motion": "^12.23.24",
+    "nodemailer": "^7.0.12"
   }
 }
