@@ -26,48 +26,67 @@ export default function ContactForm() {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess(false);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+  setSuccess(false);
 
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to send message");
-      }
-
-      setSuccess(true);
-      setFormData({
-        contactName: "",
-        companyName: "",
-        phone: "",
-        email: "",
-        subject: "",
-        message: "",
-        date: today
-      });
-    } catch (err) {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+  const payload = {
+    name: formData.contactName,
+    company: formData.companyName,
+    phone: formData.phone,
+    email: formData.email,
+    subject: formData.subject,
+    message: formData.message,
+    date: formData.date
   };
+
+  try {
+const res = await fetch("/api/contact", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  credentials: "include",
+  body: JSON.stringify(payload)
+});
+
+
+    if (!res.ok) {
+      // SAFELY handle non-JSON responses
+      const text = await res.text();
+      throw new Error(text || "Failed to send message");
+    }
+
+    setSuccess(true);
+    setFormData({
+      contactName: "",
+      companyName: "",
+      phone: "",
+      email: "",
+      subject: "",
+      message: "",
+      date: today
+    });
+
+  } catch (err) {
+    setError(err.message || "Something went wrong. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <form className="contact-form g-0 py-3" onSubmit={handleSubmit}>
       <div className="row g-3">
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">Contact Name</label>
+          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+            Contact Name
+          </label>
           <input
             type="text"
             name="contactName"
@@ -79,7 +98,9 @@ export default function ContactForm() {
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">Company Name</label>
+          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+            Company Name
+          </label>
           <input
             type="text"
             name="companyName"
@@ -90,7 +111,9 @@ export default function ContactForm() {
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">Phone Number</label>
+          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+            Phone Number
+          </label>
           <input
             type="tel"
             name="phone"
@@ -102,7 +125,9 @@ export default function ContactForm() {
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">Email</label>
+          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+            Email
+          </label>
           <input
             type="email"
             name="email"
@@ -114,7 +139,9 @@ export default function ContactForm() {
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">Date</label>
+          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+            Date
+          </label>
           <input
             type="date"
             name="date"
@@ -125,7 +152,9 @@ export default function ContactForm() {
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">Subject</label>
+          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+            Subject
+          </label>
           <input
             type="text"
             name="subject"
@@ -137,7 +166,9 @@ export default function ContactForm() {
         </div>
 
         <div className="col-12">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">Message</label>
+          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+            Message
+          </label>
           <textarea
             name="message"
             rows="6"
