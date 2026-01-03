@@ -7,14 +7,12 @@
 
 .cart-qty-badge {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  background: #c00;
-  color: white;
+  top: -20px;
+  right: -20px;
   border-radius: 50%;
-  font-size: 11px;
-  width: 18px;
-  height: 18px;
+  font-size: .9rem;
+  width: 25px;
+  height: 25px;
   display: flex;
   align-items: center;
   justify-content: center;

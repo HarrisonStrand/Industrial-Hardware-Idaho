@@ -9,10 +9,12 @@
 
 .product-detail-container {
   background: rgb(from var(--main-color) r g b / 0.25);
+	box-shadow: 3px 6px 6px 0px rgba(0, 0, 0, 0.25);
 }
 
 .product-description-card {
   background: rgb(from var(--main-light) r g b / 0.45);
+	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.15);
 }
 
 .product-image-card {
@@ -34,27 +36,6 @@
   transform: scale(1.03);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.15);
 }
-
-.option-select {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.option-select:focus {
-  border-color: var(--main-color);
-  box-shadow: 0 0 0 0.2rem rgba(var(main-color));
-}
-
-/* .btn-main {
-  background: var(--main-color);
-  color: white;
-  transition: background 0.3s ease, transform 0.2s ease;
-}
-
-.btn-main:hover {
-  background: var(--alt-color);
-  transform: translateY(-2px);
-} */
-
 
 
 

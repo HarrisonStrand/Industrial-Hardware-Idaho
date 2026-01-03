@@ -84,13 +84,13 @@ const res = await fetch("/api/contact", {
       <div className="row g-3">
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+          <label className="form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
             Contact Name
           </label>
           <input
             type="text"
             name="contactName"
-            className="contact-input form-control rounded-3 text-dark"
+            className="form-input form-control rounded-3 text-dark"
             required
             value={formData.contactName}
             onChange={handleChange}
@@ -98,26 +98,26 @@ const res = await fetch("/api/contact", {
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+          <label className="form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
             Company Name
           </label>
           <input
             type="text"
             name="companyName"
-            className="contact-input form-control rounded-3 text-dark"
+            className="form-input form-control rounded-3 text-dark"
             value={formData.companyName}
             onChange={handleChange}
           />
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+          <label className="form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
             Phone Number
           </label>
           <input
             type="tel"
             name="phone"
-            className="contact-input form-control rounded-3 text-dark"
+            className="form-input form-control rounded-3 text-dark"
             required
             value={formData.phone}
             onChange={handleChange}
@@ -125,13 +125,13 @@ const res = await fetch("/api/contact", {
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+          <label className="form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
             Email
           </label>
           <input
             type="email"
             name="email"
-            className="contact-input form-control rounded-3 text-dark"
+            className="form-input form-control rounded-3 text-dark"
             required
             value={formData.email}
             onChange={handleChange}
@@ -139,26 +139,26 @@ const res = await fetch("/api/contact", {
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+          <label className="form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
             Date
           </label>
           <input
             type="date"
             name="date"
-            className="contact-input form-control rounded-3 text-dark"
+            className="form-input form-control rounded-3 text-dark"
             value={formData.date}
             disabled
           />
         </div>
 
         <div className="col-12 col-md-6">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+          <label className="form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
             Subject
           </label>
           <input
             type="text"
             name="subject"
-            className="contact-input form-control rounded-3 text-dark"
+            className="form-input form-control rounded-3 text-dark"
             required
             value={formData.subject}
             onChange={handleChange}
@@ -166,13 +166,13 @@ const res = await fetch("/api/contact", {
         </div>
 
         <div className="col-12">
-          <label className="contact-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
+          <label className="form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
             Message
           </label>
           <textarea
             name="message"
             rows="6"
-            className="contact-input form-control rounded-3 text-dark"
+            className="form-input form-control rounded-3 text-dark"
             required
             value={formData.message}
             onChange={handleChange}

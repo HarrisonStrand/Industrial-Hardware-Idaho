@@ -1,29 +1,3 @@
-.contact-input-label {
-	letter-spacing: 1px;
-	text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-}
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: var(--alt-color);
-	transition: background-color 5000s ease-in-out 0s;
-	background-color: var(--main-light) !important;
-	background: var(--main-light);
-	border: 1px solid rgba(0, 0, 0, 0.2) !important;
-	letter-spacing: 1px !important;
-	box-shadow: inset 2px 2px 3px 1px rgba(0, 0, 0, 0.45) !important;
-}
-
-.contact-input {
-	background-color: var(--main-light) !important;
-	border: 1px solid rgba(0, 0, 0, 0.2) !important;
-	letter-spacing: 1px !important;
-	-webkit-text-fill-color: var(--alt-color) !important;
-	box-shadow: inset 2px 2px 3px 1px rgba(0, 0, 0, 0.45) !important;
-}
-
 /* CTA Button */
 .btn-main-cta {
 	cursor: pointer !important;

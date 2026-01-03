@@ -40,23 +40,22 @@
 			"Have a question about a product, sourcing specialty hardware, or setting up an account? Our team is here to help.",
 			"Give us a call or reach out to us with the form below — we look forward to working with you."
 		],
+		"locationSec1Copy": [
+			"We're located in the heart of Garden City, just one block north of Chinden Boulevard on 48th Street.",
+			"Use the map below for turn-by-turn directions."
+		],
 		"careerSections": [
 			{
-				"title": "",
+				"title": "Interested in joining our team?",
 				"copy": [
-					"We believe great work environments are built on respect, trust, and consistency. Our team members play a critical role in keeping projects across Idaho moving forward — and we take that responsibility seriously.",
-					"We take pride in doing things right the first time. From warehouse to counter sales, teamwork matters.",
-					"We are always interested in meeting motivated individuals.",
-					"Experience in hardware or construction is a plus, but not required."
+					"We're always interested in meeting motivated, dependable individuals who take pride in their work. Experience in hardware, construction, or related fields is a plus, but not required—training is provided for the right candidates."
 				]
 			},
 			{
 				"title": "",
-				"copy": [""]
-			},
-			{
-				"title": "",
-				"copy": [""]
+				"copy": [
+					"Please stop by our location and drop off your résumé in person during regular business hours. We look forward to meeting you."
+				]
 			}
 		]
 	}

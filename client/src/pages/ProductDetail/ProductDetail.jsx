@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import categoriesData from "../../data/product-parameters.json";
 import skuData from "../../data/product-skus.json";
@@ -8,6 +8,8 @@ import "./ProductDetail.css";
 export default function ProductDetail() {
 	const { categoryId, subcategoryId } = useParams();
 	const { addToCart, openCart } = useCart();
+	const navigate = useNavigate();
+
 
 	const [subcategory, setSubcategory] = useState(null);
 
@@ -110,7 +112,7 @@ export default function ProductDetail() {
 
 		addToCart(matchingSku.partNumber, Number(selected.quantity || 1));
 
-		openCart(); // 👈 THIS triggers App drawer
+		navigate("/cart");
 	};
 
 	// --------------------------------------------------
@@ -184,7 +186,7 @@ export default function ProductDetail() {
 										</label>
 
 										<select
-											className='form-select option-select'
+											className='form-select form-control rounded-3 text-secondary option-select form-input'
 											value={selected[key]}
 											onChange={(e) => handleChange(key, e.target.value)}>
 											<option value=''>Select {label}</option>
@@ -211,7 +213,7 @@ export default function ProductDetail() {
 							<input
 								type='number'
 								min='1'
-								className='form-control option-select'
+								className='form-control rounded-3 text-secondary option-select form-input'
 								value={selected.quantity}
 								onChange={(e) => handleChange("quantity", e.target.value)}
 								placeholder='Enter quantity'
@@ -223,9 +225,9 @@ export default function ProductDetail() {
 				<div className='main-linebreak border-0 border-top border-main py-2 w-75 mx-auto' />
 
 				<div className='row bottom-price-row'>
-					<div className='col-4' />
+					<div className='col-12 col-md-4' />
 
-					<div className='col-4 text-center'>
+					<div className='col-12 col-md-4 text-center'>
 						<button
 							className='btn-main-cta justify-content-center text-center rounded-4 text-uppercase fw-regular fs-4 py-4 text-main-light'
 							onClick={handleAddToCart}
@@ -234,14 +236,14 @@ export default function ProductDetail() {
 						</button>
 					</div>
 
-					<div className='col-4 price-container text-end fs-1 text-main font-secondary'>
+					<div className='col-12 col-md-4 price-container text-end fs-1 text-main font-secondary pt-3 pt-md-0'>
 						{matchingSku && selected.quantity
 							? `$${(matchingSku.price * Number(selected.quantity)).toFixed(2)}`
 							: "$0.00"}
 						<div className='fs-6 text-muted'>
-					{matchingSku && selected.quantity 
-					? `$${matchingSku.price.toFixed(2)} each`
-					: "$0.00"}
+							{matchingSku && selected.quantity
+								? `$${matchingSku.price.toFixed(2)} each`
+								: "$0.00"}
 						</div>
 					</div>
 				</div>
