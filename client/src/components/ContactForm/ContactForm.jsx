@@ -85,7 +85,7 @@ const res = await fetch("/api/contact", {
 
         <div className="col-12 col-md-6">
           <label className="form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0">
-            Contact Name
+            Contact Name / Title
           </label>
           <input
             type="text"

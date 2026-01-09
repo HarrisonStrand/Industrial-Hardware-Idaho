@@ -1,41 +1,86 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import API from "../services/api.js";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  async function fetchMe() {
+    try {
+      const res = await fetch("/api/auth/me", { credentials: "include" });
+      if (!res.ok) {
+        setUser(null);
+        return;
+      }
+      const data = await res.json();
+      setUser(data.user || null);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoadingAuth(false);
+    }
+  }
 
   useEffect(() => {
-    const saved = localStorage.getItem("user");
-    if (saved) setUser(JSON.parse(saved));
+    fetchMe();
   }, []);
 
-  const login = async (email, password) => {
-    const { data } = await API.post("/auth/login", { email, password });
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    setUser(data.user);
-  };
+  async function login(email, password) {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password })
+    });
 
-  const register = async (payload) => {
-    const { data } = await API.post("/auth/register", payload);
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    setUser(data.user);
-  };
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || "Login failed");
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    setUser(data.user);
+    return data.user;
+  }
+
+  async function register(payload) {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || "Registration failed");
+
+    setUser(data.user);
+    return data.user;
+  }
+
+  async function logout() {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include"
+    }).catch(() => {});
     setUser(null);
-  };
+  }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAdmin: user?.role === "admin",
+        loadingAuth,
+        login,
+        register,
+        logout,
+        refreshUser: fetchMe
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  return useContext(AuthContext);
+}

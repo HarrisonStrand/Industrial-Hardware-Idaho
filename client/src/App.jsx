@@ -11,6 +11,7 @@ import About from "./pages/About/About.jsx";
 import Contact from "./pages/Contact/Contact.jsx";
 import Location from "./pages/Location/Location.jsx";
 import Orders from "./pages/Orders/Orders.jsx";
+import Careers from "./pages/Careers/Careers.jsx";
 import Login from "./pages/Login/Login.jsx";
 import Register from "./pages/Register/Register.jsx";
 import Shipping from "./pages/Shipping/Shipping.jsx";
@@ -70,11 +71,12 @@ export default function App() {
           >
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={<Home />} />
+              <Route path="/location" element={<Location />} />
               <Route path="/about" element={<About />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/careers" element={<Careers />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/shipping" element={<Shipping />} />
-              <Route path="/location" element={<Location />} />
-              <Route path="/orders" element={<Orders />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/products/" element={<ProductList />} />

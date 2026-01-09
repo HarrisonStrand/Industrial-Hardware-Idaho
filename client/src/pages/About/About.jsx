@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { BrandContext } from "../../context/BrandContext";
 import "./About.css";
-import ContactBanner from '../../components/ContactBanner/ContactBanner';
+import ContactBanner from "../../components/ContactBanner/ContactBanner";
 
 export default function About() {
 	const brand = useContext(BrandContext);
@@ -38,6 +38,7 @@ export default function About() {
 					</div>
 				</div>
 			</div>
+
 			<div className='team-photo-container container-fluid px-3 px-sm-5 py-4 py-md-5'>
 				<div className='about-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 					<div className='text-main text-uppercase mb-1 fs-2 px-0 ps-4'>
@@ -46,7 +47,9 @@ export default function About() {
 					<div className='about-detail-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 						<div className='row m-0 gap-5 justify-content-center'>
 							{cards.map((card, i) => (
-								<div className={`col-12 col-sm p-0 ${card.imgOrder}`}>
+								<div
+									key={card.img || i}
+									className={`col-12 col-sm p-0 ${card.imgOrder}`}>
 									<img
 										src={card.img}
 										alt=''
@@ -58,6 +61,7 @@ export default function About() {
 					</div>
 				</div>
 			</div>
+
 			<ContactBanner />
 		</>
 	);

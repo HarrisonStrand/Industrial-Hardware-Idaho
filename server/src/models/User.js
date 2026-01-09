@@ -1,12 +1,32 @@
 import mongoose from "mongoose";
 
-const userSchema = new mongoose.Schema({
-  name: { type: String },
-  email: { type: String, required: true, unique: true, lowercase: true, index: true },
-  passwordHash: { type: String, required: true },
-  role: { type: String, enum: ["admin", "staff", "customer"], default: "customer" },
-  company: { type: String },
-  createdAt: { type: Date, default: Date.now }
-});
+const CompanySchema = new mongoose.Schema(
+  {
+    companyName: { type: String, trim: true },
+    phone: { type: String, trim: true },
+    address1: { type: String, trim: true },
+    address2: { type: String, trim: true },
+    city: { type: String, trim: true },
+    state: { type: String, trim: true },
+    zip: { type: String, trim: true },
+    taxExempt: { type: Boolean, default: false },
+    notes: { type: String, trim: true }
+  },
+  { _id: false }
+);
 
-export default mongoose.model("User", userSchema);
+const UserSchema = new mongoose.Schema(
+  {
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+    passwordHash: { type: String, required: true },
+    firstName: { type: String, required: true, trim: true },
+    lastName: { type: String, required: true, trim: true },
+
+    role: { type: String, enum: ["user", "admin"], default: "user" },
+
+    company: { type: CompanySchema, default: {} }
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model("User", UserSchema);
