@@ -110,8 +110,17 @@
 	opacity: 0.9;
 }
 
+.display-name {
+	text-shadow: 1px 2px 0.5px rgba(0, 0, 0, 0.35);
+	letter-spacing: 1px !important;
+	position: relative;
+	/* right: 10%; */
+}
+
 .account-thumb {
-	background: var(--account-thumb) no-repeat center / contain;
+	/* background: var(--account-thumb) no-repeat center / contain; */
+	color: transparent !important;
+	border: none;
 	width: 50px;
 	height: 50px;
 }

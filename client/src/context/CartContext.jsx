@@ -3,7 +3,7 @@ import skuData from "../data/product-skus.json";
 
 const CartContext = createContext();
 
-export function CartProvider({ children }) {
+export function CartProvider({ children, openCart }) {
   const [items, setItems] = useState([]);
 
   const addToCart = (partNumber, quantity = 1) => {
@@ -68,7 +68,7 @@ export function CartProvider({ children }) {
     );
   }, [detailedItems]);
 
-  // ✅ total quantity (optional, keep if you want it elsewhere)
+  // ✅ total quantity across all lines
   const cartCount = useMemo(() => {
     return detailedItems.reduce(
       (sum, item) => sum + Number(item.quantity || 0),
@@ -81,6 +81,11 @@ export function CartProvider({ children }) {
     return detailedItems.length;
   }, [detailedItems]);
 
+  // ✅ safe openCart function (won't crash if not provided)
+  const openCartSafe = () => {
+    if (typeof openCart === "function") openCart();
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -91,7 +96,8 @@ export function CartProvider({ children }) {
         clearCart,
         cartTotal,
         cartCount,
-        cartItemCount
+        cartItemCount,
+        openCart: openCartSafe
       }}
     >
       {children}

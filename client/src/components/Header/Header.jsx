@@ -2,12 +2,21 @@ import { useEffect, useState, useContext } from "react";
 import { ThemeContext } from "../../context/ThemeContext.jsx";
 import { BrandContext } from "../../context/BrandContext";
 import { SearchContext } from "../../context/SearchContext.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import ShopNowItems from "../../data/shop-now-items.json";
 import "./Header.css";
 import CartIcon from "../Cart/CartIcon/CartIcon.jsx";
 
 export default function Header({ onCartOpen }) {
+	const { user } = useAuth();
+	const companyName = user?.company?.name || user?.company?.companyName || "";
+	const displayName =
+		companyName ||
+		[user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+		user?.email;
+	const avatarSrc = user?.avatarUrl || "/img/avatar-placeholder.png";
+
 	const brand = useContext(BrandContext);
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -295,10 +304,13 @@ export default function Header({ onCartOpen }) {
 					</div>
 
 					<div className='col col-lg-2 align-items-center d-flex justify-content-end mx-sm-0 pe-0 pe-sm-2'>
+						<label className='text-center display-name d-none d-lg-inline fw-semibold text-main-light'>
+							{displayName}
+						</label>
 						<Link
-							className='account-link rounded-circle mx-sm-4 mx-3'
-							to='/register'>
-							<div className='account-thumb rounded-circle' />
+							className='account-link rounded-circle mx-sm-4 mx-3 text-decoration-none'
+							to='/login'>
+							<img src={avatarSrc} className='account-thumb rounded-circle' />
 						</Link>
 						<CartIcon
 							onClick={() => {

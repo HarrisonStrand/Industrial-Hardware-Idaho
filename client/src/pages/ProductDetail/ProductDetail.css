@@ -71,3 +71,35 @@
 	box-sizing: border-box;
 	border-right: none;
 }
+
+.btn-secondary-cta {
+	cursor: pointer !important;
+	background: linear-gradient(
+		148deg,
+		rgba(from var(--main-light) r g b / 0.3) 0%,
+		rgba(from var(--main-light) r g b / 0.8) 100%
+	);
+	border: 3px solid rgba(from var(--main-color) r g b / 0.8) inset !important;
+	border-right: solid 1px rgba(0, 0, 0, 0.45) !important;
+	letter-spacing: 1px;
+	line-height: 28px !important;
+	box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.4);
+	text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  max-width: 250px;
+	transition: all 0.3s ease;
+}
+
+.btn-secondary-cta:hover {
+	filter: brightness(0.9);
+	box-shadow: inset 1px 1px 2px 1px rgba(0, 0, 0, 0.5);
+	/* box-shadow: none; */
+	box-sizing: border-box;
+	border-right: none;
+}
+
+.btn-secondary-cta:active {
+	filter: brightness(0.9);
+	box-shadow: inset 3px 3px 4px 1px rgba(0, 0, 0, 0.5);
+	box-sizing: border-box;
+	border-right: none;
+}

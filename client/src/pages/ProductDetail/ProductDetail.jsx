@@ -3,13 +3,14 @@ import { useState, useEffect, useMemo } from "react";
 import categoriesData from "../../data/product-parameters.json";
 import skuData from "../../data/product-skus.json";
 import { useCart } from "../../context/CartContext";
+import { useToast } from "../../context/ToastContext.jsx";
 import "./ProductDetail.css";
 
 export default function ProductDetail() {
 	const { categoryId, subcategoryId } = useParams();
-	const { addToCart, openCart } = useCart();
+	const { addToCart, cartItemCount } = useCart();
+	const { showToast } = useToast();
 	const navigate = useNavigate();
-
 
 	const [subcategory, setSubcategory] = useState(null);
 
@@ -110,9 +111,16 @@ export default function ProductDetail() {
 			return;
 		}
 
-		addToCart(matchingSku.partNumber, Number(selected.quantity || 1));
+		const qty = Number(selected.quantity || 1);
+		addToCart(matchingSku.partNumber, qty);
 
-		navigate("/cart");
+		showToast({
+			message: qty > 1 ? `Added ${qty} items to cart` : "Added to cart",
+			variant: "success",
+			actionLabel: "View Cart",
+			onAction: () => navigate("/cart"),
+			duration: 4000,
+		});
 	};
 
 	// --------------------------------------------------
@@ -228,12 +236,23 @@ export default function ProductDetail() {
 					<div className='col-12 col-md-4' />
 
 					<div className='col-12 col-md-4 text-center'>
-						<button
-							className='btn-main-cta justify-content-center text-center rounded-4 text-uppercase fw-regular fs-4 py-4 text-main-light'
-							onClick={handleAddToCart}
-							disabled={!matchingSku || !selected.quantity}>
-							Add to Cart
-						</button>
+						<div className='d-flex justify-content-center align-items-center gap-4'>
+							<button
+								className='btn-main-cta justify-content-center text-center rounded-4 text-uppercase fw-regular fs-4 py-4 text-main-light'
+								onClick={handleAddToCart}
+								disabled={!matchingSku || !selected.quantity}>
+								Add to Cart
+							</button>
+
+							{cartItemCount > 0 && (
+								<button
+									className='btn-main-cta btn-secondary-cta justify-content-center text-center rounded-4 text-uppercase fw-regular fs-4 py-4 text-main'
+									onClick={() => navigate("/cart")}
+									type='button'>
+									View Cart
+								</button>
+							)}
+						</div>
 					</div>
 
 					<div className='col-12 col-md-4 price-container text-end fs-1 text-main font-secondary pt-3 pt-md-0'>

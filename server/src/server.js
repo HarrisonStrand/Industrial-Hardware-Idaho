@@ -7,21 +7,17 @@ import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import contactRoute from "./routes/contact.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
-
-try {
-  await connectDB();
-} catch (e) {
-  console.warn("⚠️ MongoDB not connected — continuing without DB");
-}
 
 const app = express();
 
 app.use(cookieParser());
 app.use(express.json());
 
-// If you’re using Vite on 3000 and API on 5000, this is the safe cookie setup:
+app.use("/api/users", userRoutes);
+
 app.use(
   cors({
     origin: ["http://localhost:3000"],
@@ -31,10 +27,31 @@ app.use(
 
 app.get("/", (_req, res) => res.json({ status: "API running" }));
 
-app.use("/api/auth", authRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/contact", contactRoute);
+let dbReady = false;
 
-const PORT = process.env.PORT || 5001;
+async function start() {
+  try {
+    await connectDB();
+    dbReady = true;
+  } catch (e) {
+    console.warn("⚠️ MongoDB not connected — auth routes will return 503");
+    console.warn(e?.message || e);
+  }
 
-app.listen(PORT, () => console.log(`Server listening on :${PORT}`));
+  // If DB isn’t ready, prevent auth routes from crashing the app
+  app.use("/api/auth", (req, res, next) => {
+    if (!dbReady) {
+      return res.status(503).json({ error: "Database unavailable" });
+    }
+    next();
+  });
+
+  app.use("/api/auth", authRoutes);
+  app.use("/api/products", productRoutes);
+  app.use("/api/contact", contactRoute);
+
+  const PORT = process.env.PORT || 5001;
+  app.listen(PORT, () => console.log(`Server listening on :${PORT}`));
+}
+
+start();
