@@ -118,7 +118,6 @@
 }
 
 .account-thumb {
-	/* background: var(--account-thumb) no-repeat center / contain; */
 	color: transparent !important;
 	border: none;
 	width: 50px;
@@ -489,4 +488,9 @@
 	.category-modal::after {
 		display: none !important;
 	}
+}
+
+.avatar-dropdown-menu .avatar-dropdown-item {
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
 }

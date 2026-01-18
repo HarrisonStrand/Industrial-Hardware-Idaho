@@ -1,0 +1,201 @@
+* {
+  letter-spacing: 1px;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.profile-section-container {
+  background: rgb(from var(--accent-light) r g b / .25);
+  border: 1px solid rgb(from var(--accent-light) r g b / .35);
+	box-shadow: 3px 6px 6px 0px rgba(0, 0, 0, 0.25);
+}
+
+.profile-detail-container {
+  background: rgb(from var(--main-color) r g b / 0.15);
+  border: 1px solid rgb(from var(--main-color) r g b / 0.15);
+	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+.profile-link-box {
+  background: rgb(from var(--main-light) r g b / 0.65);
+	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+.profile-banner-container {
+	width: 85%;
+}
+
+@media (max-width: 1200px) {
+	.profile-banner-container {
+		width: 70%;
+	}
+}
+
+.profile-banner-title {
+	font-size: 1.6rem;
+}
+
+@media (max-width: 800px) {
+	.profile-banner-title {
+		font-size: 1.3rem;
+	}
+}
+
+.profile-banner-card {
+	background: rgb(from var(--main-color) r g b / 0.25);
+}
+
+.profile-banner-left,
+.profile-banner-right {
+	font-size: 1.6rem;
+}
+
+@media (max-width: 1731px) {
+	.profile-banner-left,
+	.profile-banner-right {
+		font-size: 1.3rem;
+	}
+}
+
+@media (max-width: 1491px) {
+	.profile-banner-left,
+	.profile-banner-right {
+		font-size: 1.2rem;
+	}
+}
+
+
+@media (max-width: 400px) {
+	.profile-banner-container {
+		width: 85%;
+	}
+	.profile-banner-left,
+	.profile-banner-right {
+		font-size: 1.1rem;
+	}
+}
+
+.profile-link {
+	transition:
+		color 0.25s ease,
+		transform 0.25s ease,
+		opacity 0.25s ease;
+}
+
+.profile-link:hover {
+	color: var(--alt-color) !important;
+	transform: translateY(-1px);
+	opacity: 0.9;
+}
+
+.map-container {
+  height: 450px;
+}
+
+.address-text {
+  letter-spacing: 1px;
+  font-size: 1.3rem;
+}
+
+@media (min-width: 580px) and (max-width: 851px) {
+  .address-text {
+    font-size: 1rem;
+  }
+}
+
+.avatar-image {
+	cursor: pointer;
+	filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.35));
+	transition:
+	transform 0.25s ease,
+	opacity 0.25s ease;
+}
+
+.avatar-image:hover {
+	filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.45));
+	transform: translateY(-2px);
+	opacity: 0.9;
+}
+
+.company-name-display {
+	text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+}
+
+.email-display {
+	text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.1);
+}
+
+
+
+
+
+
+
+
+
+/* Avatar hover overlay */
+.avatar-clickable {
+	cursor: pointer;
+	border-radius: 9999px;
+	overflow: hidden; /* ensures overlay stays clipped to circle */
+}
+
+.avatar-overlay {
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	height: 34%; /* bottom third-ish */
+	background: rgba(0, 0, 0, 0.45);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	transition: opacity 180ms ease-in-out;
+	pointer-events: none; /* overlay doesn't block click */
+}
+
+.avatar-clickable:hover .avatar-overlay,
+.avatar-clickable:focus .avatar-overlay,
+.avatar-clickable:focus-within .avatar-overlay {
+	opacity: 1;
+}
+
+.avatar-overlay-icon {
+	color: #fff;
+	font-size: 1.1rem;
+}
+
+/* Static profile value styling */
+.profile-static-value {
+	padding-top: 0.35rem;
+	padding-bottom: 0.35rem;
+	min-height: 2rem;
+	white-space: pre-wrap; /* so notes display nicely */
+}
+
+/* Modal styles */
+.avatar-modal-backdrop {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.55);
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+}
+
+.avatar-modal-content {
+	width: min(520px, 92vw);
+	background: #fff;
+	padding: 1rem 1rem 1.25rem;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}

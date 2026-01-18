@@ -12,14 +12,15 @@ import Contact from "./pages/Contact/Contact.jsx";
 import Location from "./pages/Location/Location.jsx";
 import Orders from "./pages/Orders/Orders.jsx";
 import Careers from "./pages/Careers/Careers.jsx";
+import Login from "./pages/Login/Login.jsx";
+import SignedOut from "./pages/Auth/SignedOut.jsx";
+import Profile from "./pages/Account/Profile.jsx";
 import Register from "./pages/Register/Register.jsx";
 import Shipping from "./pages/Shipping/Shipping.jsx";
 import Dashboard from "./pages/Dashboard/Dashboard.jsx";
 import AdminPanel from "./pages/AdminPanel/AdminPanel.jsx";
 import ProductList from "./pages/ProductList/ProductList.jsx";
 import ProductDetail from "./pages/ProductDetail/ProductDetail.jsx";
-import Login from "./pages/Login/Login.jsx";
-import Profile from "./pages/Account/Profile.jsx";
 import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
@@ -35,6 +36,8 @@ library.add(fab, fas, far);
 export default function App() {
 	const location = useLocation();
 	const [cartOpen, setCartOpen] = useState(false);
+
+	const routeKey = location.pathname + location.search;
 
 	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
@@ -70,12 +73,12 @@ export default function App() {
 
 				<AnimatePresence mode='wait'>
 					<motion.div
-						key={location.pathname + location.search}
+						key={routeKey}
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
 						transition={{ duration: 0.4 }}>
-						<Routes location={location} key={location.pathname}>
+						<Routes location={location} key={routeKey}>
 							<Route path='/' element={<Home />} />
 							<Route path='/location' element={<Location />} />
 							<Route path='/about' element={<About />} />
@@ -84,6 +87,7 @@ export default function App() {
 							<Route path='/contact' element={<Contact />} />
 							<Route path='/shipping' element={<Shipping />} />
 							<Route path='/login' element={<Login />} />
+							<Route path='/signed-out' element={<SignedOut />} />
 							<Route
 								path='/profile'
 								element={

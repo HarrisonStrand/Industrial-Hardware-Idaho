@@ -1,88 +1,106 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
+import { apiFetch } from "../utils/apiFetch";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-	const [user, setUser] = useState(null);
-	const [loadingAuth, setLoadingAuth] = useState(true);
-	const refreshMe = fetchMe;
+  const [user, setUser] = useState(null);
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
-	async function fetchMe() {
-		try {
-			const res = await fetch("/api/auth/me", { credentials: "include" });
-			if (!res.ok) {
-				setUser(null);
-				return;
-			}
-			const data = await res.json();
-			setUser(data.user || null);
-		} catch {
-			setUser(null);
-		} finally {
-			setLoadingAuth(false);
-		}
-	}
+  const handleUnauthorized = useCallback(() => {
+    const path = window.location?.pathname || "";
+    setUser(null);
 
-	useEffect(() => {
-		fetchMe();
-	}, []);
+    // avoid redirect loops
+    if (!path.startsWith("/signed-out")) {
+      window.location.replace("/signed-out");
+    }
+  }, []);
 
-	async function login(email, password) {
-		const res = await fetch("/api/auth/login", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			credentials: "include",
-			body: JSON.stringify({ email, password }),
-		});
+  const fetchMe = useCallback(async () => {
+    try {
+      const data = await apiFetch("/api/auth/me", {}, { onUnauthorized: handleUnauthorized });
+      setUser(data.user || null);
+    } catch {
+      setUser(null);
+    } finally {
+      setLoadingAuth(false);
+    }
+  }, [handleUnauthorized]);
 
-		const data = await res.json().catch(() => ({}));
-		if (!res.ok) throw new Error(data?.error || "Login failed");
+  useEffect(() => {
+    fetchMe();
+  }, [fetchMe]);
 
-		setUser(data.user);
-		return data.user;
-	}
+  const login = useCallback(
+    async (email, password) => {
+      const data = await apiFetch(
+        "/api/auth/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        },
+        { onUnauthorized: handleUnauthorized }
+      );
 
-	async function register(payload) {
-		const res = await fetch("/api/auth/register", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			credentials: "include",
-			body: JSON.stringify(payload),
-		});
+      setUser(data.user);
+      return data.user;
+    },
+    [handleUnauthorized]
+  );
 
-		const data = await res.json().catch(() => ({}));
-		if (!res.ok) throw new Error(data?.error || "Registration failed");
+  const register = useCallback(
+    async (payload) => {
+      const data = await apiFetch(
+        "/api/auth/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        },
+        { onUnauthorized: handleUnauthorized }
+      );
 
-		setUser(data.user);
-		return data.user;
-	}
+      setUser(data.user);
+      return data.user;
+    },
+    [handleUnauthorized]
+  );
 
-	async function logout() {
-		await fetch("/api/auth/logout", {
-			method: "POST",
-			credentials: "include",
-		}).catch(() => {});
-		setUser(null);
-	}
+  const logout = useCallback(async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+    } catch {
+      // ignore
+    } finally {
+      setUser(null);
+    }
+  }, []);
 
-	return (
-		<AuthContext.Provider
-			value={{
-				user,
-				setUser,
-				isAdmin: user?.role === "admin",
-				loadingAuth,
-				login,
-				register,
-				logout,
-				refreshMe,
-				refreshUser: fetchMe,
-			}}>
-			{children}
-		</AuthContext.Provider>
-	);
+  const value = useMemo(
+    () => ({
+      user,
+      setUser,
+      isAdmin: user?.role === "admin",
+      loadingAuth,
+      login,
+      register,
+      logout,
+      refreshMe: fetchMe,
+      handleUnauthorized // optional: exposed in case you want it elsewhere
+    }),
+    [user, loadingAuth, login, register, logout, fetchMe, handleUnauthorized]
+  );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-	return useContext(AuthContext);
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
+  return ctx;
 }

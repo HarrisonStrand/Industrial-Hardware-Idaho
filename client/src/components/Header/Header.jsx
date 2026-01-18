@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef, useMemo } from "react";
 import { ThemeContext } from "../../context/ThemeContext.jsx";
 import { BrandContext } from "../../context/BrandContext";
 import { SearchContext } from "../../context/SearchContext.jsx";
@@ -9,13 +9,7 @@ import "./Header.css";
 import CartIcon from "../Cart/CartIcon/CartIcon.jsx";
 
 export default function Header({ onCartOpen }) {
-	const { user } = useAuth();
-	const companyName = user?.company?.name || user?.company?.companyName || "";
-	const displayName =
-		companyName ||
-		[user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
-		user?.email;
-	const avatarSrc = user?.avatarUrl || "/img/avatar-placeholder.png";
+	const { user, isAdmin, loadingAuth, logout } = useAuth();
 
 	const brand = useContext(BrandContext);
 	const navigate = useNavigate();
@@ -36,11 +30,58 @@ export default function Header({ onCartOpen }) {
 	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 	const isMobileCart = screenWidth < 800;
 
+	// ✅ Account dropdown
+	const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+	const accountMenuRef = useRef(null);
+
+	const companyName = user?.company?.name || user?.company?.companyName || "";
+
+	const displayName = useMemo(() => {
+		return (
+			companyName ||
+			[user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+			user?.email ||
+			""
+		);
+	}, [companyName, user?.firstName, user?.lastName, user?.email]);
+
+	const avatarSrc = useMemo(() => {
+		return user?.avatarUrl
+			? `${user.avatarUrl}?v=${encodeURIComponent(user.avatarUpdatedAt || "0")}`
+			: "/img/avatar-placeholder.png";
+	}, [user?.avatarUrl, user?.avatarUpdatedAt]);
+
 	useEffect(() => {
 		const handleResize = () => setScreenWidth(window.innerWidth);
 		window.addEventListener("resize", handleResize);
 		return () => window.removeEventListener("resize", handleResize);
 	}, []);
+
+	// Close dropdown on route change
+	useEffect(() => {
+		setAccountMenuOpen(false);
+	}, [location.pathname, location.search]);
+
+	// Close dropdown on click outside
+	useEffect(() => {
+		function onDocClick(e) {
+			if (!accountMenuRef.current) return;
+			if (!accountMenuRef.current.contains(e.target)) {
+				setAccountMenuOpen(false);
+			}
+		}
+		document.addEventListener("mousedown", onDocClick);
+		return () => document.removeEventListener("mousedown", onDocClick);
+	}, []);
+
+	async function handleLogoutClick() {
+		setAccountMenuOpen(false);
+		try {
+			await logout();
+		} finally {
+			navigate("/signed-out", { replace: true });
+		}
+	}
 
 	/* ---------------------------------------------
 	 * SEARCH SYNC WITH /products
@@ -53,7 +94,8 @@ export default function Header({ onCartOpen }) {
 		} else {
 			setSearchQuery("");
 		}
-	}, [location]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [location.pathname, location.search]);
 
 	const handleSearchChange = (e) => {
 		const value = e.target.value;
@@ -105,10 +147,12 @@ export default function Header({ onCartOpen }) {
 
 	useEffect(() => {
 		updateLogoSrc();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	useEffect(() => {
 		updateLogoSrc();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [theme]);
 
 	const handleToggleTheme = () => {
@@ -126,11 +170,10 @@ export default function Header({ onCartOpen }) {
 
 	const closeMenu = () => {
 		setMenuClosing(true);
-		// Wait for slide-up animation to finish
 		setTimeout(() => {
 			setMenuOpen(false);
 			setMenuClosing(false);
-		}, 450); // must match CSS animation duration
+		}, 450);
 	};
 
 	return (
@@ -167,6 +210,7 @@ export default function Header({ onCartOpen }) {
 						</h5>
 					</Link>
 				</div>
+
 				<div className='col-4 d-flex justify-content-center d-flex d-sm-none'>
 					<Link
 						className='text-decoration-none fw-bolder fs-5 text-uppercase flex-row text-main-light'
@@ -223,11 +267,10 @@ export default function Header({ onCartOpen }) {
 			</div>
 
 			{/* ========================================================
-			 * MOBILE MENU OVERLAY + PANEL (BEHIND TOP BAR)
+			 * MOBILE MENU OVERLAY + PANEL
 			 * ====================================================== */}
 			{menuOpen && (
 				<div className='mobile-menu-overlay' onClick={closeMenu}>
-					{/* Sliding panel */}
 					<div
 						className={`mobile-menu bg-main-light ${menuClosing ? "closing" : ""}`}
 						onClick={(e) => e.stopPropagation()}>
@@ -275,18 +318,6 @@ export default function Header({ onCartOpen }) {
 			<nav className='navbar navbar-expand-lg container-fluid title-banner'>
 				<div className='container-fluid flex-row g-0 justify-content-between px-3 py-2 align-items-center'>
 					<div className='col-6 col-md-9 col-lg-10'>
-						{/* <Link
-							className='text-decoration-none fw-bolder fs-5 text-uppercase d-flex flex-row text-main-light'
-							to='/'>
-							<img
-								src={logoSrc}
-								className='header-logo col-2 col-lg-2 d-none d-sm-flex mx-0 mx-md-4'
-								alt={brand.brandName}
-							/>
-							<h2 className='d-flex text-main-light align-items-center company-title py-0 my-0 px-0 px-sm-3 px-md-2'>
-								{brand.brandName}
-							</h2>
-						</Link> */}
 						<div className='d-flex flex-row text-main-light align-items-center'>
 							<Link to='/'>
 								<img
@@ -307,11 +338,86 @@ export default function Header({ onCartOpen }) {
 						<label className='text-center display-name d-none d-lg-inline fw-semibold text-main-light'>
 							{displayName}
 						</label>
-						<Link
-							className='account-link rounded-circle mx-sm-4 mx-3 text-decoration-none'
-							to='/login'>
-							<img src={avatarSrc} className='account-thumb rounded-circle' />
-						</Link>
+
+						{/* ✅ Avatar dropdown */}
+						<div className='position-relative' ref={accountMenuRef}>
+							<button
+								type='button'
+								className='account-link rounded-circle mx-sm-4 mx-3 text-decoration-none border-0 bg-transparent p-0'
+								onClick={() => setAccountMenuOpen((v) => !v)}
+								aria-label='Account menu'>
+								<img
+									src={avatarSrc}
+									className='account-thumb rounded-circle'
+									alt='Account'
+								/>
+							</button>
+
+							{accountMenuOpen && (
+								<div
+									className='dropdown-menu avatar-dropdown-menu show p-2 shadow'
+									style={{
+										position: "absolute",
+										top: "calc(100% + 10px)",
+										right: 0,
+										minWidth: 220,
+										zIndex: 9999,
+									}}>
+									{/* Loading */}
+									{loadingAuth && (
+										<div className='px-3 py-2 text-muted small'>Loading…</div>
+									)}
+
+									{/* Logged out */}
+									{!loadingAuth && !user && (
+										<>
+											<Link
+												className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase'
+												to='/login'
+												onClick={() => setAccountMenuOpen(false)}>
+												Log in
+											</Link>
+											<Link
+												className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase'
+												to='/register'
+												onClick={() => setAccountMenuOpen(false)}>
+												Create account
+											</Link>
+										</>
+									)}
+
+									{/* Logged in */}
+									{!loadingAuth && user && (
+										<>
+											<Link
+												className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase'
+												to='/profile'
+												onClick={() => setAccountMenuOpen(false)}>
+												Account
+											</Link>
+
+											{isAdmin && (
+												<Link
+													className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase'
+													to='/admin'
+													onClick={() => setAccountMenuOpen(false)}>
+													Admin
+												</Link>
+											)}
+
+											<div className='dropdown-divider my-2' />
+
+											<button
+												className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase text-danger'
+												onClick={handleLogoutClick}>
+												Log out
+											</button>
+										</>
+									)}
+								</div>
+							)}
+						</div>
+
 						<CartIcon
 							onClick={() => {
 								if (isDrawerDisabled || isMobileCart) {

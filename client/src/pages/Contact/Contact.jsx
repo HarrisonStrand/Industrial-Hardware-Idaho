@@ -35,7 +35,7 @@ export default function Contact() {
 							))}
 						</div>
 						<div className='contact-info-container py-0 py-sm-4 px-2 px-sm-0'>
-							<div className='contact-link-box row align-items-center justify-content-center rounded-4 border border-3 border-main py-3 py-sm-2 py-xl-4 px-3 px-xl-5 fw-semibold'>
+							<div className='contact-link-box row align-items-center justify-content-center rounded-4 border border-3 border-main py-3 py-sm-2 py-xl-4 px-3 px-xl-5 fw-semibold g-0'>
 								<div className='fs-4 contact-form-title text-main text-uppercase text-start'>
 									Contact Form
 								</div>
