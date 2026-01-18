@@ -28,13 +28,13 @@ createRoot(document.getElementById("root")).render(
         <BrandProvider value={brand}>
           <VariablesProvider value={variables}>
             <SearchProvider>
-              <CartProvider>
+              {/* <CartProvider> */}
                 <AuthProvider>
                   <ToastProvider>
                     <App />
                   </ToastProvider>
                 </AuthProvider>
-              </CartProvider>
+              {/* </CartProvider> */}
             </SearchProvider>
           </VariablesProvider>
         </BrandProvider>

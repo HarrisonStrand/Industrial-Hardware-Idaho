@@ -7,8 +7,13 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
 
+  // ✅ prevents ProtectedRoute from redirecting while we're intentionally logging out
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const handleUnauthorized = useCallback(() => {
     const path = window.location?.pathname || "";
+
+    // If we're already headed out, don't fight it.
     setUser(null);
 
     // avoid redirect loops
@@ -68,7 +73,24 @@ export function AuthProvider({ children }) {
     [handleUnauthorized]
   );
 
-  const logout = useCallback(async () => {
+  /**
+   * ✅ Logout with optional redirect.
+   * We redirect FIRST (window.location.replace) to get off protected routes immediately,
+   * then clear local user state.
+   */
+  const logout = useCallback(async ({ redirectTo = "/signed-out" } = {}) => {
+    setLoggingOut(true);
+
+    // 🚑 Get off protected routes immediately (no race with ProtectedRoute)
+    try {
+      const path = window.location?.pathname || "";
+      if (redirectTo && path !== redirectTo) {
+        window.location.replace(redirectTo);
+      }
+    } catch {
+      // ignore
+    }
+
     try {
       await fetch("/api/auth/logout", {
         method: "POST",
@@ -78,6 +100,7 @@ export function AuthProvider({ children }) {
       // ignore
     } finally {
       setUser(null);
+      setLoggingOut(false);
     }
   }, []);
 
@@ -87,13 +110,14 @@ export function AuthProvider({ children }) {
       setUser,
       isAdmin: user?.role === "admin",
       loadingAuth,
+      loggingOut, // ✅ expose
       login,
       register,
       logout,
       refreshMe: fetchMe,
-      handleUnauthorized // optional: exposed in case you want it elsewhere
+      handleUnauthorized
     }),
-    [user, loadingAuth, login, register, logout, fetchMe, handleUnauthorized]
+    [user, loadingAuth, loggingOut, login, register, logout, fetchMe, handleUnauthorized]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

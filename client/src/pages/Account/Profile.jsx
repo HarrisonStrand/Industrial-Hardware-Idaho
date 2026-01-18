@@ -78,13 +78,10 @@ export default function Profile() {
 		});
 	}
 
-	async function handleSignOut() {
-		try {
-			await logout();
-		} finally {
-			navigate("/signed-out", { replace: true, state: { fromLogout: true } });
-		}
-	}
+async function handleSignOut() {
+	await logout({ redirectTo: "/signed-out" });
+}
+
 
 async function saveProfile() {
   setSaving(true);

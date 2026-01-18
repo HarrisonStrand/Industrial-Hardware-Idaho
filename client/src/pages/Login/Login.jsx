@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { useToast } from "../../context/ToastContext";
@@ -12,19 +12,23 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // ✅ Stable "from"
+  const from = useMemo(() => {
+    return location.state?.from || "";
+  }, [location.state?.from]);
+
   // ✅ If already signed in, redirect away from /login
   useEffect(() => {
     if (loadingAuth) return;
     if (!user) return;
 
-    const from = location.state?.from;
     if (from) {
       navigate(from, { replace: true });
       return;
     }
 
     navigate(isAdmin ? "/admin" : "/profile", { replace: true });
-  }, [user, loadingAuth, isAdmin, navigate, location.state]);
+  }, [user, loadingAuth, isAdmin, navigate, from]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -39,12 +43,9 @@ export default function Login() {
 
     try {
       await login(email, password);
-
       showToast({ variant: "success", message: "Signed in" });
 
-      // ✅ Redirect handled by the useEffect above once user becomes truthy.
-      // But if you want a fallback immediate redirect:
-      const from = location.state?.from;
+      // ✅ Redirect immediately (also fine if the useEffect handles it)
       if (from) navigate(from, { replace: true });
       else navigate(isAdmin ? "/admin" : "/profile", { replace: true });
     } catch (ex) {
@@ -56,10 +57,7 @@ export default function Login() {
     }
   };
 
-  // Prevent rendering form while auth is still determining state
   if (loadingAuth) return null;
-
-  // If user exists, we’re redirecting via effect
   if (user) return null;
 
   return (

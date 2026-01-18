@@ -74,14 +74,12 @@ export default function Header({ onCartOpen }) {
 		return () => document.removeEventListener("mousedown", onDocClick);
 	}, []);
 
-	async function handleLogoutClick() {
-		setAccountMenuOpen(false);
-		try {
-			await logout();
-		} finally {
-			navigate("/signed-out", { replace: true });
-		}
-	}
+async function handleLogoutClick() {
+  setAccountMenuOpen(false);
+
+	await logout({ redirectTo: "/signed-out" });
+}
+
 
 	/* ---------------------------------------------
 	 * SEARCH SYNC WITH /products
@@ -175,6 +173,11 @@ export default function Header({ onCartOpen }) {
 			setMenuClosing(false);
 		}, 450);
 	};
+
+// 	useEffect(() => {
+//   console.log("PATH:", window.location.pathname, "USER:", !!user);
+// }, [user]);
+
 
 	return (
 		<div className='header bg-main'>
