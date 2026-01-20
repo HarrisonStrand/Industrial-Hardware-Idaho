@@ -16,6 +16,8 @@ import Login from "./pages/Login/Login.jsx";
 import SignedOut from "./pages/Auth/SignedOut.jsx";
 import Profile from "./pages/Account/Profile.jsx";
 import Register from "./pages/Register/Register.jsx";
+import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
+import ResetPassword from "./pages/Auth/ResetPassword.jsx";
 import Shipping from "./pages/Shipping/Shipping.jsx";
 import Dashboard from "./pages/Dashboard/Dashboard.jsx";
 import AdminPanel from "./pages/AdminPanel/AdminPanel.jsx";
@@ -40,7 +42,6 @@ export default function App() {
 	const routeKey = location.pathname + location.search;
 
 	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
-
 
 	useEffect(() => {
 		const handleResize = () => setScreenWidth(window.innerWidth);
@@ -98,6 +99,8 @@ export default function App() {
 								}
 							/>
 							<Route path='/register' element={<Register />} />
+							<Route path='/forgot-password' element={<ForgotPassword />} />
+							<Route path='/reset-password' element={<ResetPassword />} />
 							<Route path='/products/' element={<ProductList />} />
 							<Route path='/products/:id' element={<ProductDetail />} />
 							<Route

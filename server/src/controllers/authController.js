@@ -21,7 +21,7 @@ export const register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     // allow role assignment; default to customer if not provided
-    const user = await User.create({ name, email, passwordHash, role: role || "customer", company });
+    const user = await User.create({ name, email, passwordHash, role: role || "user", company });
     const token = signToken(user);
     res.status(201).json({ user: { id: user._id, name: user.name, email: user.email, role: user.role }, token });
   } catch (err) {

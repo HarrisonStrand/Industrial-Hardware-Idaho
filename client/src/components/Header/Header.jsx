@@ -36,6 +36,9 @@ export default function Header({ onCartOpen }) {
 
 	const companyName = user?.company?.name || user?.company?.companyName || "";
 
+	const DEFAULT_AVATAR = "/images/photos/profile-placeholder.jpg";
+	const [avatarError, setAvatarError] = useState(false);
+
 	const displayName = useMemo(() => {
 		return (
 			companyName ||
@@ -46,10 +49,50 @@ export default function Header({ onCartOpen }) {
 	}, [companyName, user?.firstName, user?.lastName, user?.email]);
 
 	const avatarSrc = useMemo(() => {
-		return user?.avatarUrl
-			? `${user.avatarUrl}?v=${encodeURIComponent(user.avatarUpdatedAt || "0")}`
-			: "/img/avatar-placeholder.png";
-	}, [user?.avatarUrl, user?.avatarUpdatedAt]);
+		if (!user) return DEFAULT_AVATAR;
+
+		if (user.avatarUrl) {
+			return `${user.avatarUrl}?v=${encodeURIComponent(
+				user.avatarUpdatedAt || "0"
+			)}`;
+		}
+
+		return null; // 👈 important: allow initials fallback
+	}, [user, user?.avatarUrl, user?.avatarUpdatedAt]);
+
+	const initials = useMemo(() => {
+		if (!user) return "";
+
+		// Prefer company name
+		const company = user.company?.name || user.company?.companyName;
+		if (company) {
+			return company
+				.split(" ")
+				.filter(Boolean)
+				.slice(0, 2)
+				.map((w) => w[0].toUpperCase())
+				.join("");
+		}
+
+		// Otherwise first + last name
+		if (user.firstName || user.lastName) {
+			return [user.firstName, user.lastName]
+				.filter(Boolean)
+				.map((n) => n[0].toUpperCase())
+				.join("");
+		}
+
+		// Fallback to email
+		if (user.email) {
+			return user.email[0].toUpperCase();
+		}
+
+		return "";
+	}, [user]);
+
+	useEffect(() => {
+		setAvatarError(false);
+	}, [avatarSrc]);
 
 	useEffect(() => {
 		const handleResize = () => setScreenWidth(window.innerWidth);
@@ -74,12 +117,11 @@ export default function Header({ onCartOpen }) {
 		return () => document.removeEventListener("mousedown", onDocClick);
 	}, []);
 
-async function handleLogoutClick() {
-  setAccountMenuOpen(false);
+	async function handleLogoutClick() {
+		setAccountMenuOpen(false);
 
-	await logout({ redirectTo: "/signed-out" });
-}
-
+		await logout({ redirectTo: "/signed-out" });
+	}
 
 	/* ---------------------------------------------
 	 * SEARCH SYNC WITH /products
@@ -174,10 +216,9 @@ async function handleLogoutClick() {
 		}, 450);
 	};
 
-// 	useEffect(() => {
-//   console.log("PATH:", window.location.pathname, "USER:", !!user);
-// }, [user]);
-
+	// 	useEffect(() => {
+	//   console.log("PATH:", window.location.pathname, "USER:", !!user);
+	// }, [user]);
 
 	return (
 		<div className='header bg-main'>
@@ -348,75 +389,100 @@ async function handleLogoutClick() {
 								type='button'
 								className='account-link rounded-circle mx-sm-4 mx-3 text-decoration-none border-0 bg-transparent p-0'
 								onClick={() => setAccountMenuOpen((v) => !v)}
-								aria-label='Account menu'>
-								<img
-									src={avatarSrc}
-									className='account-thumb rounded-circle'
-									alt='Account'
-								/>
+								aria-label='Account menu'
+								aria-expanded={accountMenuOpen}>
+								<div className='account-avatar-wrapper rounded-circle'>
+									{/* 1️⃣ Logged in + avatar exists + no error */}
+									{user && avatarSrc && !avatarError && (
+										<img
+											src={avatarSrc}
+											alt='Account'
+											className='account-thumb rounded-circle'
+											onError={() => setAvatarError(true)}
+											loading='lazy'
+										/>
+									)}
+
+									{/* 2️⃣ Logged in but no avatar OR avatar errored → initials */}
+									{user && (!avatarSrc || avatarError) && (
+										<div className='account-initials rounded-circle'>
+											{initials || "?"}
+										</div>
+									)}
+
+									{/* 3️⃣ Not logged in → default avatar image (MUST exist in /public) */}
+									{!user && (
+										<img
+											src={DEFAULT_AVATAR}
+											alt='Guest'
+											className='account-thumb rounded-circle'
+											loading='lazy'
+											onError={(e) => {
+												// hard fallback in case DEFAULT_AVATAR path is wrong
+												e.currentTarget.src = "/img/avatar-placeholder.png";
+											}}
+										/>
+									)}
+								</div>
 							</button>
 
 							{accountMenuOpen && (
-								<div
-									className='dropdown-menu avatar-dropdown-menu show p-2 shadow'
-									style={{
-										position: "absolute",
-										top: "calc(100% + 10px)",
-										right: 0,
-										minWidth: 220,
-										zIndex: 9999,
-									}}>
-									{/* Loading */}
-									{loadingAuth && (
-										<div className='px-3 py-2 text-muted small'>Loading…</div>
-									)}
+								<div className='avatar-dropdown-modal'>
+									<div className='avatar-dropdown-panel rounded-3'>
+										{/* Loading */}
+										{loadingAuth && (
+											<div className='px-3 py-2 text-muted small'>Loading…</div>
+										)}
 
-									{/* Logged out */}
-									{!loadingAuth && !user && (
-										<>
-											<Link
-												className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase'
-												to='/login'
-												onClick={() => setAccountMenuOpen(false)}>
-												Log in
-											</Link>
-											<Link
-												className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase'
-												to='/register'
-												onClick={() => setAccountMenuOpen(false)}>
-												Create account
-											</Link>
-										</>
-									)}
-
-									{/* Logged in */}
-									{!loadingAuth && user && (
-										<>
-											<Link
-												className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase'
-												to='/profile'
-												onClick={() => setAccountMenuOpen(false)}>
-												Account
-											</Link>
-
-											{isAdmin && (
+										{/* Logged out */}
+										{!loadingAuth && !user && (
+											<>
 												<Link
-													className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase'
-													to='/admin'
+													className='avatar-dropdown-item rounded-3 text-uppercase text-decoration-none'
+													to='/login'
 													onClick={() => setAccountMenuOpen(false)}>
-													Admin
+													Log in
 												</Link>
-											)}
 
-											<div className='dropdown-divider my-2' />
+												<Link
+													className='avatar-dropdown-item rounded-3 text-uppercase text-decoration-none'
+													to='/register'
+													onClick={() => setAccountMenuOpen(false)}>
+													Create account
+												</Link>
+											</>
+										)}
 
-											<button
-												className='dropdown-item avatar-dropdown-item rounded-2 text-uppercase text-danger'
-												onClick={handleLogoutClick}>
-												Log out
-											</button>
-										</>
-									)}
+										{/* Logged in */}
+										{!loadingAuth && user && (
+											<>
+												<Link
+													className='avatar-dropdown-item rounded-3 text-uppercase text-decoration-none'
+													to='/profile'
+													onClick={() => setAccountMenuOpen(false)}>
+													Account
+												</Link>
+
+												{isAdmin && (
+													<Link
+														className='avatar-dropdown-item rounded-3 text-uppercase text-decoration-none'
+														to='/admin'
+														onClick={() => setAccountMenuOpen(false)}>
+														Admin
+													</Link>
+												)}
+
+												<div className='avatar-dropdown-divider' />
+
+												<button
+													type='button'
+													className='avatar-dropdown-item rounded-3 text-uppercase text-danger bg-transparent border-0 text-start w-100'
+													onClick={handleLogoutClick}>
+													Log out
+												</button>
+											</>
+										)}
+									</div>
 								</div>
 							)}
 						</div>
