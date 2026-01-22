@@ -39,8 +39,8 @@ export const footerData = (brand) => ({
     title: "Customer Service",
     items: [
       { text: "Returns & Exchanges", path: "/returns" },
-      { text: "Special Requests", path: "/request" },
-      { text: "Order Status", path: "/orders" },
+      { text: "Special Requests", path: "/requests" },
+      { text: "Order Status", path: "/order-status" },
       { text: "Shipping Information", path: "/shipping" }
     ],
     textAlign: "text-center text-md-center text-lg-end"
@@ -49,9 +49,9 @@ export const footerData = (brand) => ({
   section4: {
     title: "Resources",
     items: [
-      { text: "Customer Forms", path: "/forms" },
+      { text: "Customer Forms", path: "/customer-forms" },
       { text: "Account Login", path: "/login" },
-      { text: "Vendor Information", path: "/vendors" },
+      { text: "Vendor Information", path: "/vendor-information" },
       { text: "Join Our Team", path: "/careers" }
     ],
     textAlign: "text-center text-md-end text-lg-end"

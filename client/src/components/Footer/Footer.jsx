@@ -8,6 +8,8 @@ import "./Footer.css";
 export default function Footer() {
 	const brand = useContext(BrandContext);
 	const sections = footerData(brand);
+	const currentYear = new Date().getFullYear();
+
 
 	/* ---------------------------------------------
 	 * THEME HANDLING
@@ -73,6 +75,7 @@ export default function Footer() {
 								<div key={i} className='section-item mb-2 mb-md-4'>
 									<Link
 										to={item.path}
+										onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
 										className='text-decoration-none fw-light text-main-light'>
 										{item.text}
 									</Link>
@@ -102,6 +105,11 @@ export default function Footer() {
 								<i className='bi bi-arrow-right fs-5'></i>
 							</button>
 						</form>
+					</div>
+					<div className="col-12 col-sm-2 col-md col-md-3 mt-0 mb-3 text-center align-self-end">
+						<div className="small copyright-text">
+							All rights reserved &#xA9; Wollum Ventures LLC {currentYear}
+						</div>
 					</div>
 					<div className="social-icon-container col-12 col-sm-2 align-items-center d-flex justify-content-center justify-content-sm-end text-end px-0 pb-3 pb-sm-0 pt-0 pt-sm-3">
 						<div className="social-icon">

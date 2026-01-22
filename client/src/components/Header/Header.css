@@ -532,7 +532,7 @@
 .avatar-dropdown-modal {
   position: absolute;
   top: calc(100% + 10px);
-  right: 0;
+  right: 20px;
   z-index: 2500;
 }
 
@@ -562,7 +562,6 @@
 
 .avatar-dropdown-item {
   display: block;
-  padding: 10px 12px;
   color: rgb(75, 75, 75);
   letter-spacing: 1px;
   font-size: 12px;
@@ -577,6 +576,5 @@
 .avatar-dropdown-divider {
   height: 1px;
   background: rgba(0, 0, 0, 0.12);
-  margin: 8px 4px;
   border-radius: 1px;
 }

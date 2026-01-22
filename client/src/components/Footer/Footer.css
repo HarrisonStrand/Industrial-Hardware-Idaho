@@ -36,3 +36,7 @@ newsletter-arrow {
   box-shadow: 0 -4px 8px 0px rgb(0, 0, 0, 0.25);
   border-top: 1px solid rgba(0, 0, 0, 0.25);
 }
+
+.copyright-text {
+  color: rgba(from var(--secondary-light) r g b / .3);
+}

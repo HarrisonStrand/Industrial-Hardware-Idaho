@@ -62,36 +62,9 @@
 
 /* CTA Button */
 .btn-main-cta {
-	cursor: pointer !important;
-	background: linear-gradient(
-		148deg,
-		rgba(from var(--main-color) r g b / 0.8) 0%,
-		rgba(from var(--alt-color) r g b / 0.8) 100%
-	);
-	border: none;
-	border-right: solid 1px rgba(0, 0, 0, 0.75) !important;
-	letter-spacing: 1px;
 	line-height: 28px !important;
-	box-shadow: 3px 4px 4px rgba(0, 0, 0, 0.4);
-	text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.6);
 	width: 100%;
 	max-width: 250px;
-	transition: all 0.3s ease;
-}
-
-.btn-main-cta:hover {
-	filter: brightness(0.9);
-	box-shadow: inset 1px 1px 2px 1px rgba(0, 0, 0, 0.5);
-	/* box-shadow: none; */
-	box-sizing: border-box;
-	border-right: none;
-}
-
-.btn-main-cta:active {
-	filter: brightness(0.9);
-	box-shadow: inset 3px 3px 4px 1px rgba(0, 0, 0, 0.5);
-	box-sizing: border-box;
-	border-right: none;
 }
 
 

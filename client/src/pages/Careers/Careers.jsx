@@ -12,11 +12,11 @@ export default function Careers() {
 	return (
 		<>
 			<div className='container-fluid px-3 px-sm-5 py-4 py-md-5'>
-				<div className='location-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
+				<div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 					<div className='text-main text-uppercase mb-1 fs-2 px-0 ps-4'>
 						Careers
 					</div>
-					<div className='location-detail-container py-3 rounded-4 px-3 px-sm-5'>
+					<div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
 						<div className='row m-0 pb-2 pb-sm-0'>
 							{brand.careerSections.map((section, index) => (
 								<div key={index} className='mb-0'>

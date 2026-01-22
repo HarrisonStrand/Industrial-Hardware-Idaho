@@ -71,12 +71,12 @@ export default function ResetPassword() {
   return (
     <>
       <div className="container-fluid px-3 px-sm-5 py-4 pt-md-5">
-        <div className="login-section-container py-4 fade-in rounded-4 px-3 px-sm-5">
+        <div className="theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5">
           <div className="text-main text-uppercase mb-1 fs-2 px-0 ps-4">
             Reset Password
           </div>
 
-          <div className="login-detail-container py-4 fade-in rounded-4 px-3 px-sm-5">
+          <div className="theme-detail-container py-4 fade-in rounded-4 px-3 px-sm-5">
             <div className="row m-0">
               {!linkLooksValid ? (
                 <div className="text-center py-4">

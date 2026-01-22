@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
+import ScrollToTop from "./components/ScrollToTop/ScrollToTop.jsx";
 import Header from "./components/Header/Header.jsx";
 import CartDrawer from "./components/Cart/CartDrawer/CartDrawer.jsx";
 import MobileCartBar from "./components/Cart/MobileCartBar/MobileCartBar.jsx";
@@ -10,7 +11,6 @@ import Home from "./pages/Home/Home.jsx";
 import About from "./pages/About/About.jsx";
 import Contact from "./pages/Contact/Contact.jsx";
 import Location from "./pages/Location/Location.jsx";
-import Orders from "./pages/Orders/Orders.jsx";
 import Careers from "./pages/Careers/Careers.jsx";
 import Login from "./pages/Login/Login.jsx";
 import SignedOut from "./pages/Auth/SignedOut.jsx";
@@ -18,7 +18,6 @@ import Profile from "./pages/Account/Profile.jsx";
 import Register from "./pages/Register/Register.jsx";
 import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
 import ResetPassword from "./pages/Auth/ResetPassword.jsx";
-import Shipping from "./pages/Shipping/Shipping.jsx";
 import Dashboard from "./pages/Dashboard/Dashboard.jsx";
 import AdminPanel from "./pages/AdminPanel/AdminPanel.jsx";
 import ProductList from "./pages/ProductList/ProductList.jsx";
@@ -27,6 +26,15 @@ import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from "./components/Footer/Footer.jsx";
+import PrivacyPolicy from "./pages/Legal/PrivacyPolicy.jsx";
+import TermsConditions from "./pages/Legal/TermsConditions.jsx";
+import CustomerService from "./pages/Legal/CustomerService.jsx";
+import ReturnsExchanges from "./pages/Legal/ReturnsExchanges.jsx";
+import ShippingInformation from "./pages/Legal/ShippingInformation.jsx";
+import SpecialRequests from "./pages/SpecialRequests/SpecialRequests.jsx";
+import OrderStatus from "./pages/OrderStatus/OrderStatus.jsx";
+import CustomerForms from "./pages/CustomerForms/CustomerForms.jsx";
+import VendorInformation from "./pages/VendorInformation/VendorInformation.jsx";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { fab } from "@fortawesome/free-brands-svg-icons";
@@ -63,6 +71,7 @@ export default function App() {
 	return (
 		<CartProvider openCart={() => setCartOpen(true)}>
 			<main className='main container-fluid position-relative p-0'>
+				<ScrollToTop />
 				<Header onCartOpen={() => setCartOpen(true)} />
 
 				{/* Desktop Drawer only (disabled on /cart + /checkout) */}
@@ -84,10 +93,21 @@ export default function App() {
 							<Route path='/' element={<Home />} />
 							<Route path='/location' element={<Location />} />
 							<Route path='/about' element={<About />} />
-							<Route path='/orders' element={<Orders />} />
 							<Route path='/careers' element={<Careers />} />
 							<Route path='/contact' element={<Contact />} />
-							<Route path='/shipping' element={<Shipping />} />
+							<Route path='/privacy' element={<PrivacyPolicy />} />
+							<Route path='/terms' element={<TermsConditions />} />
+							<Route path='/customer-service' element={<CustomerService />} />
+							<Route path='/returns' element={<ReturnsExchanges />} />
+							<Route path='/shipping' element={<ShippingInformation />} />
+							<Route path='/requests' element={<SpecialRequests />} />
+							<Route path='/order-status' element={<OrderStatus />} />
+							<Route path='/customer-forms' element={<CustomerForms />} />
+							<Route
+								path='/vendor-information'
+								element={<VendorInformation />}
+							/>
+
 							<Route path='/login' element={<Login />} />
 							<Route path='/signed-out' element={<SignedOut />} />
 							<Route

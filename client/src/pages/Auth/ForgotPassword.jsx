@@ -45,12 +45,12 @@ export default function ForgotPassword() {
   return (
     <>
       <div className="container-fluid px-3 px-sm-5 py-4 pt-md-5">
-        <div className="login-section-container py-4 fade-in rounded-4 px-3 px-sm-5">
+        <div className="theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5">
           <div className="text-main text-uppercase mb-1 fs-2 px-0 ps-4">
             Forgot Password
           </div>
 
-          <div className="login-detail-container py-4 fade-in rounded-4 px-3 px-sm-5">
+          <div className="theme-detail-container py-4 fade-in rounded-4 px-3 px-sm-5">
             <div className="row m-0">
               {!sent ? (
                 <form className="contact-form g-0 py-3" onSubmit={submit}>

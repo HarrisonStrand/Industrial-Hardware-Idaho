@@ -10,7 +10,7 @@ export default function Contact() {
 	return (
 		<>
 			<div className='container-fluid px-3 px-sm-5 py-4 py-md-5'>
-				<div className='contact-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
+				<div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 					<div className='row justify-content-between align-items-end'>
 						<div className='text-main text-uppercase mb-1 fs-2 px-0 ps-0 ps-sm-4 col-12 col-md-6 text-center text-md-start'>
 							Contact Our Team
@@ -24,7 +24,7 @@ export default function Contact() {
 							</Link>
 						</div>
 					</div>
-					<div className='contact-detail-container py-3 rounded-4 px-3 px-sm-5'>
+					<div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
 						<div className='row m-0 pb-2 pb-sm-0'>
 							{brand.contactSec1Copy.map((line, index) => (
 								<div
@@ -34,7 +34,7 @@ export default function Contact() {
 								</div>
 							))}
 						</div>
-						<div className='contact-info-container py-0 py-sm-4 px-2 px-sm-0'>
+						<div className='theme-info-container py-0 py-sm-4 px-2 px-sm-0'>
 							<div className='contact-link-box row align-items-center justify-content-center rounded-4 border border-3 border-main py-3 py-sm-2 py-xl-4 px-3 px-xl-5 fw-semibold g-0'>
 								<div className='fs-4 contact-form-title text-main text-uppercase text-start'>
 									Contact Form

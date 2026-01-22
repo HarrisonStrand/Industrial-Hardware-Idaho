@@ -438,14 +438,14 @@ export default function Header({ onCartOpen }) {
 										{!loadingAuth && !user && (
 											<>
 												<Link
-													className='avatar-dropdown-item rounded-3 text-uppercase text-decoration-none'
+													className='avatar-dropdown-item ps-3 pb-2 rounded-3 text-uppercase text-decoration-none'
 													to='/login'
 													onClick={() => setAccountMenuOpen(false)}>
 													Log in
 												</Link>
 
 												<Link
-													className='avatar-dropdown-item rounded-3 text-uppercase text-decoration-none'
+													className='avatar-dropdown-item ps-3 pb-2 rounded-3 text-uppercase text-decoration-none'
 													to='/register'
 													onClick={() => setAccountMenuOpen(false)}>
 													Create account
@@ -457,7 +457,7 @@ export default function Header({ onCartOpen }) {
 										{!loadingAuth && user && (
 											<>
 												<Link
-													className='avatar-dropdown-item rounded-3 text-uppercase text-decoration-none'
+													className='avatar-dropdown-item ps-3 pb-2 rounded-3 text-uppercase text-decoration-none'
 													to='/profile'
 													onClick={() => setAccountMenuOpen(false)}>
 													Account
@@ -465,21 +465,20 @@ export default function Header({ onCartOpen }) {
 
 												{isAdmin && (
 													<Link
-														className='avatar-dropdown-item rounded-3 text-uppercase text-decoration-none'
+														className='avatar-dropdown-item ps-3 rounded-3 text-uppercase text-decoration-none'
 														to='/admin'
 														onClick={() => setAccountMenuOpen(false)}>
 														Admin
 													</Link>
 												)}
 
-												<div className='avatar-dropdown-divider' />
+												<div className='avatar-dropdown-divider my-2' />
 
-												<button
-													type='button'
-													className='avatar-dropdown-item rounded-3 text-uppercase text-danger bg-transparent border-0 text-start w-100'
+												<Link
+													className='avatar-dropdown-item ps-3 rounded-3 text-uppercase text-danger bg-transparent border-0 text-start w-100 text-decoration-none'
 													onClick={handleLogoutClick}>
 													Log out
-												</button>
+												</Link>
 											</>
 										)}
 									</div>

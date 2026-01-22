@@ -175,40 +175,13 @@ async function uploadAvatar() {
 
 	return (
 		<div className='container-fluid px-3 px-sm-5 py-4 pt-md-5'>
-			<div className='profile-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
-				<div className='d-flex align-items-center justify-content-between px-0 ps-4'>
+			<div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
+				<div className='d-flex align-items-center justify-content-between px-0 px-sm-4'>
 					<div className='text-main text-uppercase mb-1 fs-2'>Account</div>
-
-					{/* Top-right actions */}
-					{!isEditing ? (
-						<button
-							className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
-							onClick={() => setIsEditing(true)}>
-							Edit
-						</button>
-					) : (
-						<div className='d-flex gap-2'>
-							<button
-								className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
-								onClick={saveProfile}
-								disabled={saving}>
-								Save
-							</button>
-							<button
-								className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
-								onClick={() => {
-									resetFormToUser();
-									setIsEditing(false);
-								}}
-								disabled={saving}>
-								Cancel
-							</button>
-						</div>
-					)}
 				</div>
 
-				<div className='contact-detail-container py-3 rounded-4 px-3 px-sm-5'>
-					<div className='d-flex align-items-top gap-3 pb-3'>
+				<div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
+					<div className='d-flex align-items-center gap-3 pb-3'>
 						<div className='col d-flex align-items-center'>
 							{/* Avatar clickable area */}
 							<div
@@ -245,8 +218,30 @@ async function uploadAvatar() {
 								<div className='email-display text-muted small'>{user.email}</div>
 							</div>
 						</div>
+					{/* Top-right actions */}
+					<div className="col-12 col-sm-1 edit-btn text-end">
+					{!isEditing ? (
 
-						<div className='signout-btn col-1 text-end'>
+						<button
+							className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main col-1'
+							onClick={() => setIsEditing(true)}>
+							Edit
+						</button>
+					) : (
+						<div className='d-flex'>
+							<button
+								className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
+								onClick={() => {
+									resetFormToUser();
+									setIsEditing(false);
+								}}
+								disabled={saving}>
+								Cancel
+							</button>
+						</div>
+					)}
+					</div>
+						<div className='col-12 col-sm-1 signout-btn text-end'>
 							<button
 								className='btn-main-cta text-center rounded-3 text-uppercase py-2 text-main-light'
 								onClick={handleSignOut}
@@ -406,11 +401,11 @@ async function uploadAvatar() {
 
 					{/* Keep your bottom action row if you still want it (optional) */}
 					{/* If you keep it, it should match editing state */}
-					<div className='row justify-content-end align-items-end pt-3'>
-						<div className='col-12 text-end'>
+					<div className='d-flex justify-content-end align-items-end pt-3'>
+						<div className='col-12 col-sm text-end'>
 							{!isEditing ? null : (
 								<button
-									className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
+									className='btn-main-cta px-3 rounded-3 text-uppercase fw-regular py-2 text-main-light'
 									onClick={saveProfile}
 									disabled={saving}>
 									Save

@@ -1,0 +1,43 @@
+* {
+  letter-spacing: 1px;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.legal-link-box {
+  background: rgb(from var(--main-light) r g b / 0.25);
+	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+.legal-link {
+	transition:
+		color 0.25s ease,
+		transform 0.25s ease,
+		opacity 0.25s ease;
+}
+
+.legal-link:hover {
+	color: var(--alt-color) !important;
+	transform: translateY(-1px);
+	opacity: 0.9;
+}
+
+.legal-title {
+  letter-spacing: 1px;
+}
+
+.legal-list {
+  padding-left: 1.1rem;
+}
+
+.legal-copy p,
+.legal-copy li {
+  line-height: 1.6;
+}

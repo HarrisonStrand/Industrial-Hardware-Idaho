@@ -8,6 +8,8 @@ import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import contactRoute from "./routes/contact.js";
 import userRoutes from "./routes/userRoutes.js";
+import specialRequestsRoute from "./routes/specialRequestsRoute.js";
+
 
 dotenv.config();
 
@@ -17,6 +19,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use("/api/users", userRoutes);
+app.use("/api/special-requests", specialRequestsRoute);
 
 app.use(
   cors({

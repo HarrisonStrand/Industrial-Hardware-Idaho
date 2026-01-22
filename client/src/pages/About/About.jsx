@@ -21,11 +21,11 @@ export default function About() {
 	return (
 		<>
 			<div className='container-fluid px-3 px-sm-5 py-4 pt-md-5'>
-				<div className='about-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
+				<div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 					<div className='text-main text-uppercase mb-1 fs-2 px-0 ps-4'>
 						About Us
 					</div>
-					<div className='about-detail-container py-4 fade-in rounded-4 px-3 px-sm-5'>
+					<div className='theme-detail-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 						<div className='row m-0'>
 							{brand.aboutSec1Copy.map((line, index) => (
 								<div
@@ -40,11 +40,11 @@ export default function About() {
 			</div>
 
 			<div className='team-photo-container container-fluid px-3 px-sm-5 py-4 py-md-5'>
-				<div className='about-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
+				<div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 					<div className='text-main text-uppercase mb-1 fs-2 px-0 ps-4'>
 						Our Team
 					</div>
-					<div className='about-detail-container py-4 fade-in rounded-4 px-3 px-sm-5'>
+					<div className='theme-detail-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 						<div className='row m-0 gap-5 justify-content-center'>
 							{cards.map((card, i) => (
 								<div
