@@ -1,484 +1,678 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { apiFetch } from "../../utils/apiFetch";
 import "./Profile.css";
 
+function formatTaxStatus(status) {
+  if (status === "exempt") return "Exempt (Approved)";
+  if (status === "pending") return "Pending Approval";
+  return "Non-Exempt";
+}
+
 export default function Profile() {
-	const navigate = useNavigate();
-	const { user, setUser, logout } = useAuth();
-	const { showToast } = useToast();
+  const { user, setUser, logout } = useAuth();
+  const { showToast } = useToast();
 
-	const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-	const [form, setForm] = useState({
-		firstName: "",
-		lastName: "",
-		company: { name: "", address: "", taxStatus: "", notes: "" },
-	});
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    companyName: "",
+    phone: "",
+    email: "",
+    billingAddress: { address1: "", address2: "", city: "", state: "", zip: "" },
+    deliveryAddress: { address1: "", address2: "", city: "", state: "", zip: "" }
+  });
 
-	// Avatar modal state
-	const [showAvatarModal, setShowAvatarModal] = useState(false);
-	const [avatarFile, setAvatarFile] = useState(null);
-	const [avatarPreview, setAvatarPreview] = useState("");
-	const fileInputRef = useRef(null);
+  // Avatar modal state
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const fileInputRef = useRef(null);
 
-	const [saving, setSaving] = useState(false);
+  const avatarSrc = useMemo(() => {
+    return user?.avatarUrl
+      ? `${user.avatarUrl}?v=${encodeURIComponent(user.avatarUpdatedAt || "0")}`
+      : "/img/avatar-placeholder.png";
+  }, [user?.avatarUrl, user?.avatarUpdatedAt]);
 
-	const avatarSrc = useMemo(() => {
-		return user?.avatarUrl
-			? `${user.avatarUrl}?v=${encodeURIComponent(user.avatarUpdatedAt || "0")}`
-			: "/img/avatar-placeholder.png";
-	}, [user?.avatarUrl, user?.avatarUpdatedAt]);
+  // Populate form from user
+  useEffect(() => {
+    if (!user) return;
 
-	useEffect(() => {
-		if (!user) return;
-
-		setForm({
-			firstName: user.firstName || "",
-			lastName: user.lastName || "",
-			company: {
-				name: user.company?.name || user.company?.companyName || "",
-				address: user.company?.address || "",
-				taxStatus: user.company?.taxStatus || "",
-				notes: user.company?.notes || "",
-			},
-		});
-	}, [user]);
-
-	useEffect(() => {
-		if (!avatarFile) {
-			setAvatarPreview("");
-			return;
-		}
-		const url = URL.createObjectURL(avatarFile);
-		setAvatarPreview(url);
-		return () => URL.revokeObjectURL(url);
-	}, [avatarFile]);
-
-	function setCompanyField(key, value) {
-		setForm((prev) => ({
-			...prev,
-			company: { ...prev.company, [key]: value },
-		}));
-	}
-
-	function resetFormToUser() {
-		if (!user) return;
-		setForm({
-			firstName: user.firstName || "",
-			lastName: user.lastName || "",
-			company: {
-				name: user.company?.name || user.company?.companyName || "",
-				address: user.company?.address || "",
-				taxStatus: user.company?.taxStatus || "",
-				notes: user.company?.notes || "",
-			},
-		});
-	}
-
-async function handleSignOut() {
-	await logout({ redirectTo: "/signed-out" });
-}
-
-
-async function saveProfile() {
-  setSaving(true);
-  try {
-    const data = await apiFetch(
-      "/api/users/me",
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form)
+    setForm({
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      companyName: user.company?.name || user.company?.companyName || "",
+      phone: user.phone || "",
+      email: user.email || "",
+      billingAddress: {
+        address1: user.billingAddress?.address1 || "",
+        address2: user.billingAddress?.address2 || "",
+        city: user.billingAddress?.city || "",
+        state: user.billingAddress?.state || "",
+        zip: user.billingAddress?.zip || ""
       },
-      { onUnauthorized: () => window.location.replace("/signed-out") }
-    );
-
-    setUser(data.user);
-    setIsEditing(false);
-    showToast({ variant: "success", message: "Profile updated" });
-  } catch (e) {
-    showToast({
-      variant: "danger",
-      message: `Profile update failed: ${e.message}`
+      deliveryAddress: {
+        address1: user.deliveryAddress?.address1 || "",
+        address2: user.deliveryAddress?.address2 || "",
+        city: user.deliveryAddress?.city || "",
+        state: user.deliveryAddress?.state || "",
+        zip: user.deliveryAddress?.zip || ""
+      }
     });
-  } finally {
-    setSaving(false);
-  }
-}
+  }, [user]);
 
+  // Avatar preview
+  useEffect(() => {
+    if (!avatarFile) {
+      setAvatarPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(avatarFile);
+    setAvatarPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [avatarFile]);
 
-async function uploadAvatar() {
-  if (!avatarFile) return;
+  function resetFormToUser() {
+    if (!user) return;
 
-  setSaving(true);
-  try {
-    const fd = new FormData();
-    fd.append("avatar", avatarFile);
-
-    const data = await apiFetch(
-      "/api/users/me/avatar",
-      {
-        method: "POST",
-        body: fd
+    setForm({
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      companyName: user.company?.name || user.company?.companyName || "",
+      phone: user.phone || "",
+      email: user.email || "",
+      billingAddress: {
+        address1: user.billingAddress?.address1 || "",
+        address2: user.billingAddress?.address2 || "",
+        city: user.billingAddress?.city || "",
+        state: user.billingAddress?.state || "",
+        zip: user.billingAddress?.zip || ""
       },
-      { onUnauthorized: () => window.location.replace("/signed-out") }
-    );
+      deliveryAddress: {
+        address1: user.deliveryAddress?.address1 || "",
+        address2: user.deliveryAddress?.address2 || "",
+        city: user.deliveryAddress?.city || "",
+        state: user.deliveryAddress?.state || "",
+        zip: user.deliveryAddress?.zip || ""
+      }
+    });
+  }
 
-    setUser(data.user);
-    setAvatarFile(null);
+  async function handleSignOut() {
+    await logout({ redirectTo: "/signed-out" });
+  }
+
+  function setAddressField(which, key, value) {
+    setForm((prev) => ({
+      ...prev,
+      [which]: { ...prev[which], [key]: value }
+    }));
+  }
+
+  async function saveProfile() {
+    setSaving(true);
+    try {
+      const data = await apiFetch(
+        "/api/users/me",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form)
+        },
+        { onUnauthorized: () => window.location.replace("/signed-out") }
+      );
+
+      setUser(data.user);
+      setIsEditing(false);
+      showToast({ variant: "success", message: "Profile updated" });
+    } catch (e) {
+      showToast({ variant: "danger", message: `Profile update failed: ${e.message}` });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function requestTaxExempt() {
+    setSaving(true);
+    try {
+      const data = await apiFetch(
+        "/api/users/me",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ requestTaxExempt: true })
+        },
+        { onUnauthorized: () => window.location.replace("/signed-out") }
+      );
+
+      setUser(data.user);
+      showToast({ variant: "success", message: "Tax exempt request submitted (Pending Approval)" });
+    } catch (e) {
+      showToast({ variant: "danger", message: `Request failed: ${e.message}` });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function uploadAvatar() {
+    if (!avatarFile) return;
+
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append("avatar", avatarFile);
+
+      const data = await apiFetch(
+        "/api/users/me/avatar",
+        {
+          method: "POST",
+          body: fd
+        },
+        { onUnauthorized: () => window.location.replace("/signed-out") }
+      );
+
+      setUser(data.user);
+      setAvatarFile(null);
+      setShowAvatarModal(false);
+      showToast({ variant: "success", message: "Avatar updated" });
+    } catch (e) {
+      showToast({ variant: "danger", message: `Avatar upload failed: ${e.message}` });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function openAvatarModal() {
+    setShowAvatarModal(true);
+  }
+
+  function closeAvatarModal() {
     setShowAvatarModal(false);
-    showToast({ variant: "success", message: "Avatar updated" });
-  } catch (e) {
-    showToast({
-      variant: "danger",
-      message: `Avatar upload failed: ${e.message}`
-    });
-  } finally {
-    setSaving(false);
+    setAvatarFile(null);
   }
-}
 
+  function triggerFilePicker() {
+    fileInputRef.current?.click();
+  }
 
-	function openAvatarModal() {
-		setShowAvatarModal(true);
-	}
+  if (!user) return null;
 
-	function closeAvatarModal() {
-		setShowAvatarModal(false);
-		setAvatarFile(null);
-	}
+  const displayName =
+    user.company?.name ||
+    user.company?.companyName ||
+    [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+    user.email;
 
-	function triggerFilePicker() {
-		fileInputRef.current?.click();
-	}
+  const taxStatus = user.tax?.status || "non_exempt";
+  const taxLabel = formatTaxStatus(taxStatus);
 
-	if (!user) return null;
+  const hasCardOnFile = Boolean(user?.payment?.hasCardOnFile);
 
-	const displayCompanyName =
-		user.company?.name ||
-		user.company?.companyName ||
-		`${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-		user.email;
+  // Read-only display values
+  const display = {
+    firstName: user.firstName || "—",
+    lastName: user.lastName || "—",
+    companyName: user.company?.name || user.company?.companyName || "—",
+    phone: user.phone || "—",
+    email: user.email || "—",
+    billingAddress: user.billingAddress?.address1
+      ? `${user.billingAddress.address1}${user.billingAddress.address2 ? `, ${user.billingAddress.address2}` : ""}, ${user.billingAddress.city || ""} ${user.billingAddress.state || ""} ${user.billingAddress.zip || ""}`.replace(/\s+/g, " ").trim()
+      : "—",
+    deliveryAddress: user.deliveryAddress?.address1
+      ? `${user.deliveryAddress.address1}${user.deliveryAddress.address2 ? `, ${user.deliveryAddress.address2}` : ""}, ${user.deliveryAddress.city || ""} ${user.deliveryAddress.state || ""} ${user.deliveryAddress.zip || ""}`.replace(/\s+/g, " ").trim()
+      : "—"
+  };
 
-	// Static display values (read-only view)
-	const display = {
-		firstName: user.firstName || "—",
-		lastName: user.lastName || "—",
-		companyName: user.company?.name || user.company?.companyName || "—",
-		companyAddress: user.company?.address || "—",
-		taxStatus: user.company?.taxStatus || "—",
-		notes: user.company?.notes || "—",
-	};
+  return (
+    <div className='container-fluid px-3 px-sm-5 py-4 pt-md-5'>
+      <div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
+        <div className='d-flex align-items-center justify-content-between px-0 px-sm-4'>
+          <div className='text-main text-uppercase mb-1 fs-2'>Account</div>
+        </div>
 
-	return (
-		<div className='container-fluid px-3 px-sm-5 py-4 pt-md-5'>
-			<div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
-				<div className='d-flex align-items-center justify-content-between px-0 px-sm-4'>
-					<div className='text-main text-uppercase mb-1 fs-2'>Account</div>
-				</div>
+        <div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
+          <div className='d-flex align-items-center gap-3 pb-3'>
+            <div className='col d-flex align-items-center'>
+              {/* Avatar clickable area */}
+              <div
+                className='avatar-clickable position-relative'
+                role='button'
+                tabIndex={0}
+                onClick={openAvatarModal}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") openAvatarModal();
+                }}
+                style={{ width: 72, height: 72 }}
+              >
+                <img
+                  key={avatarSrc}
+                  src={avatarSrc}
+                  alt='Avatar'
+                  className='rounded-circle avatar-image border border-main border-3'
+                  style={{
+                    width: 72,
+                    height: 72,
+                    objectFit: "cover",
+                    display: "block"
+                  }}
+                />
+                <div className='avatar-overlay'>
+                  <i className='bi bi-camera-fill avatar-overlay-icon' />
+                </div>
+              </div>
 
-				<div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
-					<div className='d-flex align-items-center gap-3 pb-3'>
-						<div className='col d-flex align-items-center'>
-							{/* Avatar clickable area */}
-							<div
-								className='avatar-clickable position-relative'
-								role='button'
-								tabIndex={0}
-								onClick={openAvatarModal}
-								onKeyDown={(e) => {
-									if (e.key === "Enter" || e.key === " ") openAvatarModal();
-								}}
-								style={{ width: 72, height: 72 }}>
-								<img
-									key={avatarSrc}
-									src={avatarSrc}
-									alt='Avatar'
-									className='rounded-circle avatar-image border border-main border-3'
-									style={{
-										width: 72,
-										height: 72,
-										objectFit: "cover",
-										display: "block",
-									}}
-								/>
-								{/* Hover overlay (bottom third only) */}
-								<div className='avatar-overlay'>
-									<i className='bi bi-camera-fill avatar-overlay-icon' />
-								</div>
-							</div>
+              <div className='ps-3'>
+                <div className='company-name-display fw-semibold text-secondary'>{displayName}</div>
+                <div className='email-display text-muted small'>{user.email}</div>
+              </div>
+            </div>
 
-							<div className='ps-3'>
-								<div className='company-name-display fw-semibold text-secondary'>
-									{displayCompanyName}
-								</div>
-								<div className='email-display text-muted small'>{user.email}</div>
-							</div>
-						</div>
-					{/* Top-right actions */}
-					<div className="col-12 col-sm-1 edit-btn text-end">
-					{!isEditing ? (
+            {/* Edit / Cancel */}
+            <div className='col-12 col-sm-1 edit-btn text-end'>
+              {!isEditing ? (
+                <button
+                  className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main col-1'
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit
+                </button>
+              ) : (
+                <div className='d-flex'>
+                  <button
+                    className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
+                    onClick={() => {
+                      resetFormToUser();
+                      setIsEditing(false);
+                    }}
+                    disabled={saving}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
 
-						<button
-							className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main col-1'
-							onClick={() => setIsEditing(true)}>
-							Edit
-						</button>
-					) : (
-						<div className='d-flex'>
-							<button
-								className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
-								onClick={() => {
-									resetFormToUser();
-									setIsEditing(false);
-								}}
-								disabled={saving}>
-								Cancel
-							</button>
-						</div>
-					)}
-					</div>
-						<div className='col-12 col-sm-1 signout-btn text-end'>
-							<button
-								className='btn-main-cta text-center rounded-3 text-uppercase py-2 text-main-light'
-								onClick={handleSignOut}
-								disabled={saving}>
-								Sign Out
-							</button>
-						</div>
-					</div>
+            {/* Sign out */}
+            <div className='col-12 col-sm-1 signout-btn text-end'>
+              <button
+                className='btn-main-cta text-center rounded-3 text-uppercase py-2 text-main-light'
+                onClick={handleSignOut}
+                disabled={saving}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
 
-					<div className='profile-link-box row align-items-center justify-content-center rounded-4 border border-3 border-main py-3 py-sm-2 py-xl-4 px-3 px-xl-5 fw-semibold g-0'>
-						<div className='fs-4 contact-form-title text-main text-uppercase text-start'>
-							Account Details
-						</div>
-						<div className='main-linebreak w-100 border-0 border-top border-main py-2 d-none d-sm-block'></div>
+          {/* Account Details */}
+          <div className='profile-link-box row align-items-center justify-content-center rounded-4 border border-3 border-main py-3 py-sm-2 py-xl-4 px-3 px-xl-5 fw-semibold g-0'>
+            <div className='fs-4 contact-form-title text-main text-uppercase text-start'>
+              Account Details
+            </div>
+            <div className='main-linebreak w-100 border-0 border-top border-main py-2 d-none d-sm-block'></div>
 
-						{/* READ-ONLY VIEW */}
-						{!isEditing && (
-							<div className='profile-static g-0 py-3'>
-								<div className='row g-3'>
-									<div className='col-12 col-md-6'>
-										<div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
-											First name
-										</div>
-										<div className='profile-static-value text-dark ps-0 ps-sm-2'>
-											{display.firstName}
-										</div>
-									</div>
+            {/* READ ONLY */}
+            {!isEditing && (
+              <div className='profile-static g-0 py-3'>
+                <div className='row g-3'>
+                  <div className='col-12 col-md-6'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      First name
+                    </div>
+                    <div className='profile-static-value text-dark ps-0 ps-sm-2'>{display.firstName}</div>
+                  </div>
 
-									<div className='col-12 col-md-6'>
-										<div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
-											Last name
-										</div>
-										<div className='profile-static-value text-dark ps-0 ps-sm-2'>
-											{display.lastName}
-										</div>
-									</div>
+                  <div className='col-12 col-md-6'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      Last name
+                    </div>
+                    <div className='profile-static-value text-dark ps-0 ps-sm-2'>{display.lastName}</div>
+                  </div>
 
-									<div className='col-12 col-md-6'>
-										<div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
-											Company name
-										</div>
-										<div className='profile-static-value text-dark ps-0 ps-sm-2'>
-											{display.companyName}
-										</div>
-									</div>
+                  <div className='col-12 col-md-6'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      Company name
+                    </div>
+                    <div className='profile-static-value text-dark ps-0 ps-sm-2'>{display.companyName}</div>
+                  </div>
 
-									<div className='col-12 col-md-6'>
-										<div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
-											Company address
-										</div>
-										<div className='profile-static-value text-dark ps-0 ps-sm-2'>
-											{display.companyAddress}
-										</div>
-									</div>
+                  <div className='col-12 col-md-6'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      Phone number
+                    </div>
+                    <div className='profile-static-value text-dark ps-0 ps-sm-2'>{display.phone}</div>
+                  </div>
 
-									<div className='col-12 col-md-6'>
-										<div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
-											Tax status
-										</div>
-										<div className='profile-static-value text-dark ps-0 ps-sm-2'>
-											{display.taxStatus}
-										</div>
-									</div>
+                  <div className='col-12 col-md-6'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      Email
+                    </div>
+                    <div className='profile-static-value text-dark ps-0 ps-sm-2'>{display.email}</div>
+                  </div>
 
-									<div className='col-12'>
-										<div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
-											Notes
-										</div>
-										<div className='profile-static-value text-dark ps-0 ps-sm-2'>
-											{display.notes}
-										</div>
-									</div>
-								</div>
-							</div>
-						)}
+                  <div className='col-12 col-md-6'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      Tax status
+                    </div>
+                    <div className='profile-static-value text-dark ps-0 ps-sm-2'>
+                      {taxLabel}
+                      {taxStatus === "non_exempt" && (
+                        <button
+                          className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main ms-3'
+                          onClick={requestTaxExempt}
+                          disabled={saving}
+                        >
+                          Request Exempt
+                        </button>
+                      )}
+                    </div>
+                  </div>
 
-						{/* EDIT MODE (FORM) */}
-						{isEditing && (
-							<div className='contact-form g-0 py-3'>
-								<div className='row g-3'>
-									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
-											First name
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={form.firstName}
-											onChange={(e) =>
-												setForm((p) => ({ ...p, firstName: e.target.value }))
-											}
-										/>
-									</div>
+                  <div className='col-12'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      Billing address
+                    </div>
+                    <div className='profile-static-value text-dark ps-0 ps-sm-2'>{display.billingAddress}</div>
+                  </div>
 
-									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
-											Last name
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={form.lastName}
-											onChange={(e) =>
-												setForm((p) => ({ ...p, lastName: e.target.value }))
-											}
-										/>
-									</div>
+                  <div className='col-12'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      Delivery address
+                    </div>
+                    <div className='profile-static-value text-dark ps-0 ps-sm-2'>{display.deliveryAddress}</div>
+                  </div>
+                </div>
 
-									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
-											Company name
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={form.company.name}
-											onChange={(e) => setCompanyField("name", e.target.value)}
-										/>
-									</div>
+                {/* Card on File (placeholder for Stripe integration) */}
+                <div className='mt-4'>
+                  <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                    Card on file
+                  </div>
+                  <div className='profile-static-value text-dark ps-0 ps-sm-2'>
+                    {hasCardOnFile ? "On file" : "None on file"}
+                    <button
+                      className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main ms-3'
+                      onClick={() => showToast({ variant: "info", message: "Stripe card-on-file coming next." })}
+                      disabled={saving}
+                    >
+                      {hasCardOnFile ? "Update Card" : "Add Card"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
-									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
-											Company address
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={form.company.address}
-											onChange={(e) => setCompanyField("address", e.target.value)}
-										/>
-									</div>
+            {/* EDIT MODE */}
+            {isEditing && (
+              <div className='contact-form g-0 py-3'>
+                <div className='row g-3'>
+                  <div className='col-12 col-md-6'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      First name
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.firstName}
+                      onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))}
+                    />
+                  </div>
 
-									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
-											Tax status
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={form.company.taxStatus}
-											onChange={(e) =>
-												setCompanyField("taxStatus", e.target.value)
-											}
-										/>
-									</div>
+                  <div className='col-12 col-md-6'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      Last name
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.lastName}
+                      onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))}
+                    />
+                  </div>
 
-									<div className='col-12'>
-										<label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
-											Notes
-										</label>
-										<textarea
-											className='form-control form-input rounded-3 text-dark'
-											rows={3}
-											value={form.company.notes}
-											onChange={(e) => setCompanyField("notes", e.target.value)}
-										/>
-									</div>
-								</div>
-							</div>
-						)}
-					</div>
+                  <div className='col-12 col-md-6'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      Company name
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.companyName}
+                      onChange={(e) => setForm((p) => ({ ...p, companyName: e.target.value }))}
+                    />
+                  </div>
 
-					{/* Keep your bottom action row if you still want it (optional) */}
-					{/* If you keep it, it should match editing state */}
-					<div className='d-flex justify-content-end align-items-end pt-3'>
-						<div className='col-12 col-sm text-end'>
-							{!isEditing ? null : (
-								<button
-									className='btn-main-cta px-3 rounded-3 text-uppercase fw-regular py-2 text-main-light'
-									onClick={saveProfile}
-									disabled={saving}>
-									Save
-								</button>
-							)}
-						</div>
-					</div>
-				</div>
-			</div>
+                  <div className='col-12 col-md-6'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      Phone number
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.phone}
+                      onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                    />
+                  </div>
 
-			{/* Avatar Modal */}
-			{showAvatarModal && (
-				<div
-					className='avatar-modal-backdrop'
-					role='presentation'
-					onClick={closeAvatarModal}>
-					<div
-						className='avatar-modal-content rounded-4'
-						role='dialog'
-						aria-modal='true'
-						aria-label='Avatar'
-						onClick={(e) => e.stopPropagation()}>
-						<div className='d-flex justify-content-between align-items-center mb-3'>
-							<div className='text-main text-uppercase fw-semibold'>Avatar</div>
-							<button
-								type='button'
-								className='btn-close'
-								aria-label='Close'
-								onClick={closeAvatarModal}
-							/>
-						</div>
+                  <div className='col-12'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      Email (login)
+                    </label>
+                    <input
+                      type='email'
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.email}
+                      onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                    />
+                    <div className='text-muted small ps-0 ps-sm-2 mt-1'>
+                      Changing your email will change the email you use to log in.
+                    </div>
+                  </div>
 
-						<div className='d-flex flex-column align-items-center'>
-							<img
-								src={avatarPreview || avatarSrc}
-								alt='Avatar preview'
-								className='rounded-circle border border-main border-3'
-								style={{ width: 160, height: 160, objectFit: "cover" }}
-							/>
+                  {/* Billing Address */}
+                  <div className='col-12 mt-2'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      Billing Address
+                    </div>
+                  </div>
 
-							<input
-								ref={fileInputRef}
-								type='file'
-								accept='image/*'
-								className='d-none'
-								onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-							/>
+                  <div className='col-12 col-md-6'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      Address 1
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.billingAddress.address1}
+                      onChange={(e) => setAddressField("billingAddress", "address1", e.target.value)}
+                    />
+                  </div>
 
-							<div className='d-flex gap-2 mt-3'>
-								<button
-									className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
-									onClick={triggerFilePicker}
-									disabled={saving}>
-									Change
-								</button>
+                  <div className='col-12 col-md-6'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      Address 2
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.billingAddress.address2}
+                      onChange={(e) => setAddressField("billingAddress", "address2", e.target.value)}
+                    />
+                  </div>
 
-								<button
-									className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
-									onClick={uploadAvatar}
-									disabled={!avatarFile || saving}>
-									Save
-								</button>
-							</div>
+                  <div className='col-12 col-md-4'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      City
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.billingAddress.city}
+                      onChange={(e) => setAddressField("billingAddress", "city", e.target.value)}
+                    />
+                  </div>
 
-							<div className='text-muted small mt-2'>
-								{avatarFile
-									? avatarFile.name
-									: "Choose an image to update your avatar."}
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
-		</div>
-	);
+                  <div className='col-12 col-md-4'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      State
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.billingAddress.state}
+                      onChange={(e) => setAddressField("billingAddress", "state", e.target.value)}
+                    />
+                  </div>
+
+                  <div className='col-12 col-md-4'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      ZIP
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.billingAddress.zip}
+                      onChange={(e) => setAddressField("billingAddress", "zip", e.target.value)}
+                    />
+                  </div>
+
+                  {/* Delivery Address */}
+                  <div className='col-12 mt-3'>
+                    <div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
+                      Delivery Address
+                    </div>
+                  </div>
+
+                  <div className='col-12 col-md-6'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      Address 1
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.deliveryAddress.address1}
+                      onChange={(e) => setAddressField("deliveryAddress", "address1", e.target.value)}
+                    />
+                  </div>
+
+                  <div className='col-12 col-md-6'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      Address 2
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.deliveryAddress.address2}
+                      onChange={(e) => setAddressField("deliveryAddress", "address2", e.target.value)}
+                    />
+                  </div>
+
+                  <div className='col-12 col-md-4'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      City
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.deliveryAddress.city}
+                      onChange={(e) => setAddressField("deliveryAddress", "city", e.target.value)}
+                    />
+                  </div>
+
+                  <div className='col-12 col-md-4'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      State
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.deliveryAddress.state}
+                      onChange={(e) => setAddressField("deliveryAddress", "state", e.target.value)}
+                    />
+                  </div>
+
+                  <div className='col-12 col-md-4'>
+                    <label className='form-input-label text-uppercase form-label text-main ps-0 ps-sm-2 mb-0'>
+                      ZIP
+                    </label>
+                    <input
+                      className='form-input form-control rounded-3 text-dark'
+                      value={form.deliveryAddress.zip}
+                      onChange={(e) => setAddressField("deliveryAddress", "zip", e.target.value)}
+                    />
+                  </div>
+
+                  {/* Save button (your bottom row stays too) */}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom save row */}
+          <div className='d-flex justify-content-end align-items-end pt-3'>
+            <div className='col-12 col-sm text-end'>
+              {!isEditing ? null : (
+                <button
+                  className='btn-main-cta px-3 rounded-3 text-uppercase fw-regular py-2 text-main-light'
+                  onClick={saveProfile}
+                  disabled={saving}
+                >
+                  Save
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Avatar Modal */}
+      {showAvatarModal && (
+        <div className='avatar-modal-backdrop' role='presentation' onClick={closeAvatarModal}>
+          <div
+            className='avatar-modal-content rounded-4'
+            role='dialog'
+            aria-modal='true'
+            aria-label='Avatar'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='d-flex justify-content-between align-items-center mb-3'>
+              <div className='text-main text-uppercase fw-semibold'>Avatar</div>
+              <button type='button' className='btn-close' aria-label='Close' onClick={closeAvatarModal} />
+            </div>
+
+            <div className='d-flex flex-column align-items-center'>
+              <img
+                src={avatarPreview || avatarSrc}
+                alt='Avatar preview'
+                className='rounded-circle border border-main border-3'
+                style={{ width: 160, height: 160, objectFit: "cover" }}
+              />
+
+              <input
+                ref={fileInputRef}
+                type='file'
+                accept='image/*'
+                className='d-none'
+                onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+              />
+
+              <div className='d-flex gap-2 mt-3'>
+                <button
+                  className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
+                  onClick={triggerFilePicker}
+                  disabled={saving}
+                >
+                  Change
+                </button>
+
+                <button
+                  className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
+                  onClick={uploadAvatar}
+                  disabled={!avatarFile || saving}
+                >
+                  Save
+                </button>
+              </div>
+
+              <div className='text-muted small mt-2'>
+                {avatarFile ? avatarFile.name : "Choose an image to update your avatar."}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

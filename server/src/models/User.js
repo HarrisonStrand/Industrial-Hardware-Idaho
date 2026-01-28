@@ -1,32 +1,46 @@
 import mongoose from "mongoose";
 
-const CompanySchema = new mongoose.Schema(
+const AddressSchema = new mongoose.Schema(
   {
-    companyName: { type: String, trim: true },
-    phone: { type: String, trim: true },
-    address1: { type: String, trim: true },
-    address2: { type: String, trim: true },
-    city: { type: String, trim: true },
-    state: { type: String, trim: true },
-    zip: { type: String, trim: true },
-    taxExempt: { type: Boolean, default: false },
-    notes: { type: String, trim: true }
+    name: { type: String, trim: true, default: "" },       // optional label
+    address1: { type: String, trim: true, default: "" },
+    address2: { type: String, trim: true, default: "" },
+    city: { type: String, trim: true, default: "" },
+    state: { type: String, trim: true, default: "" },
+    zip: { type: String, trim: true, default: "" }
+  },
+  { _id: false }
+);
+
+const TaxSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ["non_exempt", "pending", "exempt"],
+      default: "non_exempt"
+    },
+    approvedAt: { type: Date, default: null },
+    approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }
+  },
+  { _id: false }
+);
+
+const PaymentSchema = new mongoose.Schema(
+  {
+    stripeCustomerId: { type: String, default: "" },
+    defaultPaymentMethodId: { type: String, default: "" }
   },
   { _id: false }
 );
 
 const UserSchema = new mongoose.Schema(
   {
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true
-    },
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
+    phone: { type: String, trim: true, default: "" },
+    notes: { type: String, default: "" },
 
     role: { type: String, enum: ["user", "admin"], default: "user" },
 
@@ -34,16 +48,16 @@ const UserSchema = new mongoose.Schema(
     avatarKey: { type: String, default: "" },
     avatarUpdatedAt: { type: Date, default: null },
 
-    // ✅ Password reset
-    resetPasswordTokenHash: { type: String, default: "" },
-    resetPasswordExpiresAt: { type: Date, default: null },
-
     company: {
-      name: { type: String, default: "" },
-      address: { type: String, default: "" },
-      taxStatus: { type: String, default: "" },
-      notes: { type: String, default: "" }
-    }
+      name: { type: String, default: "" }
+    },
+
+    billingAddress: { type: AddressSchema, default: () => ({}) },
+    deliveryAddress: { type: AddressSchema, default: () => ({}) },
+
+    tax: { type: TaxSchema, default: () => ({}) },
+
+    payment: { type: PaymentSchema, default: () => ({}) }
   },
   { timestamps: true }
 );

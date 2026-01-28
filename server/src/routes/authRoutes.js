@@ -7,133 +7,146 @@ import { signToken } from "../utils/jwt.js";
 import { requireAuth } from "../middleware/auth.js";
 import { createResetToken } from "../utils/resetToken.js";
 
-
 const router = express.Router();
 
 function setAuthCookie(res, token) {
-	const isProd = process.env.NODE_ENV === "production";
+  const isProd = process.env.NODE_ENV === "production";
 
-	res.cookie("token", token, {
-		httpOnly: true,
-		secure: isProd, // must be true on HTTPS
-		sameSite: isProd ? "none" : "lax",
-		maxAge: 7 * 24 * 60 * 60 * 1000,
-	});
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  });
+}
+
+function serializeUser(user) {
+  return {
+    id: user._id,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    phone: user.phone || "",
+    role: user.role,
+
+    company: user.company || { name: "" },
+
+    billingAddress: user.billingAddress || {
+      address1: "",
+      address2: "",
+      city: "",
+      state: "",
+      zip: ""
+    },
+
+    deliveryAddress: user.deliveryAddress || {
+      address1: "",
+      address2: "",
+      city: "",
+      state: "",
+      zip: ""
+    },
+
+    tax: user.tax || { status: "non_exempt", approvedAt: null, approvedBy: null },
+
+    avatarUrl: user.avatarUrl || "",
+    avatarUpdatedAt: user.avatarUpdatedAt || null,
+
+    payment: {
+      hasCardOnFile: Boolean(user?.payment?.defaultPaymentMethodId)
+    }
+  };
 }
 
 router.post("/register", async (req, res) => {
-	try {
-		const {
-			email,
-			password,
-			firstName,
-			lastName,
-			company = {},
-			adminKey, // ✅ optional
-		} = req.body;
+  try {
+    const {
+      email,
+      password,
+      firstName,
+      lastName,
+      companyName = "",
+      phone = "",
+      billingAddress,
+      deliveryAddress,
+      adminKey
+    } = req.body;
 
-		if (!email || !password || !firstName || !lastName) {
-			return res.status(400).json({ error: "Missing required fields" });
-		}
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
-		const existing = await User.findOne({ email: email.toLowerCase() });
-		if (existing)
-			return res.status(409).json({ error: "Email already in use" });
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) return res.status(409).json({ error: "Email already in use" });
 
-		const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(password, 12);
 
-		// ✅ Enforce role safely (no client-controlled role)
-		const isAdmin =
-			typeof adminKey === "string" &&
-			adminKey.length > 0 &&
-			adminKey === process.env.ADMIN_INVITE_KEY;
+    const isAdmin =
+      typeof adminKey === "string" &&
+      adminKey.length > 0 &&
+      adminKey === process.env.ADMIN_INVITE_KEY;
 
-		const user = await User.create({
-			email: email.toLowerCase(),
-			passwordHash,
-			firstName,
-			lastName,
-			company,
-			role: isAdmin ? "admin" : "user",
-		});
+    const user = await User.create({
+      email: email.toLowerCase(),
+      passwordHash,
+      firstName,
+      lastName,
+      phone,
+      company: { name: companyName || "" },
+      billingAddress: billingAddress || undefined,
+      deliveryAddress: deliveryAddress || undefined,
+      // tax.status defaults in schema to non_exempt (recommended)
+      role: isAdmin ? "admin" : "user"
+    });
 
-		const token = signToken({ id: user._id.toString(), role: user.role });
-		setAuthCookie(res, token);
+    const token = signToken({ id: user._id.toString(), role: user.role });
+    setAuthCookie(res, token);
 
-		return res.status(201).json({
-			user: {
-				id: user._id,
-				email: user.email,
-				firstName: user.firstName,
-				lastName: user.lastName,
-				role: user.role,
-				company: user.company,
-				avatarUrl: user.avatarUrl || "",
-				avatarUpdatedAt: user.avatarUpdatedAt || null,
-			},
-		});
-	} catch (err) {
-		console.error("REGISTER ERROR:", err);
-		res.status(500).json({ error: "Registration failed" });
-	}
+    return res.status(201).json({ user: serializeUser(user) });
+  } catch (err) {
+    console.error("REGISTER ERROR:", err);
+    res.status(500).json({ error: "Registration failed" });
+  }
 });
 
 router.post("/login", async (req, res) => {
-	try {
-		const { email, password } = req.body;
-		if (!email || !password) {
-			return res.status(400).json({ error: "Missing email or password" });
-		}
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: "Missing email or password" });
+    }
 
-		const user = await User.findOne({ email: email.toLowerCase() });
-		if (!user) return res.status(401).json({ error: "Invalid credentials" });
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(401).json({ error: "Invalid credentials" });
 
-		const ok = await bcrypt.compare(password, user.passwordHash);
-		if (!ok) return res.status(401).json({ error: "Invalid credentials" });
+    const ok = await bcrypt.compare(password, user.passwordHash);
+    if (!ok) return res.status(401).json({ error: "Invalid credentials" });
 
-		const token = signToken({ id: user._id.toString(), role: user.role });
-		setAuthCookie(res, token);
+    const token = signToken({ id: user._id.toString(), role: user.role });
+    setAuthCookie(res, token);
 
-		return res.status(200).json({
-			user: {
-				id: user._id,
-				email: user.email,
-				firstName: user.firstName,
-				lastName: user.lastName,
-				role: user.role,
-				company: user.company,
-				avatarUrl: user.avatarUrl || "",
-				avatarUpdatedAt: user.avatarUpdatedAt || null,
-			},
-		});
-	} catch (err) {
-		console.error("LOGIN ERROR:", err);
-		res.status(500).json({ error: "Login failed" });
-	}
+    return res.status(200).json({ user: serializeUser(user) });
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    res.status(500).json({ error: "Login failed" });
+  }
 });
 
 router.post("/logout", (_req, res) => {
-	res.clearCookie("token");
-	res.status(200).json({ success: true });
+  res.clearCookie("token");
+  res.status(200).json({ success: true });
 });
 
 router.get("/me", requireAuth, async (req, res) => {
-	const user = await User.findById(req.user.id).lean();
-	if (!user) return res.status(404).json({ error: "User not found" });
+  const user = await User.findById(req.user.id).lean();
+  if (!user) return res.status(404).json({ error: "User not found" });
 
-	res.json({
-		user: {
-			id: user._id,
-			email: user.email,
-			firstName: user.firstName,
-			lastName: user.lastName,
-			role: user.role,
-			company: user.company,
-			avatarUrl: user.avatarUrl || "",
-			avatarUpdatedAt: user.avatarUpdatedAt || null,
-		},
-	});
+  return res.json({ user: serializeUser(user) });
 });
+
+/* ===========================
+   Forgot / Reset password
+   =========================== */
 
 router.post("/forgot-password", async (req, res) => {
   try {
@@ -142,7 +155,7 @@ router.post("/forgot-password", async (req, res) => {
 
     const user = await User.findOne({ email: email.toLowerCase() });
 
-    // ✅ Always return success to avoid leaking whether the account exists
+    // Always return success to avoid leaking account existence
     if (!user) return res.json({ success: true });
 
     const { token, tokenHash } = createResetToken();
@@ -157,10 +170,7 @@ router.post("/forgot-password", async (req, res) => {
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD
-      }
+      auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD }
     });
 
     await transporter.sendMail({
@@ -214,34 +224,21 @@ router.post("/reset-password", async (req, res) => {
 
     user.passwordHash = await bcrypt.hash(newPassword, 12);
 
-    // ✅ Invalidate token
+    // Invalidate token
     user.resetPasswordTokenHash = "";
     user.resetPasswordExpiresAt = null;
 
     await user.save();
 
-    // ✅ Optional: auto-login after reset
+    // Optional: auto-login after reset
     const jwtToken = signToken({ id: user._id.toString(), role: user.role });
     setAuthCookie(res, jwtToken);
 
-    return res.json({
-      success: true,
-      user: {
-        id: user._id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        company: user.company,
-        avatarUrl: user.avatarUrl,
-        avatarUpdatedAt: user.avatarUpdatedAt
-      }
-    });
+    return res.json({ success: true, user: serializeUser(user) });
   } catch (err) {
     console.error("RESET PASSWORD ERROR:", err);
     return res.status(500).json({ error: "Reset failed" });
   }
 });
-
 
 export default router;
