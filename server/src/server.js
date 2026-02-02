@@ -9,24 +9,29 @@ import productRoutes from "./routes/productRoutes.js";
 import contactRoute from "./routes/contact.js";
 import userRoutes from "./routes/userRoutes.js";
 import specialRequestsRoute from "./routes/specialRequestsRoute.js";
-
+import billingRoutes from "./routes/billingRoutes.js";
 
 dotenv.config();
 
 const app = express();
 
-app.use(cookieParser());
-app.use(express.json());
-
-app.use("/api/users", userRoutes);
-app.use("/api/special-requests", specialRequestsRoute);
-
+// ✅ Put CORS early so it handles preflight before routes
 app.use(
   cors({
     origin: ["http://localhost:3000"],
     credentials: true
   })
 );
+
+app.use(cookieParser());
+app.use(express.json());
+
+// Routes that can run regardless of DB should go above the DB gate (optional)
+// app.use("/api/contact", contactRoute);
+
+app.use("/api/users", userRoutes);
+app.use("/api/special-requests", specialRequestsRoute);
+app.use("/api/billing", billingRoutes);
 
 app.get("/", (_req, res) => res.json({ status: "API running" }));
 

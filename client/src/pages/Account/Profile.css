@@ -196,3 +196,45 @@
 	width: 100% !important;
   max-width: 250px !important;
 }
+
+/* =========================
+   Card On File Modal
+   ========================= */
+
+.card-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.card-modal-content {
+  width: min(560px, 96vw);
+  background: var(--main-light, #fff);
+  border: 2px solid var(--main, #111);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  padding: 18px 18px 20px;
+}
+
+.card-summary-box {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.card-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-summary-muted {
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
