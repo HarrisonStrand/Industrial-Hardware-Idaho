@@ -3,12 +3,13 @@ import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { apiFetch } from "../../utils/apiFetch";
 import CardOnFile from "../../components/Billing/CardOnFile.jsx";
+import CardModal from "../../components/Billing/CardModal.jsx";
 import "./Profile.css";
 
 function formatTaxStatus(status) {
 	if (status === "exempt") return "Exempt (Approved)";
 	if (status === "pending") return "Pending Approval";
-	return "Non-Exempt";
+	return "";
 }
 
 export default function Profile() {
@@ -269,6 +270,22 @@ export default function Profile() {
 		setShowCardModal(false);
 	}
 
+	useEffect(() => {
+		if (!showAvatarModal) return;
+		document.body.style.overflow = "hidden";
+		return () => {
+			document.body.style.overflow = "";
+		};
+	}, [showAvatarModal]);
+
+	useEffect(() => {
+		if (!showCardModal) return;
+		document.body.style.overflow = "hidden";
+		return () => {
+			document.body.style.overflow = "";
+		};
+	}, [showCardModal]);
+
 	if (!user) return null;
 
 	const displayName =
@@ -291,7 +308,9 @@ export default function Profile() {
 		email: user.email || "—",
 		billingAddress: user.billingAddress?.address1
 			? `${user.billingAddress.address1}${
-					user.billingAddress.address2 ? `, ${user.billingAddress.address2}` : ""
+					user.billingAddress.address2
+						? `, ${user.billingAddress.address2}`
+						: ""
 				}, ${user.billingAddress.city || ""} ${
 					user.billingAddress.state || ""
 				} ${user.billingAddress.zip || ""}`
@@ -489,10 +508,12 @@ export default function Profile() {
 										Card on file
 									</div>
 
-									<div className='profile-static-value text-dark ps-0 ps-sm-2 d-flex align-items-center flex-wrap gap-2'>
-										<span>
-											{!hasCardOnFile && "None on file"}
-											{hasCardOnFile && loadingCard && "Card on file (loading...)"}
+									<div className='profile-static-value text-dark ps-0 ps-sm-2 d-flex align-items-center flex-wrap'>
+										{hasCardOnFile &&
+										<span className="pe-3">
+											{hasCardOnFile &&
+												loadingCard &&
+												"Card on file (loading...)"}
 											{hasCardOnFile && !loadingCard && cardSummary?.last4 && (
 												<>
 													{`${(cardSummary.brand || "card").toUpperCase()} •••• ${cardSummary.last4}`}
@@ -509,9 +530,10 @@ export default function Profile() {
 												!cardSummary?.last4 &&
 												"Card on file"}
 										</span>
+						}
 
 										<button
-											className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main ms-0 ms-sm-3'
+											className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light me-0 me-sm-3'
 											onClick={openCardModal}
 											disabled={saving}>
 											{hasCardOnFile ? "Update Card" : "Add Card"}
@@ -519,7 +541,7 @@ export default function Profile() {
 
 										{hasCardOnFile && (
 											<button
-												className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
+												className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light me-0 me-sm-3'
 												onClick={removeCardOnFile}
 												disabled={saving}>
 												Remove
@@ -599,7 +621,8 @@ export default function Profile() {
 											}
 										/>
 										<div className='text-muted small ps-0 ps-sm-2 mt-1'>
-											Changing your email will change the email you use to log in.
+											Changing your email will change the email you use to log
+											in.
 										</div>
 									</div>
 
@@ -618,7 +641,11 @@ export default function Profile() {
 											className='form-input form-control rounded-3 text-dark'
 											value={form.billingAddress.address1}
 											onChange={(e) =>
-												setAddressField("billingAddress", "address1", e.target.value)
+												setAddressField(
+													"billingAddress",
+													"address1",
+													e.target.value
+												)
 											}
 										/>
 									</div>
@@ -631,7 +658,11 @@ export default function Profile() {
 											className='form-input form-control rounded-3 text-dark'
 											value={form.billingAddress.address2}
 											onChange={(e) =>
-												setAddressField("billingAddress", "address2", e.target.value)
+												setAddressField(
+													"billingAddress",
+													"address2",
+													e.target.value
+												)
 											}
 										/>
 									</div>
@@ -644,7 +675,11 @@ export default function Profile() {
 											className='form-input form-control rounded-3 text-dark'
 											value={form.billingAddress.city}
 											onChange={(e) =>
-												setAddressField("billingAddress", "city", e.target.value)
+												setAddressField(
+													"billingAddress",
+													"city",
+													e.target.value
+												)
 											}
 										/>
 									</div>
@@ -657,7 +692,11 @@ export default function Profile() {
 											className='form-input form-control rounded-3 text-dark'
 											value={form.billingAddress.state}
 											onChange={(e) =>
-												setAddressField("billingAddress", "state", e.target.value)
+												setAddressField(
+													"billingAddress",
+													"state",
+													e.target.value
+												)
 											}
 										/>
 									</div>
@@ -690,7 +729,11 @@ export default function Profile() {
 											className='form-input form-control rounded-3 text-dark'
 											value={form.deliveryAddress.address1}
 											onChange={(e) =>
-												setAddressField("deliveryAddress", "address1", e.target.value)
+												setAddressField(
+													"deliveryAddress",
+													"address1",
+													e.target.value
+												)
 											}
 										/>
 									</div>
@@ -703,7 +746,11 @@ export default function Profile() {
 											className='form-input form-control rounded-3 text-dark'
 											value={form.deliveryAddress.address2}
 											onChange={(e) =>
-												setAddressField("deliveryAddress", "address2", e.target.value)
+												setAddressField(
+													"deliveryAddress",
+													"address2",
+													e.target.value
+												)
 											}
 										/>
 									</div>
@@ -716,7 +763,11 @@ export default function Profile() {
 											className='form-input form-control rounded-3 text-dark'
 											value={form.deliveryAddress.city}
 											onChange={(e) =>
-												setAddressField("deliveryAddress", "city", e.target.value)
+												setAddressField(
+													"deliveryAddress",
+													"city",
+													e.target.value
+												)
 											}
 										/>
 									</div>
@@ -729,7 +780,11 @@ export default function Profile() {
 											className='form-input form-control rounded-3 text-dark'
 											value={form.deliveryAddress.state}
 											onChange={(e) =>
-												setAddressField("deliveryAddress", "state", e.target.value)
+												setAddressField(
+													"deliveryAddress",
+													"state",
+													e.target.value
+												)
 											}
 										/>
 									</div>
@@ -742,7 +797,11 @@ export default function Profile() {
 											className='form-input form-control rounded-3 text-dark'
 											value={form.deliveryAddress.zip}
 											onChange={(e) =>
-												setAddressField("deliveryAddress", "zip", e.target.value)
+												setAddressField(
+													"deliveryAddress",
+													"zip",
+													e.target.value
+												)
 											}
 										/>
 									</div>
@@ -833,74 +892,16 @@ export default function Profile() {
 
 			{/* Card Modal */}
 			{showCardModal && (
-				<div
-					className='card-modal-backdrop'
-					role='presentation'
-					onClick={closeCardModal}>
-					<div
-						className='card-modal-content rounded-4'
-						role='dialog'
-						aria-modal='true'
-						aria-label='Card on file'
-						onClick={(e) => e.stopPropagation()}>
-						<div className='d-flex justify-content-between align-items-center mb-3'>
-							<div className='text-main text-uppercase fw-semibold'>
-								Card On File
-							</div>
-							<button
-								type='button'
-								className='btn-close'
-								aria-label='Close'
-								onClick={closeCardModal}
-							/>
-						</div>
-
-						<div className='text-muted small mb-3'>
-							Add a card to speed up checkout. Your card details are securely
-							stored by our payment processor (not in our database).
-						</div>
-
-						<div className='card-summary-box mb-3'>
-							<div className='card-summary-row'>
-								<div className='text-main text-uppercase fw-semibold'>
-									Current
-								</div>
-								<div className='card-summary-muted'>
-									{!hasCardOnFile
-										? "None"
-										: loadingCard
-											? "Loading..."
-											: cardSummary?.last4
-												? `${(cardSummary.brand || "card").toUpperCase()} •••• ${cardSummary.last4}`
-												: "On file"}
-								</div>
-							</div>
-						</div>
-
-						<CardOnFile
-							onDone={async () => {
-								try {
-									const data = await apiFetch("/api/billing/card-summary");
-									setCardSummary(data.card || null);
-								} catch {
-									setCardSummary(null);
-								}
-								closeCardModal();
-							}}
-						/>
-
-						{hasCardOnFile && (
-							<div className='d-flex justify-content-end mt-3'>
-								<button
-									className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light'
-									onClick={removeCardOnFile}
-									disabled={saving}>
-									Remove Card
-								</button>
-							</div>
-						)}
-					</div>
-				</div>
+				<CardModal
+					open={showCardModal}
+					onClose={closeCardModal}
+					hasCardOnFile={hasCardOnFile}
+					loadingCard={loadingCard}
+					cardSummary={cardSummary}
+					saving={saving}
+					removeCardOnFile={removeCardOnFile}
+					setCardSummary={setCardSummary}
+				/>
 			)}
 		</div>
 	);
