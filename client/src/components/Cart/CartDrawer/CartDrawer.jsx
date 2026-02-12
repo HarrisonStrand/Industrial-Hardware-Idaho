@@ -1,6 +1,6 @@
 import React from "react";
 import "./CartDrawer.css";
-import CartItem from "../CartItem/CartItem";
+import CartDrawerItem from "./CartDrawerItem";
 import { useCart } from "../../../context/CartContext";
 import { Link } from "react-router-dom";
 
@@ -28,7 +28,7 @@ export default function CartDrawer({ isOpen, onClose }) {
           )}
 
           {items.map((item) => (
-            <CartItem
+            <CartDrawerItem
               key={item.partNumber}
               item={item}
             />

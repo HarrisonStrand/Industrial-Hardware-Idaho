@@ -338,8 +338,8 @@ export default function Profile() {
 				</div>
 
 				<div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
-					<div className='d-flex align-items-center gap-3 pb-3'>
-						<div className='col d-flex align-items-center'>
+					<div className='row d-flex align-items-center gap-3 pb-3'>
+						<div className='col-12 col-sm d-flex align-items-center'>
 							{/* Avatar clickable area */}
 							<div
 								className='avatar-clickable position-relative'
@@ -378,11 +378,11 @@ export default function Profile() {
 						</div>
 
 						{/* Edit / Cancel */}
-						<div className='col-12 col-sm-1 edit-btn text-end'>
+						<div className='col col-sm-1 edit-btn text-center text-sm-end'>
 							{!isEditing ? (
 								// ✅ FIX: restore "Edit" to your MAIN CTA styling
 								<button
-									className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main col-1'
+									className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main'
 									onClick={() => setIsEditing(true)}>
 									Edit
 								</button>
@@ -400,7 +400,7 @@ export default function Profile() {
 						</div>
 
 						{/* Sign out */}
-						<div className='col-12 col-sm-1 signout-btn text-end'>
+						<div className='col col-sm-1 signout-btn text-center text-sm-end'>
 							<button
 								className='btn-main-cta text-center rounded-3 text-uppercase py-2 text-main-light'
 								onClick={handleSignOut}
@@ -508,9 +508,9 @@ export default function Profile() {
 										Card on file
 									</div>
 
-									<div className='profile-static-value text-dark ps-0 ps-sm-2 d-flex align-items-center flex-wrap'>
+									<div className='profile-static-value text-dark ps-0 ps-sm-2 d-flex align-items-center flex-wrap align-items-center'>
 										{hasCardOnFile &&
-										<span className="pe-3">
+										<span className="pe-0 pe-sm-3">
 											{hasCardOnFile &&
 												loadingCard &&
 												"Card on file (loading...)"}
@@ -529,6 +529,13 @@ export default function Profile() {
 												!loadingCard &&
 												!cardSummary?.last4 &&
 												"Card on file"}
+																						{hasCardOnFile && (
+											<i
+												className='remove-card-icon bi bi-x text-danger text-uppercase fw-bold fs-3'
+												onClick={removeCardOnFile}
+												disabled={saving}>
+											</i>
+										)}
 										</span>
 						}
 
@@ -538,15 +545,6 @@ export default function Profile() {
 											disabled={saving}>
 											{hasCardOnFile ? "Update Card" : "Add Card"}
 										</button>
-
-										{hasCardOnFile && (
-											<button
-												className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light me-0 me-sm-3'
-												onClick={removeCardOnFile}
-												disabled={saving}>
-												Remove
-											</button>
-										)}
 									</div>
 								</div>
 							</div>

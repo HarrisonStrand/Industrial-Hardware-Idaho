@@ -9,7 +9,7 @@ export default function Cart() {
 
 	return (
 		<div className='theme-detail container-fluid px-3 px-sm-5 py-4 py-md-5'>
-			<div className='theme-detail-container py-4 cart-detail fade-in rounded-4 px-3 px-sm-5'>
+			<div className='theme-detail-container py-4 theme-detail fade-in rounded-4 px-3 px-sm-5'>
 				<div className='row py-4 m-0'>
 					<div className='text-main text-uppercase mb-1 fs-4 px-0'>
 						Cart Summary

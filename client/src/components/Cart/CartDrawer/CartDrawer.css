@@ -14,6 +14,14 @@
   pointer-events: auto;
 } */
 
+.cart-items {
+  padding: 12px;
+  padding-bottom: 220px; /* space for subtotal + buttons */
+  overflow-y: auto;
+  height: calc(100vh - 70px); /* adjust if your header is taller */
+}
+
+
 .cart-drawer {
 	position: fixed;
 	top: 0;

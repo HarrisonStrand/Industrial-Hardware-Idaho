@@ -136,9 +136,9 @@ export default function ProductDetail() {
 	// RENDER
 	// --------------------------------------------------
 	return (
-		<div className='product-detail container-fluid px-3 px-sm-5 py-4 py-md-5'>
-			<div className='product-detail-container py-4 product-detail fade-in rounded-4 px-3 px-sm-5'>
-				<div className='product-title text-center text-main fs-1 py-3 text-uppercase'>
+		<div className='theme-detail container-fluid px-3 px-sm-5 py-4 py-md-5'>
+			<div className='theme-detail-container py-4 theme-detail fade-in rounded-4 px-3 px-sm-5'>
+				<div className='theme-title text-center text-main fs-1 py-3 text-uppercase'>
 					{subcategory.name}
 				</div>
 

@@ -1,0 +1,12 @@
+/* CTA Button */
+.btn-main-cta {
+	line-height: 20px !important;
+	width: 100% !important;
+  max-width: 250px !important;
+}
+
+.btn-secondary-cta {
+	line-height: 20px !important;
+	width: 100% !important;
+  max-width: 250px !important;
+}
