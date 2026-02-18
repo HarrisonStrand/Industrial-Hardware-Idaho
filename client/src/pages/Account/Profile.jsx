@@ -15,6 +15,9 @@ function formatTaxStatus(status) {
 export default function Profile() {
 	const { user, setUser, logout } = useAuth();
 	const { showToast } = useToast();
+	const [accountCaps, setAccountCaps] = useState(null);
+	const [requesting, setRequesting] = useState(false);
+	const [accountCapsError, setAccountCapsError] = useState("");
 
 	const [isEditing, setIsEditing] = useState(false);
 	const [saving, setSaving] = useState(false);
@@ -330,6 +333,63 @@ export default function Profile() {
 			: "—",
 	};
 
+	useEffect(() => {
+		let alive = true;
+
+		async function loadAccount() {
+			try {
+				setAccountCapsError("");
+				const caps = await apiFetch("/api/checkout/capabilities");
+				if (!alive) return;
+
+				setAccountCaps(
+					caps.account || {
+						requestedType: "RETAIL",
+						approvedType: "RETAIL",
+						approvalStatus: "NONE",
+						rejectionReason: "",
+					}
+				);
+			} catch (e) {
+				if (!alive) return;
+				setAccountCapsError(e.message || "Failed to load account capabilities");
+				setAccountCaps(null);
+			}
+		}
+
+		loadAccount();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	async function requestAccountType(type) {
+		try {
+			setRequesting(true);
+
+			await apiFetch("/api/checkout/request-account-type", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ requestedType: type }),
+			});
+
+			showToast({
+				variant: "success",
+				message: "Request submitted. Awaiting admin approval.",
+			});
+
+			const caps = await apiFetch("/api/checkout/capabilities");
+			setAccountCaps(caps.account || null);
+		} catch (e) {
+			showToast({
+				variant: "danger",
+				message: e.message,
+			});
+		} finally {
+			setRequesting(false);
+		}
+	}
+
 	return (
 		<div className='container-fluid px-3 px-sm-5 py-4 pt-md-5'>
 			<div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
@@ -502,6 +562,92 @@ export default function Profile() {
 									</div>
 								</div>
 
+								<div className='mt-5'>
+									<div className='fs-4 contact-form-title text-main text-uppercase text-start'>
+										Account Type
+									</div>
+
+									<div className='main-linebreak w-100 border-0 border-top border-main py-2 d-none d-sm-block' />
+
+									<div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5 mt-3'>
+										{!accountCaps && !accountCapsError && (
+											<div className='text-muted'>Loading account info...</div>
+										)}
+
+										{accountCapsError && (
+											<div className='text-danger small'>
+												{accountCapsError}
+											</div>
+										)}
+
+										{/* Render buttons regardless, so user can still request */}
+										<div className='mt-3'>
+											<div className='text-muted small mb-2'>
+												Request account type upgrade:
+											</div>
+
+											<div className='d-flex flex-column flex-sm-row gap-2'>
+												<button
+													className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main px-4'
+													onClick={() => requestAccountType("NET30")}
+													disabled={requesting}>
+													Request Net 30
+												</button>
+
+												<button
+													className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main px-4'
+													onClick={() => requestAccountType("HOUSE")}
+													disabled={requesting}>
+													Request House Account
+												</button>
+											</div>
+										</div>
+
+										{/* Only show status details if caps loaded */}
+										{accountCaps && (
+											<div className='mt-4'>
+												<div className='mb-3'>
+													<div className='text-muted small'>Requested Type</div>
+													<div className='text-main fw-semibold'>
+														{accountCaps.requestedType}
+													</div>
+												</div>
+
+												<div className='mb-3'>
+													<div className='text-muted small'>Approved Type</div>
+													<div className='text-main fw-semibold'>
+														{accountCaps.approvedType}
+													</div>
+												</div>
+
+												<div className='mb-3'>
+													<div className='text-muted small'>
+														Approval Status
+													</div>
+													<div
+														className={`fw-semibold ${
+															accountCaps.approvalStatus === "APPROVED"
+																? "text-success"
+																: accountCaps.approvalStatus === "PENDING"
+																	? "text-warning"
+																	: accountCaps.approvalStatus === "REJECTED"
+																		? "text-danger"
+																		: "text-main"
+														}`}>
+														{accountCaps.approvalStatus}
+													</div>
+
+													{accountCaps.rejectionReason ? (
+														<div className='text-danger small mt-1'>
+															{accountCaps.rejectionReason}
+														</div>
+													) : null}
+												</div>
+											</div>
+										)}
+									</div>
+								</div>
+
 								{/* Card on File */}
 								<div className='mt-4'>
 									<div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-0'>
@@ -509,35 +655,38 @@ export default function Profile() {
 									</div>
 
 									<div className='profile-static-value text-dark ps-0 ps-sm-2 d-flex align-items-center flex-wrap align-items-center'>
-										{hasCardOnFile &&
-										<span className="pe-0 pe-sm-3">
-											{hasCardOnFile &&
-												loadingCard &&
-												"Card on file (loading...)"}
-											{hasCardOnFile && !loadingCard && cardSummary?.last4 && (
-												<>
-													{`${(cardSummary.brand || "card").toUpperCase()} •••• ${cardSummary.last4}`}
-													{cardSummary.expMonth && cardSummary.expYear
-														? ` (exp ${String(cardSummary.expMonth).padStart(
-																2,
-																"0"
-															)}/${String(cardSummary.expYear).slice(-2)})`
-														: ""}
-												</>
-											)}
-											{hasCardOnFile &&
-												!loadingCard &&
-												!cardSummary?.last4 &&
-												"Card on file"}
-																						{hasCardOnFile && (
-											<i
-												className='remove-card-icon bi bi-x text-danger text-uppercase fw-bold fs-3'
-												onClick={removeCardOnFile}
-												disabled={saving}>
-											</i>
+										{hasCardOnFile && (
+											<span className='pe-0 pe-sm-3'>
+												{hasCardOnFile &&
+													loadingCard &&
+													"Card on file (loading...)"}
+												{hasCardOnFile &&
+													!loadingCard &&
+													cardSummary?.last4 && (
+														<>
+															{`${(cardSummary.brand || "card").toUpperCase()} •••• ${cardSummary.last4}`}
+															{cardSummary.expMonth && cardSummary.expYear
+																? ` (exp ${String(
+																		cardSummary.expMonth
+																	).padStart(
+																		2,
+																		"0"
+																	)}/${String(cardSummary.expYear).slice(-2)})`
+																: ""}
+														</>
+													)}
+												{hasCardOnFile &&
+													!loadingCard &&
+													!cardSummary?.last4 &&
+													"Card on file"}
+												{hasCardOnFile && (
+													<i
+														className='remove-card-icon bi bi-x text-danger text-uppercase fw-bold fs-3'
+														onClick={removeCardOnFile}
+														disabled={saving}></i>
+												)}
+											</span>
 										)}
-										</span>
-						}
 
 										<button
 											className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light me-0 me-sm-3'

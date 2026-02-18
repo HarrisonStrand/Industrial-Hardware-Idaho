@@ -12,8 +12,13 @@
     "prettier": "3.6.2"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
     "framer-motion": "^12.23.24",
+    "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
-    "nodemailer": "^7.0.12"
+    "mongoose": "^9.2.1",
+    "nodemailer": "^7.0.12",
+    "stripe": "^20.3.1"
   }
 }

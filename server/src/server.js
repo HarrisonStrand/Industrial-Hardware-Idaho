@@ -1,65 +1,60 @@
 import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
+import cors from "cors";
 import cookieParser from "cookie-parser";
-import { connectDB } from "./config/db.js";
+import mongoose from "mongoose";
 
 import authRoutes from "./routes/authRoutes.js";
-import productRoutes from "./routes/productRoutes.js";
-import contactRoute from "./routes/contact.js";
-import userRoutes from "./routes/userRoutes.js";
-import specialRequestsRoute from "./routes/specialRequestsRoute.js";
 import billingRoutes from "./routes/billingRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import contactRoutes from "./routes/contact.js";
+
+import checkoutRoutes from "./routes/checkoutRoutes.js";
+import adminUsersRoutes from "./routes/adminUsersRoutes.js";
 
 dotenv.config();
+console.log("Stripe key exists:", Boolean(process.env.STRIPE_SECRET_KEY));
+console.log("🔥 RUNNING server/src/server.js build:", new Date().toISOString());
 
 const app = express();
 
-// ✅ Put CORS early so it handles preflight before routes
+app.use(express.json());
+app.use(cookieParser());
+
+app.use((req, _res, next) => {
+  console.log("➡️", req.method, req.path);
+  next();
+});
+
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
-    credentials: true
+    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    credentials: true,
   })
 );
 
-app.use(cookieParser());
-app.use(express.json());
+// ✅ health should not depend on DB connection
+app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-// Routes that can run regardless of DB should go above the DB gate (optional)
-// app.use("/api/contact", contactRoute);
-
-app.use("/api/users", userRoutes);
-app.use("/api/special-requests", specialRequestsRoute);
+app.use("/api/auth", authRoutes);
 app.use("/api/billing", billingRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/contact", contactRoutes);
 
-app.get("/", (_req, res) => res.json({ status: "API running" }));
+app.use("/api/checkout", checkoutRoutes);
+app.use("/api/admin/users", adminUsersRoutes);
 
-let dbReady = false;
+const PORT = process.env.PORT || 5001;
 
-async function start() {
+(async () => {
   try {
-    await connectDB();
-    dbReady = true;
-  } catch (e) {
-    console.warn("⚠️ MongoDB not connected — auth routes will return 503");
-    console.warn(e?.message || e);
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("✅ MongoDB connected");
+    console.log("ABOUT TO LISTEN ON PORT:", PORT);
+
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  } catch (err) {
+    console.error("❌ Server failed:", err);
+    process.exit(1);
   }
-
-  // If DB isn’t ready, prevent auth routes from crashing the app
-  app.use("/api/auth", (req, res, next) => {
-    if (!dbReady) {
-      return res.status(503).json({ error: "Database unavailable" });
-    }
-    next();
-  });
-
-  app.use("/api/auth", authRoutes);
-  app.use("/api/products", productRoutes);
-  app.use("/api/contact", contactRoute);
-
-  const PORT = process.env.PORT || 5001;
-  app.listen(PORT, () => console.log(`Server listening on :${PORT}`));
-}
-
-start();
+})();

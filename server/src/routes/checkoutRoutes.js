@@ -1,0 +1,15 @@
+import { Router } from "express";
+import { requireAuth } from "../middleware/auth.js";
+import {
+  getCapabilities,
+  requestAccountType,
+  createPayLaterOrder
+} from "../controllers/checkoutController.js";
+
+const router = Router();
+
+router.get("/capabilities", requireAuth, getCapabilities);
+router.post("/request-account-type", requireAuth, requestAccountType);
+router.post("/pay-later/order", requireAuth, createPayLaterOrder);
+
+export default router;
