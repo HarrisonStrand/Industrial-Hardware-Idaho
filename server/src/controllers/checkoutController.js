@@ -106,13 +106,13 @@ export async function createPayLaterOrder(req, res) {
 }
 
 function safeAddress(a) {
-  return {
-    address1: a?.address1 || "",
-    address2: a?.address2 || "",
-    city: a?.city || "",
-    state: a?.state || "",
-    zip: a?.zip || ""
-  };
+	return {
+		address1: a?.address1 || "",
+		address2: a?.address2 || "",
+		city: a?.city || "",
+		state: a?.state || "",
+		zip: a?.zip || "",
+	};
 }
 
 /**
@@ -121,80 +121,109 @@ function safeAddress(a) {
  * Client confirms via Stripe Elements.
  */
 export async function createPayNowIntent(req, res) {
-  try {
-    if (!stripe) {
-      return res.status(500).json({ error: "Stripe is not configured on the server." });
-    }
+	try {
+		if (!stripe) {
+			return res
+				.status(500)
+				.json({ error: "Stripe is not configured on the server." });
+		}
 
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
+		const user = await User.findById(req.user.id);
+		if (!user) return res.status(404).json({ error: "User not found" });
 
-    const {
-      amountCents,
-      currency = "usd",
-      saveThisCard = false,
-      // optional order snapshot if you want to send it from client:
-      items = [],
-      billingAddress,
-      shippingAddress,
-      shippingSameAsBilling = true
-    } = req.body || {};
+		const {
+			amountCents,
+			currency = "usd",
+			saveThisCard = false,
+			// optional order snapshot if you want to send it from client:
+			items = [],
+			billingAddress,
+			shippingAddress,
+			shippingSameAsBilling = true,
+		} = req.body || {};
 
-    const amountTotalCents = Number(amountCents || 0);
-    if (!Number.isFinite(amountTotalCents) || amountTotalCents <= 0) {
-      return res.status(400).json({ error: "Invalid amountCents" });
-    }
+		const amountTotalCents = Number(amountCents || 0);
+		if (!Number.isFinite(amountTotalCents) || amountTotalCents <= 0) {
+			return res.status(400).json({ error: "Invalid amountCents" });
+		}
 
-    const orderNumber = await generateOrderNumber();
+		const orderNumber = await generateOrderNumber();
 
-    const order = await Order.create({
-      orderNumber,
-      userId: user._id,
-      customer: {
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        companyName: user.company?.name || ""
-      },
-      billingAddress: safeAddress(billingAddress || user.billingAddress),
-      shippingAddress: safeAddress(
-        shippingSameAsBilling
-          ? (billingAddress || user.billingAddress)
-          : (shippingAddress || user.deliveryAddress)
-      ),
-      shippingSameAsBilling: Boolean(shippingSameAsBilling),
-      items: Array.isArray(items) ? items : [],
-      currency,
-      amountTotalCents,
-      payment: { mode: "PAY_NOW", status: "PENDING" }
-    });
+		const baseOrderData = {
+			userId: user._id,
+			customer: {
+				firstName: user.firstName || "",
+				lastName: user.lastName || "",
+				email: user.email || "",
+				phone: user.phone || "",
+				companyName: user.company?.name || "",
+			},
+			billingAddress: safeAddress(billingAddress || user.billingAddress),
+			shippingAddress: safeAddress(
+				shippingSameAsBilling
+					? billingAddress || user.billingAddress
+					: shippingAddress || user.deliveryAddress,
+			),
+			shippingSameAsBilling: Boolean(shippingSameAsBilling),
+			items: Array.isArray(items) ? items : [],
+			currency,
+			amountTotalCents,
+			payment: { mode: "PAY_NOW", status: "PENDING" },
+		};
 
-    const pi = await stripe.paymentIntents.create({
-      amount: amountTotalCents,
-      currency,
-      automatic_payment_methods: { enabled: true },
-      ...(saveThisCard ? { setup_future_usage: "off_session" } : {}),
-      metadata: {
-        orderId: String(order._id),
-        orderNumber: order.orderNumber,
-        userId: String(user._id)
-      }
-    });
+		let order;
 
-    // store PI id for reference
-    order.payment.stripePaymentIntentId = pi.id;
-    await order.save();
+		try {
+			const orderNumber = await generateOrderNumber();
+			order = await Order.create({
+				...baseOrderData,
+				orderNumber,
+			});
+		} catch (err) {
+			// Retry once if duplicate orderNumber somehow occurred
+			if (err?.code === 11000 && err?.keyPattern?.orderNumber) {
+				const orderNumber = await generateOrderNumber();
+				order = await Order.create({
+					...baseOrderData,
+					orderNumber,
+				});
+			} else {
+				throw err;
+			}
+		}
 
-    return res.json({
-      clientSecret: pi.client_secret,
-      orderId: String(order._id),
-      orderNumber: order.orderNumber
-    });
-  } catch (err) {
-    console.error("PAY-NOW INTENT ERROR:", err);
-    return res.status(500).json({ error: "Failed to create payment intent" });
-  }
+		const pi = await stripe.paymentIntents.create({
+			amount: amountTotalCents,
+			currency,
+			automatic_payment_methods: { enabled: true },
+			...(saveThisCard ? { setup_future_usage: "off_session" } : {}),
+			metadata: {
+				orderId: String(order._id),
+				orderNumber: order.orderNumber,
+				userId: String(user._id),
+			},
+		});
+
+		// store PI id for reference
+		order.payment.stripePaymentIntentId = pi.id;
+		await order.save();
+
+		return res.json({
+			clientSecret: pi.client_secret,
+			orderId: String(order._id),
+			orderNumber: order.orderNumber,
+		});
+	} catch (err) {
+		console.error("PAY-NOW INTENT ERROR:", err);
+
+		const stripeMsg =
+			err?.raw?.message || err?.message || "Failed to create payment intent";
+
+		return res.status(500).json({
+			error: stripeMsg,
+			code: err?.code || err?.raw?.code || null,
+		});
+	}
 }
 
 /**
@@ -203,107 +232,33 @@ export async function createPayNowIntent(req, res) {
  * Webhook will mark SUCCEEDED and send email.
  */
 export async function payNowWithSavedCard(req, res) {
-  try {
-    if (!stripe) {
-      return res.status(500).json({ error: "Stripe is not configured on the server." });
-    }
-
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    const { amountCents, currency = "usd", items = [], billingAddress, shippingAddress, shippingSameAsBilling = true } =
-      req.body || {};
-
-    const amountTotalCents = Number(amountCents || 0);
-    if (!Number.isFinite(amountTotalCents) || amountTotalCents <= 0) {
-      return res.status(400).json({ error: "Invalid amountCents" });
-    }
-
-    const customerId = user.payment?.stripeCustomerId;
-    const pmId = user.payment?.defaultPaymentMethodId;
-
-    if (!customerId || !pmId) {
-      return res.status(400).json({ error: "No saved card on file" });
-    }
-
-    const orderNumber = await generateOrderNumber();
-
-    const order = await Order.create({
-      orderNumber,
-      userId: user._id,
-      customer: {
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        companyName: user.company?.name || ""
-      },
-      billingAddress: safeAddress(billingAddress || user.billingAddress),
-      shippingAddress: safeAddress(
-        shippingSameAsBilling
-          ? (billingAddress || user.billingAddress)
-          : (shippingAddress || user.deliveryAddress)
-      ),
-      shippingSameAsBilling: Boolean(shippingSameAsBilling),
-      items: Array.isArray(items) ? items : [],
-      currency,
-      amountTotalCents,
-      payment: { mode: "PAY_NOW", status: "PENDING" }
-    });
-
-    const pi = await stripe.paymentIntents.create({
-      amount: amountTotalCents,
-      currency,
-      customer: customerId,
-      payment_method: pmId,
-      off_session: true,
-      confirm: true,
-      metadata: {
-        orderId: String(order._id),
-        orderNumber: order.orderNumber,
-        userId: String(user._id)
-      }
-    });
-
-    order.payment.stripePaymentIntentId = pi.id;
-    // If it succeeded immediately, we can update now (webhook will also fire; idempotent)
-    if (pi.status === "succeeded") {
-      order.payment.status = "SUCCEEDED";
-    } else if (pi.status === "requires_payment_method" || pi.status === "canceled") {
-      order.payment.status = "FAILED";
-    }
-    await order.save();
-
-    return res.json({
-      success: true,
-      orderId: String(order._id),
-      orderNumber: order.orderNumber,
-      paymentIntentId: pi.id,
-      status: pi.status
-    });
-  } catch (err) {
-    console.error("PAY-NOW SAVED-CARD ERROR:", err);
-
-    // Stripe might throw card_declined, authentication_required, etc.
-    const msg = err?.raw?.message || err?.message || "Failed to charge saved card";
-    return res.status(500).json({ error: msg });
-  }
-}
-
-export async function chargeSavedCardPayNow(req, res) {
-	if (!stripe)
-		return res
-			.status(500)
-			.json({ error: "Stripe is not configured on the server." });
-
+	console.log("✅ payNowWithSavedCard HIT", new Date().toISOString(), {
+		userId: req.user?.id,
+		amountCents: req.body?.amountCents,
+	});
 	try {
-		const { amountCents, currency = "usd" } = req.body || {};
-		if (!amountCents || Number(amountCents) <= 0) {
-			return res.status(400).json({ error: "Missing or invalid amountCents" });
+		if (!stripe) {
+			return res
+				.status(500)
+				.json({ error: "Stripe is not configured on the server." });
 		}
 
 		const user = await User.findById(req.user.id);
 		if (!user) return res.status(404).json({ error: "User not found" });
+
+		const {
+			amountCents,
+			currency = "usd",
+			items = [],
+			billingAddress,
+			shippingAddress,
+			shippingSameAsBilling = true,
+		} = req.body || {};
+
+		const amountTotalCents = Number(amountCents || 0);
+		if (!Number.isFinite(amountTotalCents) || amountTotalCents <= 0) {
+			return res.status(400).json({ error: "Invalid amountCents" });
+		}
 
 		const customerId = user.payment?.stripeCustomerId;
 		const pmId = user.payment?.defaultPaymentMethodId;
@@ -312,20 +267,76 @@ export async function chargeSavedCardPayNow(req, res) {
 			return res.status(400).json({ error: "No saved card on file" });
 		}
 
+		const orderNumber = await generateOrderNumber();
+
+		const order = await Order.create({
+			orderNumber,
+			userId: user._id,
+			customer: {
+				firstName: user.firstName || "",
+				lastName: user.lastName || "",
+				email: user.email || "",
+				phone: user.phone || "",
+				companyName: user.company?.name || "",
+			},
+			billingAddress: safeAddress(billingAddress || user.billingAddress),
+			shippingAddress: safeAddress(
+				shippingSameAsBilling
+					? billingAddress || user.billingAddress
+					: shippingAddress || user.deliveryAddress,
+			),
+			shippingSameAsBilling: Boolean(shippingSameAsBilling),
+			items: Array.isArray(items) ? items : [],
+			currency,
+			amountTotalCents,
+			payment: { mode: "PAY_NOW", status: "PENDING" },
+		});
+
 		const pi = await stripe.paymentIntents.create({
-			amount: Number(amountCents),
+			amount: amountTotalCents,
 			currency,
 			customer: customerId,
 			payment_method: pmId,
 			off_session: true,
 			confirm: true,
-			metadata: { userId: user._id.toString() },
+			metadata: {
+				orderId: String(order._id),
+				orderNumber: order.orderNumber,
+				userId: String(user._id),
+			},
 		});
 
-		// ✅ Later: create PAID order + return orderId for confirmation page
-		return res.json({ success: true, paymentIntentId: pi.id });
+		order.payment.stripePaymentIntentId = pi.id;
+		// If it succeeded immediately, we can update now (webhook will also fire; idempotent)
+		if (pi.status === "succeeded") {
+			order.payment.status = "SUCCEEDED";
+		} else if (
+			pi.status === "requires_payment_method" ||
+			pi.status === "canceled"
+		) {
+			order.payment.status = "FAILED";
+		}
+		await order.save();
+
+		console.log("✅ payNowWithSavedCard responding with", {
+			orderId: String(order._id),
+			paymentIntentId: pi.id,
+			status: pi.status,
+		});
+
+		return res.json({
+			success: true,
+			orderId: String(order._id),
+			orderNumber: order.orderNumber,
+			paymentIntentId: pi.id,
+			status: pi.status,
+		});
 	} catch (err) {
 		console.error("PAY-NOW SAVED-CARD ERROR:", err);
-		return res.status(500).json({ error: "Failed to charge saved card" });
+
+		// Stripe might throw card_declined, authentication_required, etc.
+		const msg =
+			err?.raw?.message || err?.message || "Failed to charge saved card";
+		return res.status(500).json({ error: msg });
 	}
 }

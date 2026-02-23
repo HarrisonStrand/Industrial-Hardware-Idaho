@@ -5,7 +5,7 @@ import {
   requestAccountType,
   createPayLaterOrder,
   createPayNowIntent,
-  chargeSavedCardPayNow
+  payNowWithSavedCard
 } from "../controllers/checkoutController.js";
 
 const router = Router();
@@ -16,6 +16,6 @@ router.post("/pay-later/order", requireAuth, createPayLaterOrder);
 
 // ✅ Pay now
 router.post("/pay-now/intent", requireAuth, createPayNowIntent);
-router.post("/pay-now/saved-card", requireAuth, chargeSavedCardPayNow);
+router.post("/pay-now/saved-card", requireAuth, payNowWithSavedCard);
 
 export default router;

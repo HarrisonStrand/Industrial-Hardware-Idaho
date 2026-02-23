@@ -370,7 +370,7 @@ export default function Checkout() {
 				variant: "success",
 				message: "Order submitted for invoicing",
 			});
-			navigate(`/order-status?orderId=${data.orderId}`);
+			navigate(`/order-confirmation/${orderId}`);
 		} catch (e) {
 			showToast({ variant: "danger", message: e.message });
 		} finally {
@@ -406,12 +406,19 @@ export default function Checkout() {
 				}),
 			});
 
+			console.log("saved-card response:", data);
+
 			clearCart();
 			showToast({ variant: "success", message: "Payment successful" });
 
-			if (data?.orderId) navigate(`/order-confirmation/${data.orderId}`);
-			else
+			console.log("saved-card response:", data);
+
+			if (data?.orderId) {
+				navigate(`/order-confirmation/${data.orderId}`);
+			} else {
+				console.log("NO ORDER ID FOUND", data);
 				navigate(`/order-status?paymentIntentId=${data.paymentIntentId || ""}`);
+			}
 		} catch (e) {
 			showToast({ variant: "danger", message: e.message });
 		} finally {

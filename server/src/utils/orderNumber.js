@@ -1,4 +1,4 @@
-import Order from "../models/Order.js";
+import Counter from "../models/Counter.js";
 
 function pad(n, width) {
   const s = String(n);
@@ -6,10 +6,15 @@ function pad(n, width) {
 }
 
 export async function generateOrderNumber() {
-  // Simple sequence based on count. Good for now.
-  // (If you want “no gaps ever”, we can move to a counters collection.)
-  const count = await Order.countDocuments();
-  const seq = count + 1;
   const year = new Date().getFullYear();
-  return `IHI-${year}-${pad(seq, 6)}`;
+  const key = `orderNumber-${year}`;
+
+  // Atomic increment (no collisions, even under concurrency)
+  const counter = await Counter.findOneAndUpdate(
+    { key },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+
+  return `IHI-${year}-${pad(counter.seq, 6)}`;
 }
