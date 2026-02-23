@@ -32,6 +32,7 @@ import CustomerService from "./pages/Legal/CustomerService.jsx";
 import ReturnsExchanges from "./pages/Legal/ReturnsExchanges.jsx";
 import ShippingInformation from "./pages/Legal/ShippingInformation.jsx";
 import SpecialRequests from "./pages/SpecialRequests/SpecialRequests.jsx";
+import OrderConfirmation from "./pages/OrderConfirmation/OrderConfirmation.jsx";
 import OrderStatus from "./pages/OrderStatus/OrderStatus.jsx";
 import CustomerForms from "./pages/CustomerForms/CustomerForms.jsx";
 import VendorInformation from "./pages/VendorInformation/VendorInformation.jsx";
@@ -101,6 +102,7 @@ export default function App() {
 							<Route path='/returns' element={<ReturnsExchanges />} />
 							<Route path='/shipping' element={<ShippingInformation />} />
 							<Route path='/requests' element={<SpecialRequests />} />
+							<Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
 							<Route path='/order-status' element={<OrderStatus />} />
 							<Route path='/customer-forms' element={<CustomerForms />} />
 							<Route

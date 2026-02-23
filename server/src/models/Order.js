@@ -1,17 +1,5 @@
 import mongoose from "mongoose";
 
-const OrderItemSchema = new mongoose.Schema(
-  {
-    partNumber: { type: String, required: true },
-    name: { type: String, default: "" },
-    detail: { type: String, default: "" },
-    qty: { type: Number, required: true },
-    unitPrice: { type: Number, required: true },
-    lineTotal: { type: Number, required: true }
-  },
-  { _id: false }
-);
-
 const AddressSchema = new mongoose.Schema(
   {
     address1: String,
@@ -23,29 +11,49 @@ const AddressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const OrderItemSchema = new mongoose.Schema(
+  {
+    partNumber: String,
+    name: String,
+    detail: String,
+    qty: Number,
+    unitPrice: Number,
+    lineTotal: Number
+  },
+  { _id: false }
+);
+
 const OrderSchema = new mongoose.Schema(
   {
+    orderNumber: { type: String, required: true, unique: true }, // e.g. IHI-2026-000123
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
+    customer: {
+      firstName: String,
+      lastName: String,
+      email: String,
+      phone: String,
+      companyName: String
+    },
+
+    billingAddress: AddressSchema,
+    shippingAddress: AddressSchema,
+    shippingSameAsBilling: { type: Boolean, default: true },
 
     items: { type: [OrderItemSchema], default: [] },
 
-    subtotal: { type: Number, default: 0 },
-    tax: { type: Number, default: 0 },
-    shipping: { type: Number, default: 0 },
-    total: { type: Number, default: 0 },
+    currency: { type: String, default: "usd" },
+    amountTotalCents: { type: Number, default: 0 },
 
-    billingAddress: { type: AddressSchema, default: () => ({}) },
-    deliveryAddress: { type: AddressSchema, default: () => ({}) },
-
-    paymentMode: { type: String, enum: ["PAY_NOW", "PAY_LATER"], required: true },
-    payLaterType: { type: String, enum: ["NET30", "HOUSE", ""], default: "" },
-
-    paymentStatus: { type: String, enum: ["UNPAID", "PAID"], default: "UNPAID" },
-    status: { type: String, enum: ["PENDING", "PROCESSING", "FULFILLED", "CANCELED"], default: "PENDING" },
-
-    stripePaymentIntentId: { type: String, default: "" },
-
-    notes: { type: String, default: "" }
+    payment: {
+      mode: { type: String, enum: ["PAY_NOW", "PAY_LATER"], default: "PAY_NOW" },
+      status: {
+        type: String,
+        enum: ["PENDING", "SUCCEEDED", "FAILED", "INVOICED"],
+        default: "PENDING"
+      },
+      stripePaymentIntentId: { type: String, default: "" }
+    }
   },
   { timestamps: true }
 );

@@ -1,5 +1,6 @@
+import "./config/env.js";
+
 import express from "express";
-import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import mongoose from "mongoose";
@@ -11,13 +12,15 @@ import contactRoutes from "./routes/contact.js";
 
 import checkoutRoutes from "./routes/checkoutRoutes.js";
 import adminUsersRoutes from "./routes/adminUsersRoutes.js";
+import stripeWebhookRoutes from "./routes/stripeWebhookRoutes.js";
+import orderRoutes from "./routes/orderRoutes.js";
 
-dotenv.config();
-console.log("Stripe key exists:", Boolean(process.env.STRIPE_SECRET_KEY));
+console.log("Stripe key loaded?", Boolean(process.env.STRIPE_SECRET_KEY));
 console.log("🔥 RUNNING server/src/server.js build:", new Date().toISOString());
 
 const app = express();
 
+app.use("/api/stripe", stripeWebhookRoutes);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -28,8 +31,11 @@ app.use((req, _res, next) => {
 
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
-    credentials: true,
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:3000"
+    ],
+    credentials: true
   })
 );
 
@@ -42,6 +48,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/contact", contactRoutes);
 
 app.use("/api/checkout", checkoutRoutes);
+app.use("/api/orders", orderRoutes);
 app.use("/api/admin/users", adminUsersRoutes);
 
 const PORT = process.env.PORT || 5001;
