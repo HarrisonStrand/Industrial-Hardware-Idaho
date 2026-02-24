@@ -200,3 +200,7 @@
 .remove-card-icon {
 	cursor: pointer;
 }
+
+.account-type-dropdown {
+	cursor: pointer;
+}

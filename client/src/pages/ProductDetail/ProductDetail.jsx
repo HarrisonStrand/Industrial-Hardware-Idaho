@@ -16,7 +16,7 @@ export default function ProductDetail() {
 
 	const halfWidthFields = ["quantity", "brand"];
 	const needsHalfWidthFields = ["washers", "nuts"].includes(
-		categoryId?.toLowerCase()
+		categoryId?.toLowerCase(),
 	);
 
 	const [selected, setSelected] = useState({
@@ -36,7 +36,7 @@ export default function ProductDetail() {
 	// --------------------------------------------------
 	useEffect(() => {
 		const category = categoriesData.categories.find(
-			(c) => c.id.toLowerCase() === categoryId.toLowerCase()
+			(c) => c.id.toLowerCase() === categoryId.toLowerCase(),
 		);
 
 		if (!category) {
@@ -45,7 +45,7 @@ export default function ProductDetail() {
 		}
 
 		const sub = category.subcategories.find(
-			(s) => s.id.toLowerCase() === subcategoryId.toLowerCase()
+			(s) => s.id.toLowerCase() === subcategoryId.toLowerCase(),
 		);
 
 		setSubcategory(sub || null);
@@ -70,13 +70,13 @@ export default function ProductDetail() {
 			Object.entries(selected).every(([key, val]) => {
 				if (!val || key === "quantity") return true;
 				return sku.attributes[key] === val;
-			})
+			}),
 		);
 
 		Object.keys(subcategory.attributes).forEach((key) => {
 			options[key] = [
 				...new Set(
-					filteredSkus.map((sku) => sku.attributes[key]).filter(Boolean)
+					filteredSkus.map((sku) => sku.attributes[key]).filter(Boolean),
 				),
 			];
 		});
@@ -94,7 +94,7 @@ export default function ProductDetail() {
 			Object.entries(selected).every(([key, val]) => {
 				if (!val || key === "quantity") return true;
 				return sku.attributes[key] === val;
-			})
+			}),
 		);
 	}, [selected, subcategory, subcategorySkus]);
 
@@ -175,7 +175,7 @@ export default function ProductDetail() {
 					<div className='row m-0 p-0'>
 						{Object.entries(attributes)
 							.filter(
-								([_, values]) => Array.isArray(values) && values.length > 0
+								([_, values]) => Array.isArray(values) && values.length > 0,
 							)
 							.map(([key, values]) => {
 								const label = key.replace(/_/g, " ");
@@ -194,7 +194,7 @@ export default function ProductDetail() {
 										</label>
 
 										<select
-											className='form-select form-control rounded-3 text-secondary option-select form-input'
+											className='product-option-dropdown form-select form-control rounded-3 text-secondary option-select form-input'
 											value={selected[key]}
 											onChange={(e) => handleChange(key, e.target.value)}>
 											<option value=''>Select {label}</option>
@@ -218,14 +218,35 @@ export default function ProductDetail() {
 							<label className='form-label text-uppercase small fw-bold mb-0 text-main'>
 								Quantity
 							</label>
-							<input
-								type='number'
-								min='1'
-								className='form-control rounded-3 text-secondary option-select form-input'
-								value={selected.quantity}
-								onChange={(e) => handleChange("quantity", e.target.value)}
-								placeholder='Enter quantity'
-							/>
+
+							<div className='position-relative'>
+								<input
+									type='number'
+									min='1'
+									className='form-control rounded-3 text-secondary option-select form-input pe-4'
+									value={selected.quantity}
+									onChange={(e) => handleChange("quantity", e.target.value)}
+									placeholder='Enter quantity'
+								/>
+
+								<div className='quantity-arrows d-flex flex-column pe-3'>
+									<i
+										className='bi bi-chevron-up'
+										onClick={() =>
+											handleChange("quantity", Number(selected.quantity) + 1)
+										}
+									/>
+									<i
+										className='bi bi-chevron-down'
+										onClick={() =>
+											handleChange(
+												"quantity",
+												Math.max(1, Number(selected.quantity) - 1),
+											)
+										}
+									/>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>

@@ -284,7 +284,7 @@ export default function Header({ onCartOpen }) {
 					</Link>
 					<Link
 						className='ms-4 d-flex text-decoration-none text-main align-items-center'
-						to='/orders'>
+						to='/order-status'>
 						<p className='d-none d-sm-block d-md-block top-bar-text font-secondary text-uppercase me-0 me-md-4 mb-0'>
 							Orders
 						</p>

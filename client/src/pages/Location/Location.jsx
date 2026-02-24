@@ -9,11 +9,11 @@ export default function Location() {
 	return (
 		<>
 			<div className='container-fluid px-3 px-sm-5 py-4 py-md-5'>
-				<div className='location-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
+				<div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 					<div className='text-main text-uppercase mb-1 fs-2 px-0 ps-4'>
 						location
 					</div>
-					<div className='location-detail-container py-3 rounded-4 px-3 px-sm-5'>
+					<div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
 						<div className='row m-0 pb-2 pb-sm-0'>
 							{brand.locationSec1Copy.map((line, index) => (
 								<div
@@ -23,7 +23,7 @@ export default function Location() {
 								</div>
 							))}
 						</div>
-						<div className='location-info-container py-0 py-sm-4 px-2 px-sm-0'>
+						<div className='theme-info-container py-0 py-sm-4 px-2 px-sm-0'>
 							<div className='location-link-box row align-items-center justify-content-evenly rounded-4 border border-3 border-main py-3 py-sm-2 py-xl-4 px-3 px-xl-5 fw-semibold'>
 								<div className="row justify-content-center justify-content-sm-start align-items-end">
 								<div className='col-12 col-md-3 col-lg text-main text-center text-lg-start pe-2 pe-lg-0 address-text text-uppercase px-0 ps-4 text-start mt-2'>

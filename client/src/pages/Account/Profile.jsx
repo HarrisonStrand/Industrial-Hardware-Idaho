@@ -581,9 +581,9 @@ export default function Profile() {
 
                           {/* Request controls */}
                           {!isApproved && (
-                            <div className='d-flex flex-wrap align-items-center gap-2 mt-2'>
+                            <div className='d-flex flex-wrap gap-2 mt-2'>
                               <select
-                                className='form-input form-control rounded-3 text-dark'
+                                className='account-type-dropdown form-select form-control rounded-3 text-secondary option-select form-input py-2'
                                 style={{ maxWidth: 320 }}
                                 value={requestedType}
                                 onChange={(e) => setRequestedType(e.target.value)}
@@ -593,7 +593,7 @@ export default function Profile() {
                               </select>
 
                               <button
-                                className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main'
+                                className='btn-main-cta rounded-3 text-uppercase fw-regular text-main-light'
                                 onClick={submitAccountTypeRequest}
                                 disabled={requesting || isPending}>
                                 {isPending ? "Request Sent" : "Request Approval"}

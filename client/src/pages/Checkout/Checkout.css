@@ -1,0 +1,20 @@
+/* Make sure Stripe Elements can receive clicks and show caret */
+.form-input.form-control {
+  position: relative;
+  pointer-events: auto;
+}
+
+.form-input.form-control .StripeElement {
+  width: 100%;
+  pointer-events: auto;
+}
+
+/* Sometimes a pseudo element or overlay blocks clicks */
+.form-input.form-control::before,
+.form-input.form-control::after {
+  pointer-events: none;
+}
+
+input[type="checkbox"], input[type="radio"] {
+  cursor: pointer;
+}

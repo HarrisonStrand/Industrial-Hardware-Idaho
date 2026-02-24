@@ -434,7 +434,7 @@ export default function Checkout() {
 					<div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
 						<div className='text-main'>Your cart is empty.</div>
 						<Link
-							className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light mt-3 d-inline-block px-4'
+							className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light mt-3 d-inline-block px-4 text-center text-decoration-none'
 							to='/products'>
 							Browse Products
 						</Link>
@@ -946,9 +946,9 @@ export default function Checkout() {
 						)}
 					</div>
 
-					<div className='mt-4 d-flex justify-content-between'>
+					<div className='mt-4 d-flex justify-content-between ms-3'>
 						<Link
-							className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main px-4'
+							className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main px-4 text-center text-decoration-none'
 							to='/cart'>
 							Back to Cart
 						</Link>

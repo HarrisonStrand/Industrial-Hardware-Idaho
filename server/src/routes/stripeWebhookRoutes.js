@@ -3,6 +3,7 @@ import { Router } from "express";
 import Stripe from "stripe";
 import Order from "../models/Order.js";
 import { sendOrderConfirmationEmail } from "../utils/mailer.js";
+import { pushOrderToFishbowl } from "../services/fishbowl/pushOrderToFishbowl.js";
 
 const router = Router();
 
@@ -44,6 +45,8 @@ router.post(
             order.payment.status = "SUCCEEDED";
             order.payment.stripePaymentIntentId = pi.id;
             await order.save();
+
+            await pushOrderToFishbowl(order._id);
 
             if (!wasSucceeded) {
               const to = order.customer?.email;

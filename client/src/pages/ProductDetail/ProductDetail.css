@@ -39,3 +39,41 @@
 	line-height: 28px !important;
   max-width: 250px;
 }
+
+
+/* OPTION INPUT STYLING */
+
+.product-option-dropdown {
+	cursor: pointer;
+}
+
+/* Hide native number arrows */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield; /* Firefox */
+}
+
+.quantity-arrows {
+	position: absolute;
+	right: 0px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 0.75rem; /* small chevrons */
+}
+
+.quantity-arrows i {
+	font-weight: bold !important;
+	cursor: pointer;
+	user-select: none;
+	color: var(--main-color) !important;
+	line-height: 10px;
+}
+
+.quantity-arrows i:hover {
+	color: var(--alt-color);
+}

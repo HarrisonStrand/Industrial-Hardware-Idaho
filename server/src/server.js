@@ -15,6 +15,8 @@ import adminUsersRoutes from "./routes/adminUsersRoutes.js";
 import stripeWebhookRoutes from "./routes/stripeWebhookRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 
+import fishbowlRoutes from "./routes/fishbowlRoutes.js";
+
 console.log("Stripe key loaded?", Boolean(process.env.STRIPE_SECRET_KEY));
 console.log("🔥 RUNNING server/src/server.js build:", new Date().toISOString());
 
@@ -50,6 +52,8 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin/users", adminUsersRoutes);
+
+app.use("/api/fishbowl", fishbowlRoutes);
 
 const PORT = process.env.PORT || 5001;
 
