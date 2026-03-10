@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -6,7 +6,11 @@ import ScrollToTop from "./components/ScrollToTop/ScrollToTop.jsx";
 import Header from "./components/Header/Header.jsx";
 import CartDrawer from "./components/Cart/CartDrawer/CartDrawer.jsx";
 import MobileCartBar from "./components/Cart/MobileCartBar/MobileCartBar.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Footer from "./components/Footer/Footer.jsx";
+
 import { CartProvider } from "./context/CartContext";
+
 import Home from "./pages/Home/Home.jsx";
 import About from "./pages/About/About.jsx";
 import Contact from "./pages/Contact/Contact.jsx";
@@ -18,14 +22,14 @@ import Profile from "./pages/Account/Profile.jsx";
 import Register from "./pages/Register/Register.jsx";
 import ForgotPassword from "./pages/Auth/ForgotPassword.jsx";
 import ResetPassword from "./pages/Auth/ResetPassword.jsx";
-import Dashboard from "./pages/Dashboard/Dashboard.jsx";
-import AdminPanel from "./pages/AdminPanel/AdminPanel.jsx";
+import AdminDashboard from "./pages/AdminDashboard/AdminDashboard.jsx";
+import AdminAccounts from "./pages/AdminDashboard/AdminAccounts.jsx";
+import AdminOrders from "./pages/AdminDashboard/AdminOrders.jsx";
+import AdminProducts from "./pages/AdminDashboard/AdminProducts.jsx";
 import ProductList from "./pages/ProductList/ProductList.jsx";
 import ProductDetail from "./pages/ProductDetail/ProductDetail.jsx";
 import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Footer from "./components/Footer/Footer.jsx";
 import PrivacyPolicy from "./pages/Legal/PrivacyPolicy.jsx";
 import TermsConditions from "./pages/Legal/TermsConditions.jsx";
 import CustomerService from "./pages/Legal/CustomerService.jsx";
@@ -102,7 +106,10 @@ export default function App() {
 							<Route path='/returns' element={<ReturnsExchanges />} />
 							<Route path='/shipping' element={<ShippingInformation />} />
 							<Route path='/requests' element={<SpecialRequests />} />
-							<Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+							<Route
+								path='/order-confirmation/:orderId'
+								element={<OrderConfirmation />}
+							/>
 							<Route path='/order-status' element={<OrderStatus />} />
 							<Route path='/customer-forms' element={<CustomerForms />} />
 							<Route
@@ -140,18 +147,22 @@ export default function App() {
 							/>
 
 							<Route
-								path='/dashboard'
+								path='/admin/dashboard'
 								element={
-									<ProtectedRoute>
-										<Dashboard />
+									<ProtectedRoute requireAdmin={true}>
+										<AdminDashboard />
 									</ProtectedRoute>
-								}
-							/>
+								}>
+								<Route index element={<Navigate to='accounts' replace />} />
+								<Route path='accounts' element={<AdminAccounts />} />
+								<Route path='orders' element={<AdminOrders />} />
+								<Route path='products' element={<AdminProducts />} />
+							</Route>
 							<Route
 								path='/admin'
 								element={
 									<ProtectedRoute requireAdmin={true}>
-										<AdminPanel />
+										<AdminAccounts />
 									</ProtectedRoute>
 								}
 							/>

@@ -1,0 +1,81 @@
+/* src/pages/AdminDashboard/adminBadges.css */
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  backdrop-filter: blur(4px);
+}
+
+/* tiny dot indicator */
+.status-pill::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.55);
+}
+
+/* PENDING: soft breathing glow */
+.status-pill.pending {
+  border-color: rgba(255, 193, 7, .35);
+  background: rgba(255, 193, 7, .12);
+  box-shadow: 0 0 0 rgba(255, 193, 7, 0);
+  animation: pendingPulse 1.6s ease-in-out infinite;
+}
+
+.status-pill.pending::before {
+  background: rgba(255, 193, 7, .95);
+  box-shadow: 0 0 10px rgba(255, 193, 7, .55);
+}
+
+@keyframes pendingPulse {
+  0%   { box-shadow: 0 0 0 rgba(255, 193, 7, 0);   filter: brightness(1); }
+  50%  { box-shadow: 0 0 18px rgba(255, 193, 7, .28); filter: brightness(1.06); }
+  100% { box-shadow: 0 0 0 rgba(255, 193, 7, 0);   filter: brightness(1); }
+}
+
+/* APPROVED IN PROGRESS: blue */
+.status-pill.in-progress {
+  border-color: rgba(13, 110, 253, .35);
+  background: rgba(13, 110, 253, .12);
+}
+.status-pill.in-progress::before {
+  background: rgba(13, 110, 253, .95);
+  box-shadow: 0 0 10px rgba(13, 110, 253, .35);
+}
+
+/* APPROVED COMPLETED: green */
+.status-pill.completed {
+  border-color: rgba(25, 135, 84, .35);
+  background: rgba(25, 135, 84, .12);
+}
+.status-pill.completed::before {
+  background: rgba(25, 135, 84, .95);
+  box-shadow: 0 0 10px rgba(25, 135, 84, .35);
+}
+
+/* DENIED: red */
+.status-pill.denied {
+  border-color: rgba(220, 53, 69, .35);
+  background: rgba(220, 53, 69, .12);
+}
+.status-pill.denied::before {
+  background: rgba(220, 53, 69, .95);
+  box-shadow: 0 0 10px rgba(220, 53, 69, .35);
+}
+
+/* Optional: respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .status-pill.pending {
+    animation: none;
+  }
+}

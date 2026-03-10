@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch";
 import { useToast } from "../../context/ToastContext";
 
-export default function AdminPanel() {
+export default function AdminAccounts() {
   const { showToast } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
