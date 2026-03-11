@@ -12,7 +12,12 @@
     "test:create-enrichment": "node src/scripts/testCreateProductEnrichment.js",
     "test:vendor-offering": "node src/scripts/testVendorOffering.js",
     "test:vendor-mapping": "node src/scripts/testVendorMapping.js",
-    "test:brighton-import": "node src/scripts/testBrightonCatalogImport.js"
+    "test:brighton-import": "node src/scripts/testBrightonCatalogImport.js",
+    "test:vendor-image": "node src/scripts/testVendorImageAttach.js",
+    "test:vendor-selection": "node src/scripts/testVendorSelection.js",
+    "test:vendor-image-storage": "node src/scripts/testVendorImageStorage.js",
+    "test:catalog-publishing": "node src/scripts/testCatalogPublishing.js",
+    "test:catalog-api": "node src/scripts/testCatalogApiServices.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.966.0",

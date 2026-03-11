@@ -43,7 +43,8 @@ const SyncRunSchema = new mongoose.Schema(
 
     notes: { type: String, default: "" },
   },
-  { timestamps: true }
+  { timestamps: true },
+	{ suppressReservedKeysWarning: true }
 );
 
 export default mongoose.model("SyncRun", SyncRunSchema);

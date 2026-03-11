@@ -1,5 +1,6 @@
 import "./config/env.js";
 
+import path from "path";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -17,6 +18,7 @@ import stripeWebhookRoutes from "./routes/stripeWebhookRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 
 import fishbowlRoutes from "./routes/fishbowlRoutes.js";
+import catalogRoutes from "./routes/catalogRoutes.js";
 
 console.log("Stripe key loaded?", Boolean(process.env.STRIPE_SECRET_KEY));
 console.log("🔥 RUNNING server/src/server.js build:", new Date().toISOString());
@@ -56,6 +58,9 @@ app.use("/api/admin/users", adminUsersRoutes);
 app.use("/api/admin", adminOrdersRoutes);
 
 app.use("/api/fishbowl", fishbowlRoutes);
+app.use("/api/catalog", catalogRoutes);
+
+app.use("/public", express.static(path.resolve("public")));
 
 const PORT = process.env.PORT || 5001;
 
