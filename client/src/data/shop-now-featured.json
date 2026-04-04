@@ -1,0 +1,31 @@
+{
+  "featured": [
+    {
+      "id": "deal-hex-bolts",
+      "type": "deal",
+      "badge": "Deal",
+      "title": "Hex Head Bolt Specials",
+      "copy": "Featured pricing on popular bolt sizes and finishes.",
+      "image": "/images/featured/deal-hex-bolts.png",
+      "path": "/products/bolts/hex-cap-screws"
+    },
+    {
+      "id": "new-machine-screws",
+      "type": "new",
+      "badge": "New",
+      "title": "New Machine Screw Inventory",
+      "copy": "Fresh catalog additions now available in the builder flow.",
+      "image": "/images/featured/new-machine-screws.png",
+      "path": "/products/screws/machine-screws"
+    },
+    {
+      "id": "featured-washers",
+      "type": "featured",
+      "badge": "Featured",
+      "title": "Washer Essentials",
+      "copy": "Quick access to frequently ordered washer families.",
+      "image": "/images/featured/featured-washers.png",
+      "path": "/products?category=washers"
+    }
+  ]
+}

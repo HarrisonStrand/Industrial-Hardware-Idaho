@@ -26,7 +26,7 @@ export default function CartDrawer({ isOpen, onClose }) {
 					)}
 
 					{items.map((item) => (
-						<CartDrawerItem key={item.partNumber} item={item} />
+						<CartDrawerItem key={item.lineId} item={item} />
 					))}
 				</div>
 
@@ -36,7 +36,7 @@ export default function CartDrawer({ isOpen, onClose }) {
 							Total:
 						</div>
 						<div className='subtotal-number text-end fs-2 fw-regular text-main font-secondary'>
-							${cartTotal.toFixed(2)}
+							${Number(cartTotal || 0).toFixed(2)}
 						</div>
 					</div>
 

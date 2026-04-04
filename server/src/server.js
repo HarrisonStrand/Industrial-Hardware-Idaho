@@ -19,6 +19,8 @@ import orderRoutes from "./routes/orderRoutes.js";
 
 import fishbowlRoutes from "./routes/fishbowlRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
+import catalogBuilderRoutes from "./routes/catalogBuilderRoutes.js";
+
 
 console.log("Stripe key loaded?", Boolean(process.env.STRIPE_SECRET_KEY));
 console.log("🔥 RUNNING server/src/server.js build:", new Date().toISOString());
@@ -59,6 +61,7 @@ app.use("/api/admin", adminOrdersRoutes);
 
 app.use("/api/fishbowl", fishbowlRoutes);
 app.use("/api/catalog", catalogRoutes);
+app.use("/api/catalog-builder", catalogBuilderRoutes);
 
 app.use("/public", express.static(path.resolve("public")));
 

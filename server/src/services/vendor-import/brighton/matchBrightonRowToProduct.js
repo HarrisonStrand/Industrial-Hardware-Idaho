@@ -6,6 +6,10 @@ function normalize(value = "") {
 	return String(value).trim().toLowerCase();
 }
 
+function escapeRegex(value = "") {
+	return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function matchBrightonRowToProduct(normalizedRow = {}) {
 	const vendorPartNumber = normalizedRow.vendorPartNumber || "";
 	const vendorDescription = normalizedRow.vendorDescription || "";
@@ -32,14 +36,16 @@ export async function matchBrightonRowToProduct(normalizedRow = {}) {
 
 	// 2. Try exact Fishbowl/internal SKU fields if vendor row happens to contain them later
 	const possibleInternal = normalize(
-		normalizedRow.internalPartNumber || normalizedRow.websiteSku || "",
+		normalizedRow.internalPartNumber || normalizedRow.websiteSku || ""
 	);
 
 	if (possibleInternal) {
+		const safePattern = `^${escapeRegex(possibleInternal)}$`;
+
 		const internalMatch = await Product.findOne({
 			$or: [
-				{ sku: new RegExp(`^${possibleInternal}$`, "i") },
-				{ internalPartNumber: new RegExp(`^${possibleInternal}$`, "i") },
+				{ sku: new RegExp(safePattern, "i") },
+				{ internalPartNumber: new RegExp(safePattern, "i") },
 			],
 		});
 
@@ -70,8 +76,7 @@ export async function matchBrightonRowToProduct(normalizedRow = {}) {
 
 				let score = 0;
 				if (normalize(p.size) === normalize(parsed.size)) score += 35;
-				if (normalize(p.fastenerType) === normalize(parsed.fastenerType))
-					score += 30;
+				if (normalize(p.fastenerType) === normalize(parsed.fastenerType)) score += 30;
 				if (normalize(p.finish) === normalize(parsed.finish)) score += 15;
 				if (normalize(p.grade) === normalize(parsed.grade)) score += 10;
 				if (normalize(p.length) === normalize(parsed.length)) score += 10;

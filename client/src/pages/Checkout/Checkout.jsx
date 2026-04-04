@@ -149,21 +149,15 @@ export default function Checkout() {
 
 	const orderItemsPayload = useMemo(() => {
 		return items.map((it) => ({
-			partNumber: it.partNumber,
-			name: it.name || it.partNumber,
-			detail: [
-				it.attributes?.diameter && it.attributes?.length
-					? `${it.attributes.diameter} × ${it.attributes.length}`
-					: "",
-				it.attributes?.thread || "",
-				it.attributes?.grade || "",
-				it.attributes?.finish || "",
-			]
-				.filter(Boolean)
-				.join(" • "),
-			qty: Number(it.quantity || 0),
+			productId: it.productId || null,
+			vendorOfferingId: it.vendorOfferingId || null,
+			partNumber: it.partNumber || it.sku || "",
+			name: it.name || it.partNumber || "Product",
+			qty: Math.max(1, Number(it.quantity || 1)),
 			unitPrice: Number(it.price || 0),
-			lineTotal: Number(it.lineTotal || 0),
+			vendorName: it.metadata?.vendorName || "",
+			vendorPartNumber: it.metadata?.vendorPartNumber || "",
+			attributes: it.attributes || {},
 		}));
 	}, [items]);
 
@@ -370,7 +364,7 @@ export default function Checkout() {
 				variant: "success",
 				message: "Order submitted for invoicing",
 			});
-			navigate(`/order-confirmation/${orderId}`);
+			navigate(`/order-confirmation/${data.orderId}`);
 		} catch (e) {
 			showToast({ variant: "danger", message: e.message });
 		} finally {
@@ -403,20 +397,21 @@ export default function Checkout() {
 				body: JSON.stringify({
 					amountCents,
 					currency: "usd",
+					items: orderItemsPayload,
+					billingAddress: billing?.address,
+					shippingAddress: shippingSameAsBilling
+						? billing?.address
+						: shipping?.address,
+					shippingSameAsBilling: Boolean(shippingSameAsBilling),
 				}),
 			});
-
-			console.log("saved-card response:", data);
 
 			clearCart();
 			showToast({ variant: "success", message: "Payment successful" });
 
-			console.log("saved-card response:", data);
-
 			if (data?.orderId) {
 				navigate(`/order-confirmation/${data.orderId}`);
 			} else {
-				console.log("NO ORDER ID FOUND", data);
 				navigate(`/order-status?paymentIntentId=${data.paymentIntentId || ""}`);
 			}
 		} catch (e) {
@@ -476,7 +471,7 @@ export default function Checkout() {
 					<div className='mt-2'>
 						{items.map((it) => (
 							<div
-								key={it.partNumber}
+								key={it.lineId}
 								className='d-flex justify-content-between py-2 border-bottom'>
 								<div className='text-main'>
 									<div className='fw-semibold'>{it.name}</div>
@@ -1001,8 +996,6 @@ function PayNowManualCard({
 						amountCents,
 						currency: "usd",
 						saveThisCard,
-
-						// ✅ include order snapshot so server can store order + email details
 						items,
 						billingAddress: billing?.address,
 						shippingAddress: shipping?.address,
@@ -1021,10 +1014,19 @@ function PayNowManualCard({
 		}
 
 		if (amountCents > 0) createIntent();
+
 		return () => {
 			alive = false;
 		};
-	}, [amountCents, saveThisCard, shippingSameAsBilling]); // items/billing/shipping can be large; keep deps minimal
+	}, [
+		amountCents,
+		saveThisCard,
+		shippingSameAsBilling,
+		items,
+		billing,
+		shipping,
+		showToast,
+	]);
 
 	if (loadingIntent) {
 		return <div className='text-muted small'>Preparing secure payment…</div>;
@@ -1140,8 +1142,6 @@ function ManualCardInner({
 
 			clearCart();
 			showToast({ variant: "success", message: "Payment successful" });
-
-			// ✅ NEW: confirmation page
 			navigate(`/order-confirmation/${orderId}`);
 		} catch (e) {
 			showToast({ variant: "danger", message: e.message });

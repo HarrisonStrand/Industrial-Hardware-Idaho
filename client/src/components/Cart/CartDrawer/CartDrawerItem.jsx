@@ -4,55 +4,75 @@ import "./CartDrawerItem.css";
 export default function CartDrawerItem({ item }) {
   const { updateQuantity, removeFromCart } = useCart();
 
-  const { partNumber, quantity, sku, lineTotal } = item;
-  const { attributes } = sku;
+  const {
+    lineId,
+    partNumber,
+    quantity = 1,
+    lineTotal = 0,
+    name,
+    attributes = {},
+    metadata = {},
+  } = item;
 
   const details = [];
-  if (attributes.diameter && attributes.length)
+
+  if (attributes.diameter && attributes.length) {
     details.push(`${attributes.diameter} × ${attributes.length}`);
+  } else {
+    if (attributes.diameter) details.push(attributes.diameter);
+    if (attributes.length) details.push(attributes.length);
+  }
+
   if (attributes.thread) details.push(attributes.thread);
   if (attributes.grade) details.push(attributes.grade);
   if (attributes.finish) details.push(attributes.finish);
 
-  const detailText = details.filter(Boolean).join(" • ");
+  const detailText =
+    details.filter(Boolean).join(" • ") ||
+    metadata.shortDescription ||
+    "";
+
+  const displayName =
+    name ||
+    metadata.shortDescription ||
+    partNumber ||
+    "Product";
 
   const handleQtyChange = (delta) => {
     const newQty = quantity + delta;
-    if (newQty > 0) updateQuantity(partNumber, newQty);
+    if (newQty > 0) {
+      updateQuantity(lineId, newQty);
+    }
   };
 
   return (
     <div className="drawer-item rounded-3 p-3 mb-3">
-
-      {/* TOP ROW */}
       <div className="d-flex justify-content-between align-items-start">
         <div className="drawer-item-name text-main fw-semibold">
-          {sku.subcategory.replace(/-/g, " ").toUpperCase()}
+          {String(displayName).toUpperCase()}
         </div>
 
         <button
           className="drawer-remove-btn text-danger"
-          onClick={() => removeFromCart(partNumber)}
+          onClick={() => removeFromCart(lineId)}
         >
           ×
         </button>
       </div>
 
-      {/* DETAILS */}
       {detailText && (
         <div className="drawer-item-details mt-1">
           {detailText}
         </div>
       )}
 
-      {/* PART NUMBER */}
-      <div className="drawer-item-part mt-1">
-        Part # {partNumber}
-      </div>
+      {partNumber && (
+        <div className="drawer-item-part mt-1">
+          Part # {partNumber}
+        </div>
+      )}
 
-      {/* BOTTOM ROW */}
       <div className="d-flex justify-content-between align-items-center mt-3">
-
         <div className="drawer-qty-controls d-flex align-items-center">
           <button
             className="drawer-qty-btn py-0 px-2 rounded-2 text-main"
@@ -74,9 +94,8 @@ export default function CartDrawerItem({ item }) {
         </div>
 
         <div className="drawer-line-total text-main fw-semibold">
-          ${lineTotal.toFixed(2)}
+          ${Number(lineTotal || 0).toFixed(2)}
         </div>
-
       </div>
     </div>
   );

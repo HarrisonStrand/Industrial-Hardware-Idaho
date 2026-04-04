@@ -5,6 +5,7 @@ import { SearchContext } from "../../context/SearchContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import ShopNowItems from "../../data/shop-now-items.json";
+import ShopNowFeatured from "../../data/shop-now-featured.json";
 import "./Header.css";
 import CartIcon from "../Cart/CartIcon/CartIcon.jsx";
 
@@ -26,11 +27,11 @@ export default function Header({ onCartOpen }) {
 	const [activeTab, setActiveTab] = useState("Products");
 
 	const tabs = Object.keys(ShopNowItems);
+	const featuredItems = ShopNowFeatured.featured || [];
 
 	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 	const isMobileCart = screenWidth < 800;
 
-	// ✅ Account dropdown
 	const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 	const accountMenuRef = useRef(null);
 
@@ -53,17 +54,16 @@ export default function Header({ onCartOpen }) {
 
 		if (user.avatarUrl) {
 			return `${user.avatarUrl}?v=${encodeURIComponent(
-				user.avatarUpdatedAt || "0"
+				user.avatarUpdatedAt || "0",
 			)}`;
 		}
 
-		return null; // 👈 important: allow initials fallback
+		return null;
 	}, [user, user?.avatarUrl, user?.avatarUpdatedAt]);
 
 	const initials = useMemo(() => {
 		if (!user) return "";
 
-		// Prefer company name
 		const company = user.company?.name || user.company?.companyName;
 		if (company) {
 			return company
@@ -74,7 +74,6 @@ export default function Header({ onCartOpen }) {
 				.join("");
 		}
 
-		// Otherwise first + last name
 		if (user.firstName || user.lastName) {
 			return [user.firstName, user.lastName]
 				.filter(Boolean)
@@ -82,7 +81,6 @@ export default function Header({ onCartOpen }) {
 				.join("");
 		}
 
-		// Fallback to email
 		if (user.email) {
 			return user.email[0].toUpperCase();
 		}
@@ -100,12 +98,10 @@ export default function Header({ onCartOpen }) {
 		return () => window.removeEventListener("resize", handleResize);
 	}, []);
 
-	// Close dropdown on route change
 	useEffect(() => {
 		setAccountMenuOpen(false);
 	}, [location.pathname, location.search]);
 
-	// Close dropdown on click outside
 	useEffect(() => {
 		function onDocClick(e) {
 			if (!accountMenuRef.current) return;
@@ -119,13 +115,9 @@ export default function Header({ onCartOpen }) {
 
 	async function handleLogoutClick() {
 		setAccountMenuOpen(false);
-
 		await logout({ redirectTo: "/signed-out" });
 	}
 
-	/* ---------------------------------------------
-	 * SEARCH SYNC WITH /products
-	 * ------------------------------------------ */
 	useEffect(() => {
 		if (location.pathname.startsWith("/products")) {
 			const params = new URLSearchParams(location.search);
@@ -134,18 +126,18 @@ export default function Header({ onCartOpen }) {
 		} else {
 			setSearchQuery("");
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [location.pathname, location.search]);
+	}, [location.pathname, location.search, setSearchQuery]);
 
 	const handleSearchChange = (e) => {
 		const value = e.target.value;
 		setSearchQuery(value);
 
 		if (location.pathname.startsWith("/products")) {
-			if (value.trim()) {
-				navigate(`/products?search=${encodeURIComponent(value)}`);
+			const trimmed = value.trim();
+			if (trimmed) {
+				navigate(`/products?search=${encodeURIComponent(trimmed)}`);
 			} else {
-				navigate(`/products`);
+				navigate("/products");
 			}
 		}
 	};
@@ -153,18 +145,15 @@ export default function Header({ onCartOpen }) {
 	const handleSearchSubmit = (e) => {
 		e.preventDefault();
 
-		if (!location.pathname.startsWith("/products")) {
-			if (searchQuery.trim()) {
-				navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
-			} else {
-				navigate(`/products`);
-			}
+		const trimmed = searchQuery.trim();
+
+		if (trimmed) {
+			navigate(`/products?search=${encodeURIComponent(trimmed)}`);
+		} else {
+			navigate("/products");
 		}
 	};
 
-	/* ---------------------------------------------
-	 * THEME HANDLING
-	 * ------------------------------------------ */
 	const { theme, toggleTheme } = useContext(ThemeContext);
 	const [logoSrc, setLogoSrc] = useState("");
 	const [logoSrcMobile, setLogoSrcMobile] = useState("");
@@ -172,12 +161,10 @@ export default function Header({ onCartOpen }) {
 	const updateLogoSrc = () => {
 		const root = document.documentElement;
 
-		// Desktop logo
 		const logoValue = getComputedStyle(root).getPropertyValue("--logo").trim();
 		const match = logoValue.match(/url\((['"]?)(.*?)\1\)/);
 		if (match) setLogoSrc(match[2]);
 
-		// Mobile logo
 		const logoMobileValue = getComputedStyle(root)
 			.getPropertyValue("--logo-mobile")
 			.trim();
@@ -187,12 +174,10 @@ export default function Header({ onCartOpen }) {
 
 	useEffect(() => {
 		updateLogoSrc();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	useEffect(() => {
 		updateLogoSrc();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [theme]);
 
 	const handleToggleTheme = () => {
@@ -200,9 +185,6 @@ export default function Header({ onCartOpen }) {
 		setTimeout(updateLogoSrc, 0);
 	};
 
-	/* ---------------------------------------------
-	 * MOBILE MENU OPEN / CLOSE WITH ANIMATION
-	 * ------------------------------------------ */
 	const openMenu = () => {
 		setMenuClosing(false);
 		setMenuOpen(true);
@@ -216,13 +198,8 @@ export default function Header({ onCartOpen }) {
 		}, 450);
 	};
 
-	// 	useEffect(() => {
-	//   console.log("PATH:", window.location.pathname, "USER:", !!user);
-	// }, [user]);
-
 	return (
 		<div className='header bg-main'>
-			{/* THEME BUTTON */}
 			<button
 				onClick={handleToggleTheme}
 				className='theme-btn rounded-circle d-flex position-absolute'
@@ -231,9 +208,6 @@ export default function Header({ onCartOpen }) {
 					transition: "background-color 0.3s ease, color 0.3s ease",
 				}}></button>
 
-			{/* ========================================================
-			 * TOP BAR
-			 * ====================================================== */}
 			<div className='container-fluid row g-0 justify-content-between px-sm-3 px-3 py-2 align-items-center top-bar bg-secondary-light'>
 				<div className='col-4 col-sm-6 d-flex text-start justify-content-start'>
 					<Link
@@ -297,7 +271,6 @@ export default function Header({ onCartOpen }) {
 						</p>
 					</Link>
 
-					{/* MOBILE HAMBURGER */}
 					<div className='d-flex d-sm-none ms-4 justify-content-center'>
 						<button
 							className={`hamburger-btn ${menuOpen && !menuClosing ? "open" : ""}`}
@@ -310,9 +283,6 @@ export default function Header({ onCartOpen }) {
 				</div>
 			</div>
 
-			{/* ========================================================
-			 * MOBILE MENU OVERLAY + PANEL
-			 * ====================================================== */}
 			{menuOpen && (
 				<div className='mobile-menu-overlay' onClick={closeMenu}>
 					<div
@@ -356,9 +326,6 @@ export default function Header({ onCartOpen }) {
 				</div>
 			)}
 
-			{/* ========================================================
-			 * TITLE BANNER
-			 * ====================================================== */}
 			<nav className='navbar navbar-expand-lg container-fluid title-banner'>
 				<div className='container-fluid flex-row g-0 justify-content-between px-3 py-2 align-items-center'>
 					<div className='col-6 col-md-9 col-lg-10'>
@@ -383,7 +350,6 @@ export default function Header({ onCartOpen }) {
 							{displayName}
 						</label>
 
-						{/* ✅ Avatar dropdown */}
 						<div className='position-relative' ref={accountMenuRef}>
 							<button
 								type='button'
@@ -392,7 +358,6 @@ export default function Header({ onCartOpen }) {
 								aria-label='Account menu'
 								aria-expanded={accountMenuOpen}>
 								<div className='account-avatar-wrapper rounded-circle'>
-									{/* 1️⃣ Logged in + avatar exists + no error */}
 									{user && avatarSrc && !avatarError && (
 										<img
 											src={avatarSrc}
@@ -403,14 +368,12 @@ export default function Header({ onCartOpen }) {
 										/>
 									)}
 
-									{/* 2️⃣ Logged in but no avatar OR avatar errored → initials */}
 									{user && (!avatarSrc || avatarError) && (
 										<div className='account-initials rounded-circle'>
 											{initials || "?"}
 										</div>
 									)}
 
-									{/* 3️⃣ Not logged in → default avatar image (MUST exist in /public) */}
 									{!user && (
 										<img
 											src={DEFAULT_AVATAR}
@@ -418,7 +381,6 @@ export default function Header({ onCartOpen }) {
 											className='account-thumb rounded-circle'
 											loading='lazy'
 											onError={(e) => {
-												// hard fallback in case DEFAULT_AVATAR path is wrong
 												e.currentTarget.src = "/img/avatar-placeholder.png";
 											}}
 										/>
@@ -429,12 +391,10 @@ export default function Header({ onCartOpen }) {
 							{accountMenuOpen && (
 								<div className='avatar-dropdown-modal'>
 									<div className='avatar-dropdown-panel rounded-3'>
-										{/* Loading */}
 										{loadingAuth && (
 											<div className='px-3 py-2 text-muted small'>Loading…</div>
 										)}
 
-										{/* Logged out */}
 										{!loadingAuth && !user && (
 											<>
 												<Link
@@ -453,7 +413,6 @@ export default function Header({ onCartOpen }) {
 											</>
 										)}
 
-										{/* Logged in */}
 										{!loadingAuth && user && (
 											<>
 												<Link
@@ -499,9 +458,6 @@ export default function Header({ onCartOpen }) {
 				</div>
 			</nav>
 
-			{/* ========================================================
-			 * SEARCH BAR + SHOP NOW MEGA MENU
-			 * ====================================================== */}
 			<div className='container-fluid row g-0 d-flex justify-content-center justify-content-sm-between px-3 px-md-4 px-lg-3 py-2 align-items-center search-bar-container bg-secondary'>
 				<div className='col-12 col-lg-6 d-flex text-start justify-content-center py-2 py-lg-0 justify-content-md-start'>
 					<div className='ms-0 ms-md-4 d-flex text-decoration-none text-secondary-light align-items-center'>
@@ -529,12 +485,56 @@ export default function Header({ onCartOpen }) {
 								<div className='category-modal position-absolute rounded-2 py-1'>
 									<div className='modal-hover-bridge'></div>
 
+									{featuredItems.length > 0 && (
+										<div className='px-3 pt-3 pb-2'>
+											<div className='text-uppercase fs-6 fw-bold text-main mb-2'>
+												Featured
+											</div>
+
+											<div className='row g-3 mb-3'>
+												{featuredItems.map((item) => (
+													<div key={item.id} className='col-4'>
+														<Link
+															to={item.path}
+															className='text-decoration-none'>
+															<div className='rounded-3 overflow-hidden border h-100 bg-white'>
+																{item.image ? (
+																	<img
+																		src={item.image}
+																		alt={item.title}
+																		style={{
+																			width: "100%",
+																			height: "120px",
+																			objectFit: "cover",
+																		}}
+																	/>
+																) : null}
+
+																<div className='p-2'>
+																	<div className='small text-uppercase fw-bold text-main mb-1'>
+																		{item.badge}
+																	</div>
+																	<div className='fw-semibold text-main small mb-1'>
+																		{item.title}
+																	</div>
+																	<div className='small text-muted'>
+																		{item.copy}
+																	</div>
+																</div>
+															</div>
+														</Link>
+													</div>
+												))}
+											</div>
+										</div>
+									)}
+
 									<div className='d-flex border-bottom border-main mb-0 justify-content-between'>
 										{tabs.map((tab) => (
 											<button
 												key={tab}
 												onMouseEnter={() => setActiveTab(tab)}
-												className={`mega-tab text-uppercase fs-6 border-0 bg-transparent pb-0 ${
+												className={`mega-tab text-uppercase text-main fs-6 border-0 bg-transparent pb-0 ${
 													activeTab === tab ? "active" : ""
 												}`}>
 												{tab}
@@ -547,7 +547,7 @@ export default function Header({ onCartOpen }) {
 											<Link
 												key={item.id}
 												to={item.path}
-												className='d-inline-block text-uppercase text-start text-decoration-none py-1 pe-2 category-link col-4'>
+												className='d-inline-block text-uppercase text-start text-main text-decoration-none py-1 pe-2 category-link col-4'>
 												{item.name}
 											</Link>
 										))}

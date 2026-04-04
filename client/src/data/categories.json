@@ -3,42 +3,99 @@
     {
       "id": "bolts",
       "name": "Bolts",
-      "image": "/images/categories/BOLTS.png"
+      "image": "/images/categories/BOLTS.png",
+      "subcategories": [
+        {
+          "id": "hex-cap-screws",
+          "name": "Hex Head Bolt",
+          "image": "/images/subcategories/hex-cap-screws.png"
+        },
+        {
+          "id": "socket-head-cap-screws",
+          "name": "Socket Head Cap Screws",
+          "image": "/images/subcategories/socket-head-cap-screws.png"
+        },
+        {
+          "id": "flat-head-cap-screws",
+          "name": "Flat Head Cap Screws",
+          "image": "/images/subcategories/flat-head-cap-screws.png"
+        }
+      ]
     },
     {
       "id": "screws",
       "name": "Screws",
-      "image": "/images/categories/SCREWS.png"
+      "image": "/images/categories/SCREWS.png",
+      "subcategories": [
+        {
+          "id": "machine-screws",
+          "name": "Machine Screws",
+          "image": "/images/subcategories/machine-screws.png"
+        },
+        {
+          "id": "sheet-metal-screws",
+          "name": "Sheet Metal Screws",
+          "image": "/images/subcategories/sheet-metal-screws.png"
+        }
+      ]
     },
     {
       "id": "nuts",
       "name": "Nuts",
-      "image": "/images/categories/NUTS.png"
+      "image": "/images/categories/NUTS.png",
+      "subcategories": [
+        {
+          "id": "hex-nuts",
+          "name": "Hex Nuts",
+          "image": "/images/subcategories/hex-nuts.png"
+        },
+        {
+          "id": "lock-nuts",
+          "name": "Lock Nuts",
+          "image": "/images/subcategories/lock-nuts.png"
+        }
+      ]
     },
     {
       "id": "washers",
       "name": "Washers",
-      "image": "/images/categories/WASHERS.png"
+      "image": "/images/categories/WASHERS.png",
+      "subcategories": [
+        {
+          "id": "flat-washers",
+          "name": "Flat Washers",
+          "image": "/images/subcategories/flat-washers.png"
+        },
+        {
+          "id": "lock-washers",
+          "name": "Lock Washers",
+          "image": "/images/subcategories/lock-washers.png"
+        }
+      ]
     },
     {
       "id": "electrical",
       "name": "Electrical",
-      "image": "/images/categories/ELECTRICAL.png"
+      "image": "/images/categories/ELECTRICAL.png",
+      "subcategories": []
     },
     {
       "id": "strut",
       "name": "Strut",
-      "image": "/images/categories/STRUTS.png"
+      "image": "/images/categories/STRUTS.png",
+      "subcategories": []
     },
     {
       "id": "tools",
       "name": "Tools",
-      "image": "/images/categories/TOOLS.png"
+      "image": "/images/categories/TOOLS.png",
+      "subcategories": []
     },
     {
       "id": "utilities",
       "name": "Utilities",
-      "image": "/images/categories/UTILITIES.png"
+      "image": "/images/categories/UTILITIES.png",
+      "subcategories": []
     }
   ]
 }

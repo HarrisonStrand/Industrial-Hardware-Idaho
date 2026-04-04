@@ -26,8 +26,9 @@ import AdminDashboard from "./pages/AdminDashboard/AdminDashboard.jsx";
 import AdminAccounts from "./pages/AdminDashboard/AdminAccounts.jsx";
 import AdminOrders from "./pages/AdminDashboard/AdminOrders.jsx";
 import AdminProducts from "./pages/AdminDashboard/AdminProducts.jsx";
-import ProductList from "./pages/ProductList/ProductList.jsx";
-import ProductDetail from "./pages/ProductDetail/ProductDetail.jsx";
+import ProductList from "./pages/Products/ProductList/ProductList.jsx";
+import ProductDetail from "./pages/Products/ProductDetail/ProductDetail.jsx";
+import CatalogProductRedirect from "./pages/Catalog/CatalogProductRedirect.jsx";
 import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
 import PrivacyPolicy from "./pages/Legal/PrivacyPolicy.jsx";
@@ -51,10 +52,9 @@ library.add(fab, fas, far);
 export default function App() {
 	const location = useLocation();
 	const [cartOpen, setCartOpen] = useState(false);
+	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
 	const routeKey = location.pathname + location.search;
-
-	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
 	useEffect(() => {
 		const handleResize = () => setScreenWidth(window.innerWidth);
@@ -63,62 +63,76 @@ export default function App() {
 	}, []);
 
 	const isMobileCart = screenWidth < 800;
-
 	const noCartOverlayRoutes = ["/cart", "/checkout"];
 	const hideCartUI = noCartOverlayRoutes.includes(location.pathname);
 
-	// ✅ KEY FIX: close cart drawer whenever navigation happens,
-	// and especially when entering /cart or /checkout
-	useEffect(() => {
-		setCartOpen(false);
-	}, [location.pathname, location.search]);
+	const openCart = () => setCartOpen(true);
+	const closeCart = () => setCartOpen(false);
 
 	return (
-		<CartProvider openCart={() => setCartOpen(true)}>
-			<main className='main container-fluid position-relative p-0'>
-				<ScrollToTop />
-				<Header onCartOpen={() => setCartOpen(true)} />
+		<CartProvider openCart={openCart}>
+			<ScrollToTop />
 
-				{/* Desktop Drawer only (disabled on /cart + /checkout) */}
-				{!isMobileCart && !hideCartUI && (
-					<CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
-				)}
-
-				{/* Mobile bar only (disabled on /cart + /checkout) */}
-				{isMobileCart && !hideCartUI && <MobileCartBar />}
+			<div className='app-shell d-flex flex-column min-vh-100'>
+				<Header onCartOpen={openCart} />
 
 				<AnimatePresence mode='wait'>
-					<motion.div
+					<motion.main
 						key={routeKey}
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						exit={{ opacity: 0 }}
-						transition={{ duration: 0.4 }}>
-						<Routes location={location} key={routeKey}>
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: -10 }}
+						transition={{ duration: 0.2 }}
+						className='flex-grow-1'>
+						<Routes>
 							<Route path='/' element={<Home />} />
-							<Route path='/location' element={<Location />} />
 							<Route path='/about' element={<About />} />
-							<Route path='/careers' element={<Careers />} />
 							<Route path='/contact' element={<Contact />} />
-							<Route path='/privacy' element={<PrivacyPolicy />} />
-							<Route path='/terms' element={<TermsConditions />} />
-							<Route path='/customer-service' element={<CustomerService />} />
-							<Route path='/returns' element={<ReturnsExchanges />} />
-							<Route path='/shipping' element={<ShippingInformation />} />
-							<Route path='/requests' element={<SpecialRequests />} />
+							<Route path='/location' element={<Location />} />
+							<Route path='/careers' element={<Careers />} />
+							<Route path='/login' element={<Login />} />
+							<Route path='/signed-out' element={<SignedOut />} />
+							<Route path='/register' element={<Register />} />
+							<Route path='/forgot-password' element={<ForgotPassword />} />
+							<Route
+								path='/reset-password/:token'
+								element={<ResetPassword />}
+							/>
+
+							<Route path='/products' element={<ProductList />} />
+							<Route
+								path='/products/:categoryId/:subcategoryId'
+								element={<ProductDetail />}
+							/>
+							<Route
+								path='/catalog/product/:slug'
+								element={<CatalogProductRedirect />}
+							/>
+
+							<Route path='/cart' element={<Cart />} />
+							<Route path='/checkout' element={<Checkout />} />
 							<Route
 								path='/order-confirmation/:orderId'
 								element={<OrderConfirmation />}
 							/>
 							<Route path='/order-status' element={<OrderStatus />} />
+
+							<Route path='/privacy-policy' element={<PrivacyPolicy />} />
+							<Route path='/terms-conditions' element={<TermsConditions />} />
+							<Route path='/customer-service' element={<CustomerService />} />
+							<Route path='/returns-exchanges' element={<ReturnsExchanges />} />
+							<Route
+								path='/shipping-information'
+								element={<ShippingInformation />}
+							/>
+
+							<Route path='/special-requests' element={<SpecialRequests />} />
 							<Route path='/customer-forms' element={<CustomerForms />} />
 							<Route
 								path='/vendor-information'
 								element={<VendorInformation />}
 							/>
 
-							<Route path='/login' element={<Login />} />
-							<Route path='/signed-out' element={<SignedOut />} />
 							<Route
 								path='/profile'
 								element={
@@ -127,51 +141,72 @@ export default function App() {
 									</ProtectedRoute>
 								}
 							/>
-							<Route path='/register' element={<Register />} />
-							<Route path='/forgot-password' element={<ForgotPassword />} />
-							<Route path='/reset-password' element={<ResetPassword />} />
-							<Route path='/products/' element={<ProductList />} />
-							<Route path='/products/:id' element={<ProductDetail />} />
+
+							{/* Admin routes */}
 							<Route
-								path='/products/:categoryId/:subcategoryId'
-								element={<ProductDetail />}
-							/>
-							<Route path='/cart' element={<Cart />} />
-							<Route
-								path='/checkout'
-								element={
-									<ProtectedRoute>
-										<Checkout />
-									</ProtectedRoute>
-								}
+								path='/admin'
+								element={<Navigate to='/admin/dashboard' replace />}
 							/>
 
 							<Route
 								path='/admin/dashboard'
 								element={
-									<ProtectedRoute requireAdmin={true}>
+									<ProtectedRoute requireAdmin>
 										<AdminDashboard />
 									</ProtectedRoute>
-								}>
-								<Route index element={<Navigate to='accounts' replace />} />
-								<Route path='accounts' element={<AdminAccounts />} />
-								<Route path='orders' element={<AdminOrders />} />
-								<Route path='products' element={<AdminProducts />} />
-							</Route>
+								}
+							/>
 							<Route
-								path='/admin'
+								path='/admin/dashboard/accounts'
 								element={
-									<ProtectedRoute requireAdmin={true}>
+									<ProtectedRoute requireAdmin>
 										<AdminAccounts />
 									</ProtectedRoute>
 								}
 							/>
+							<Route
+								path='/admin/dashboard/orders'
+								element={
+									<ProtectedRoute requireAdmin>
+										<AdminOrders />
+									</ProtectedRoute>
+								}
+							/>
+							<Route
+								path='/admin/dashboard/products'
+								element={
+									<ProtectedRoute requireAdmin>
+										<AdminProducts />
+									</ProtectedRoute>
+								}
+							/>
+
+							{/* Backward-compatible admin aliases */}
+							<Route
+								path='/admin/accounts'
+								element={<Navigate to='/admin/dashboard/accounts' replace />}
+							/>
+							<Route
+								path='/admin/orders'
+								element={<Navigate to='/admin/dashboard/orders' replace />}
+							/>
+							<Route
+								path='/admin/products'
+								element={<Navigate to='/admin/dashboard/products' replace />}
+							/>
 						</Routes>
-					</motion.div>
+					</motion.main>
 				</AnimatePresence>
 
 				<Footer />
-			</main>
+
+				{!hideCartUI && (
+					<>
+						<CartDrawer isOpen={cartOpen} onClose={closeCart} />
+						{isMobileCart && <MobileCartBar onOpenCart={openCart} />}
+					</>
+				)}
+			</div>
 		</CartProvider>
 	);
 }

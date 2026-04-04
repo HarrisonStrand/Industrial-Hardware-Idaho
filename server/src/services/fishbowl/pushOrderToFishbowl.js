@@ -1,6 +1,59 @@
-// src/services/fishbowl/pushOrderToFishbowl.js
 import { fishbowlClient } from "../../integrations/fishbowl/fishbowlClient.js";
-import Order from "../../models/Order.js"; // adjust to your project
+import Order from "../../models/Order.js";
+
+function resolveFishbowlPartNumber(item = {}) {
+  return (
+    item.partNumber ||
+    item.vendorPartNumber ||
+    item?.attributes?.fishbowlPartNum ||
+    ""
+  );
+}
+
+function buildImportRows(order, externalRef) {
+  const customerName = order.customer?.companyName || `${order.customer?.firstName || ""} ${order.customer?.lastName || ""}`.trim() || "WEB CUSTOMER";
+
+  const rows = [["SO Number", "Customer", "Part Number", "Quantity", "Price"]];
+
+  for (const item of order.items || []) {
+    const partNumber = resolveFishbowlPartNumber(item);
+    if (!partNumber) continue;
+
+    rows.push([
+      externalRef,
+      customerName,
+      partNumber,
+      Number(item.qty || 0),
+      Number(item.unitPrice || 0),
+    ]);
+  }
+
+  return rows;
+}
+
+function buildDirectPayload(order, externalRef) {
+  const customerName = order.customer?.companyName || `${order.customer?.firstName || ""} ${order.customer?.lastName || ""}`.trim() || "WEB CUSTOMER";
+
+  return {
+    num: externalRef,
+    customer: {
+      name: customerName,
+      email: order.customer?.email || "",
+      phone: order.customer?.phone || "",
+    },
+    billingAddress: order.billingAddress || {},
+    shippingAddress: order.shippingAddress || {},
+    items: (order.items || [])
+      .map((item, index) => ({
+        lineNumber: index + 1,
+        partNumber: resolveFishbowlPartNumber(item),
+        description: item.name || item.detail || item.partNumber || "",
+        quantity: Number(item.qty || 0),
+        rate: Number(item.unitPrice || 0),
+      }))
+      .filter((item) => item.partNumber),
+  };
+}
 
 export async function pushOrderToFishbowl(orderId) {
   const enabled = String(process.env.FISHBOWL_ENABLED || "false") === "true";
@@ -9,7 +62,6 @@ export async function pushOrderToFishbowl(orderId) {
   const order = await Order.findById(orderId);
   if (!order) throw new Error(`Order not found: ${orderId}`);
 
-  // Idempotency guard
   if (order.fishbowlId || order.fishbowlNumber) {
     return {
       skipped: true,
@@ -19,23 +71,21 @@ export async function pushOrderToFishbowl(orderId) {
     };
   }
 
-  const mode = String(process.env.FISHBOWL_SO_CREATE_MODE || "IMPORT").toUpperCase();
+  const validItems = (order.items || []).filter((item) => resolveFishbowlPartNumber(item));
+  if (!validItems.length) {
+    return {
+      pushed: false,
+      error: "Order has no valid Fishbowl part numbers",
+    };
+  }
 
-  // TODO: map your order shape -> Fishbowl
-  // (customer, addresses, shipping, tax, payment terms, line items -> FB parts/products, etc.)
-  // Keep a stable external reference so you can find this SO later:
-  const externalRef = `IHI-${order._id}`;
+  const mode = String(process.env.FISHBOWL_SO_CREATE_MODE || "IMPORT").toUpperCase();
+  const externalRef = order.orderNumber || `IHI-${order._id}`;
 
   let resp;
 
   if (mode === "DIRECT") {
-    // Only use this if your /apidocs shows POST /api/sales-orders for your version
-    const payload = {
-      // TODO: real Sales Order JSON per your server's /apidocs
-      // num: externalRef,
-      // customer: { id: ... } or { name: ... }
-      // items: [...]
-    };
+    const payload = buildDirectPayload(order, externalRef);
 
     resp = await fishbowlClient.request({
       method: "POST",
@@ -43,17 +93,8 @@ export async function pushOrderToFishbowl(orderId) {
       body: payload,
     });
   } else {
-    // IMPORT mode: use Fishbowl's import mechanism (CSV/JSON import endpoint). :contentReference[oaicite:7]{index=7}
-    // You’ll pick the import name exactly as Fishbowl labels it, with spaces replaced by "-".
-    // Example shown in docs: "Sales Order Details" -> "Sales-Order-Details". :contentReference[oaicite:8]{index=8}
     const importName = "Sales-Order-Details";
-
-    // TODO: build rows to match the import definition in Fishbowl.
-    // This is a placeholder structure: [ [headers...], [row...], [row...] ]
-    const rows = [
-      ["SO Number", "Customer", "Part Number", "Quantity"], // placeholder headers
-      [externalRef, "WEB CUSTOMER", "PART-123", 1],         // placeholder row
-    ];
+    const rows = buildImportRows(order, externalRef);
 
     resp = await fishbowlClient.request({
       method: "POST",
@@ -68,15 +109,22 @@ export async function pushOrderToFishbowl(orderId) {
       status: resp.status,
       error: resp.data,
       note:
-        "If this is the first time this app logs into Fishbowl, approve the integration inside Fishbowl (or you may see an approval error).",
+        "If this is the first time this app logs into Fishbowl, approve the integration inside Fishbowl.",
     };
   }
 
-  // TODO: Once we know the response shape / lookup strategy, save refs:
-  // order.fishbowlId = ...
-  // order.fishbowlNumber = ...
-  // order.fishbowlStatus = ...
-  // await order.save();
+  order.fishbowlStatus = "PUSHED";
+  order.fishbowlNumber = externalRef;
 
-  return { pushed: true, fishbowl: resp.data };
+  if (resp?.data?.id != null) order.fishbowlId = String(resp.data.id);
+  if (resp?.data?.number) order.fishbowlNumber = String(resp.data.number);
+  if (resp?.data?.status) order.fishbowlStatus = String(resp.data.status);
+
+  await order.save();
+
+  return {
+    pushed: true,
+    fishbowl: resp.data,
+    fishbowlNumber: order.fishbowlNumber,
+  };
 }

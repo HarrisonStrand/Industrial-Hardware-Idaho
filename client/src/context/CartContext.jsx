@@ -1,110 +1,159 @@
 import { createContext, useContext, useState, useMemo } from "react";
-import skuData from "../data/product-skus.json";
 
 const CartContext = createContext();
 
+function toSafeNumber(value, fallback = 0) {
+	const num = Number(value);
+	return Number.isFinite(num) ? num : fallback;
+}
+
+function normalizeCatalogCartInput(input = {}) {
+	const quantity = Math.max(1, toSafeNumber(input.quantity, 1));
+
+	const productId = input.productId || null;
+	const vendorOfferingId = input.vendorOfferingId || null;
+
+	const lineId = vendorOfferingId
+		? `catalog:${productId}:${vendorOfferingId}`
+		: `catalog:${productId || input.partNumber || input.sku || "unknown"}`;
+
+	return {
+		mode: "catalog",
+		lineId,
+		partNumber: input.partNumber || input.sku || "",
+		productId,
+		vendorOfferingId,
+		sku: input.sku || "",
+		slug: input.slug || "",
+		name: input.name || input.title || "Product",
+		image: input.image || "",
+		attributes: input.attributes || {},
+		price: toSafeNumber(input.price, 0),
+		quantity,
+		metadata: {
+			source: "catalog-api",
+			category: input.category || "",
+			subcategory: input.subcategory || "",
+			vendorName: input.vendorName || "",
+			vendorPartNumber: input.vendorPartNumber || "",
+			shortDescription: input.shortDescription || "",
+		},
+	};
+}
+
 export function CartProvider({ children, openCart }) {
-  const [items, setItems] = useState([]);
+	const [items, setItems] = useState([]);
 
-  const addToCart = (partNumber, quantity = 1) => {
-    const qty = Number(quantity || 1);
+	const addToCart = (input = {}) => {
+		const snapshot = normalizeCatalogCartInput(input);
 
-    setItems((prev) => {
-      const existing = prev.find((i) => i.partNumber === partNumber);
+		setItems((prev) => {
+			const existing = prev.find((item) => item.lineId === snapshot.lineId);
 
-      if (existing) {
-        return prev.map((i) =>
-          i.partNumber === partNumber
-            ? { ...i, quantity: Number(i.quantity) + qty }
-            : i
-        );
-      }
+			if (existing) {
+				return prev.map((item) =>
+					item.lineId === snapshot.lineId
+						? {
+								...item,
+								quantity:
+									Math.max(
+										1,
+										toSafeNumber(item.quantity, 0) +
+											toSafeNumber(snapshot.quantity, 0),
+									),
+								price: toSafeNumber(snapshot.price, item.price ?? 0),
+								image: snapshot.image || item.image || "",
+								name: snapshot.name || item.name || "Product",
+								attributes: snapshot.attributes || item.attributes || {},
+								metadata: {
+									...(item.metadata || {}),
+									...(snapshot.metadata || {}),
+								},
+						  }
+						: item,
+				);
+			}
 
-      return [...prev, { partNumber, quantity: qty }];
-    });
-  };
+			return [...prev, snapshot];
+		});
+	};
 
-  const removeFromCart = (partNumber) => {
-    setItems((prev) => prev.filter((i) => i.partNumber !== partNumber));
-  };
+	const removeFromCart = (lineId) => {
+		setItems((prev) => prev.filter((item) => item.lineId !== lineId));
+	};
 
-  const updateQuantity = (partNumber, quantity) => {
-    const qty = Number(quantity);
+	const updateQuantity = (lineId, quantity) => {
+		const nextQty = Math.max(0, toSafeNumber(quantity, 0));
 
-    setItems((prev) =>
-      prev
-        .map((i) =>
-          i.partNumber === partNumber ? { ...i, quantity: qty } : i
-        )
-        .filter((i) => Number(i.quantity) > 0)
-    );
-  };
+		setItems((prev) =>
+			prev
+				.map((item) =>
+					item.lineId === lineId
+						? { ...item, quantity: nextQty }
+						: item,
+				)
+				.filter((item) => toSafeNumber(item.quantity, 0) > 0),
+		);
+	};
 
-  const clearCart = () => setItems([]);
+	const clearCart = () => setItems([]);
 
-  const detailedItems = useMemo(() => {
-    return items.map((item) => {
-      const sku = skuData.find((s) => s.partNumber === item.partNumber);
+	const detailedItems = useMemo(() => {
+		return items.map((item) => {
+			const qty = toSafeNumber(item.quantity, 0);
+			const unitPrice = toSafeNumber(item.price, 0);
+			const lineTotal = unitPrice * qty;
 
-      const unitPrice = Number(sku?.price ?? 0);
-      const qty = Number(item.quantity ?? 0);
+			return {
+				...item,
+				price: unitPrice,
+				quantity: qty,
+				lineTotal,
+			};
+		});
+	}, [items]);
 
-      return {
-        ...item,
-        sku,
-        name: sku?.name || sku?.partNumber || item.partNumber,
-        image: sku?.image || "",
-        attributes: sku?.attributes || {},
-        price: unitPrice,
-        lineTotal: unitPrice * qty
-      };
-    });
-  }, [items]);
+	const cartTotal = useMemo(() => {
+		return detailedItems.reduce(
+			(sum, item) => sum + toSafeNumber(item.lineTotal, 0),
+			0,
+		);
+	}, [detailedItems]);
 
-  const cartTotal = useMemo(() => {
-    return detailedItems.reduce(
-      (sum, item) => sum + (Number(item.lineTotal) || 0),
-      0
-    );
-  }, [detailedItems]);
+	const cartCount = useMemo(() => {
+		return detailedItems.reduce(
+			(sum, item) => sum + toSafeNumber(item.quantity, 0),
+			0,
+		);
+	}, [detailedItems]);
 
-  // ✅ total quantity across all lines
-  const cartCount = useMemo(() => {
-    return detailedItems.reduce(
-      (sum, item) => sum + Number(item.quantity || 0),
-      0
-    );
-  }, [detailedItems]);
+	const cartItemCount = useMemo(() => {
+		return detailedItems.length;
+	}, [detailedItems]);
 
-  // ✅ distinct products (cart lines)
-  const cartItemCount = useMemo(() => {
-    return detailedItems.length;
-  }, [detailedItems]);
+	const openCartSafe = () => {
+		if (typeof openCart === "function") openCart();
+	};
 
-  // ✅ safe openCart function (won't crash if not provided)
-  const openCartSafe = () => {
-    if (typeof openCart === "function") openCart();
-  };
-
-  return (
-    <CartContext.Provider
-      value={{
-        items: detailedItems,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        cartTotal,
-        cartCount,
-        cartItemCount,
-        openCart: openCartSafe
-      }}
-    >
-      {children}
-    </CartContext.Provider>
-  );
+	return (
+		<CartContext.Provider
+			value={{
+				items: detailedItems,
+				addToCart,
+				removeFromCart,
+				updateQuantity,
+				clearCart,
+				cartTotal,
+				subtotal: cartTotal,
+				cartCount,
+				cartItemCount,
+				openCart: openCartSafe,
+			}}>
+			{children}
+		</CartContext.Provider>
+	);
 }
 
 export function useCart() {
-  return useContext(CartContext);
+	return useContext(CartContext);
 }
