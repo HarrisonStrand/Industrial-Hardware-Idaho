@@ -1,9 +1,44 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
 import { fetchCatalogBuilderSubcategory } from "../../../services/catalogBuilderApi.js";
 import "./ProductDetail.css";
+
+const HIDDEN_ATTRIBUTE_KEYS = new Set([
+	"fishbowlPartNum",
+	"sku",
+	"internalPartNumber",
+	"familyKey",
+	"familySlug",
+	"familyTitle",
+	"familyAttributeOptions",
+	"size",
+	"material",
+]);
+
+const ATTRIBUTE_ORDER = [
+	"measurementSystem",
+	"fastenerType",
+	"finish",
+	"grade",
+	"diameter",
+	"threadPitch",
+	"length",
+	"drive_type",
+];
+
+const INITIAL_SELECTED_STATE = {
+	measurementSystem: "",
+	drive_type: "",
+	threadPitch: "",
+	quantity: 1,
+	finish: "",
+	grade: "",
+	diameter: "",
+	length: "",
+	fastenerType: "",
+};
 
 function parseFraction(value = "") {
 	const str = String(value).trim();
@@ -29,7 +64,7 @@ function parseFraction(value = "") {
 }
 
 function sortOptionValues(values = [], key = "") {
-	const lower = key.toLowerCase();
+	const lower = String(key || "").toLowerCase();
 
 	if (["diameter", "length"].includes(lower)) {
 		return [...values].sort((a, b) => {
@@ -63,8 +98,6 @@ function formatAttributeLabel(key = "") {
 		length: "Length",
 		finish: "Finish",
 		grade: "Grade",
-		material: "Material",
-		size: "Size",
 	};
 
 	if (labelMap[key]) return labelMap[key];
@@ -75,14 +108,15 @@ function formatAttributeLabel(key = "") {
 		.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function flattenVariants(builderData) {
-	if (Array.isArray(builderData?.families) && builderData.families.length > 0) {
-		return builderData.families.flatMap((family) =>
-			Array.isArray(family?.variants) ? family.variants : []
-		);
+function formatCurrency(value = 0, currency = "USD") {
+	try {
+		return new Intl.NumberFormat("en-US", {
+			style: "currency",
+			currency: currency || "USD",
+		}).format(Number(value || 0));
+	} catch {
+		return `$${Number(value || 0).toFixed(2)}`;
 	}
-
-	return Array.isArray(builderData?.variants) ? builderData.variants : [];
 }
 
 function collectAttributesFromVariants(variants = []) {
@@ -96,15 +130,7 @@ function collectAttributesFromVariants(variants = []) {
 				value === undefined ||
 				value === null ||
 				value === "" ||
-				[
-					"fishbowlPartNum",
-					"sku",
-					"internalPartNumber",
-					"familyKey",
-					"familySlug",
-					"familyTitle",
-					"familyAttributeOptions",
-				].includes(key)
+				HIDDEN_ATTRIBUTE_KEYS.has(key)
 			) {
 				continue;
 			}
@@ -125,6 +151,82 @@ function collectAttributesFromVariants(variants = []) {
 	return result;
 }
 
+function getOrderedAttributeEntries(attributes = {}) {
+	return Object.entries(attributes)
+		.filter(([_, values]) => Array.isArray(values) && values.length > 0)
+		.sort(([a], [b]) => {
+			const aIndex = ATTRIBUTE_ORDER.indexOf(a);
+			const bIndex = ATTRIBUTE_ORDER.indexOf(b);
+
+			if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+			if (aIndex === -1) return 1;
+			if (bIndex === -1) return -1;
+			return aIndex - bIndex;
+		});
+}
+
+function variantMatchesSelection(variant, selection = {}) {
+	const attrs = variant?.attributes || {};
+
+	return Object.entries(selection).every(([key, value]) => {
+		if (key === "quantity") return true;
+		if (!value) return true;
+		return String(attrs[key] || "") === String(value);
+	});
+}
+
+function getCompatibleVariants(variants = [], selection = {}) {
+	return variants.filter((variant) => variantMatchesSelection(variant, selection));
+}
+
+function getAllowedValuesForKey(variants = [], selection = {}, key = "") {
+	const values = new Set();
+
+	for (const variant of variants) {
+		const attrs = variant?.attributes || {};
+
+		const matchesOtherSelections = Object.entries(selection).every(([selKey, selValue]) => {
+			if (selKey === "quantity") return true;
+			if (selKey === key) return true;
+			if (!selValue) return true;
+			return String(attrs[selKey] || "") === String(selValue);
+		});
+
+		if (!matchesOtherSelections) continue;
+
+		const candidate = attrs[key];
+		if (candidate !== undefined && candidate !== null && candidate !== "") {
+			values.add(String(candidate));
+		}
+	}
+
+	return Array.from(values);
+}
+
+function buildAutofilledSelection(baseSelection = {}, variant = {}, keys = [], manualKeys = new Set()) {
+	const next = { ...baseSelection };
+	const attrs = variant?.attributes || {};
+
+	for (const key of keys) {
+		if (manualKeys.has(key)) continue;
+		if (!next[key] && attrs[key]) {
+			next[key] = String(attrs[key]);
+		}
+	}
+
+	return next;
+}
+
+function hasAnyRealSelection(selected = {}) {
+	return Object.entries(selected).some(
+		([key, value]) => key !== "quantity" && Boolean(value)
+	);
+}
+
+function getGenericDisplayName(builderData, subcategoryId) {
+	return builderData?.name || String(subcategoryId || "").replace(/-/g, " ");
+}
+
 export default function ProductDetail() {
 	const { categoryId, subcategoryId } = useParams();
 	const { addToCart, cartItemCount } = useCart();
@@ -133,25 +235,10 @@ export default function ProductDetail() {
 
 	const [builderData, setBuilderData] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [selected, setSelected] = useState(INITIAL_SELECTED_STATE);
 
-	const [selected, setSelected] = useState({
-		measurementSystem: "",
-		drive_type: "",
-		threadPitch: "",
-		quantity: "",
-		finish: "",
-		grade: "",
-		diameter: "",
-		length: "",
-		fastenerType: "",
-		material: "",
-		size: "",
-	});
-
-	const halfWidthFields = ["quantity", "brand"];
-	const needsHalfWidthFields = ["washers", "nuts"].includes(
-		categoryId?.toLowerCase()
-	);
+	const hasUserMadeSelectionRef = useRef(false);
+	const manualKeysRef = useRef(new Set());
 
 	useEffect(() => {
 		let alive = true;
@@ -159,34 +246,17 @@ export default function ProductDetail() {
 		async function load() {
 			try {
 				setLoading(true);
-
-				const data = await fetchCatalogBuilderSubcategory(
-					categoryId,
-					subcategoryId
-				);
+				const data = await fetchCatalogBuilderSubcategory(categoryId, subcategoryId);
 
 				if (!alive) return;
 
 				setBuilderData(data);
-
-				setSelected({
-					measurementSystem: "",
-					drive_type: "",
-					threadPitch: "",
-					quantity: "",
-					finish: "",
-					grade: "",
-					diameter: "",
-					length: "",
-					fastenerType: "",
-					material: "",
-					size: "",
-				});
+				setSelected(INITIAL_SELECTED_STATE);
+				hasUserMadeSelectionRef.current = false;
+				manualKeysRef.current = new Set();
 			} catch (error) {
 				console.error("Failed to load builder data:", error);
-				if (alive) {
-					setBuilderData(null);
-				}
+				if (alive) setBuilderData(null);
 			} finally {
 				if (alive) setLoading(false);
 			}
@@ -199,108 +269,136 @@ export default function ProductDetail() {
 		};
 	}, [categoryId, subcategoryId]);
 
-	const variants = useMemo(() => flattenVariants(builderData), [builderData]);
+	const variants = useMemo(() => {
+		return Array.isArray(builderData?.variants) ? builderData.variants : [];
+	}, [builderData]);
 
 	const attributes = useMemo(() => {
-		if (builderData?.attributes && Object.keys(builderData.attributes).length > 0) {
-			const cleaned = {};
+		const topLevel = builderData?.attributes || {};
+		const cleaned = {};
 
-			for (const [key, values] of Object.entries(builderData.attributes)) {
-				if (
-					[
-						"familyKey",
-						"familySlug",
-						"familyTitle",
-						"familyAttributeOptions",
-						"fishbowlPartNum",
-						"sku",
-						"internalPartNumber",
-					].includes(key)
-				) {
-					continue;
-				}
-
-				cleaned[key] = Array.isArray(values)
-					? sortOptionValues(values, key)
-					: [];
+		for (const [key, values] of Object.entries(topLevel)) {
+			if (HIDDEN_ATTRIBUTE_KEYS.has(key)) continue;
+			if (Array.isArray(values) && values.length > 0) {
+				cleaned[key] = sortOptionValues(values, key);
 			}
-
-			return cleaned;
 		}
 
+		if (Object.keys(cleaned).length > 0) return cleaned;
 		return collectAttributesFromVariants(variants);
 	}, [builderData, variants]);
 
-	const hasSelectedOptions = useMemo(() => {
-		return Object.entries(selected).some(
-			([key, value]) => key !== "quantity" && Boolean(value)
-		);
-	}, [selected]);
+	const attributeEntries = useMemo(() => {
+		return getOrderedAttributeEntries(attributes);
+	}, [attributes]);
 
-	const validOptions = useMemo(() => {
+	const visibleKeys = useMemo(() => {
+		return attributeEntries.map(([key]) => key);
+	}, [attributeEntries]);
+
+	const dropdownOptions = useMemo(() => {
 		const options = {};
-		if (!variants.length) return options;
 
-		Object.keys(attributes).forEach((key) => {
-			const possibleValues = new Set();
+		for (const [key, values] of attributeEntries) {
+			const allowed = new Set(
+				getAllowedValuesForKey(variants, selected, key).map(String)
+			);
 
-			for (const candidate of variants) {
-				const candidateValue = candidate.attributes?.[key];
-				if (!candidateValue) continue;
+			options[key] = sortOptionValues(values, key).map((value) => ({
+				value,
+				disabled: !allowed.has(String(value)),
+			}));
+		}
 
-				const matchesOtherSelections = Object.entries(selected).every(
-					([selectedKey, selectedVal]) => {
-						if (selectedKey === "quantity") return true;
-						if (selectedKey === key) return true;
-						if (!selectedVal) return true;
+		return options;
+	}, [attributeEntries, variants, selected]);
 
-						return (
-							String(candidate.attributes?.[selectedKey] || "") ===
-							String(selectedVal)
-						);
-					}
+	const validVariants = useMemo(() => {
+		if (!variants.length) return [];
+		return getCompatibleVariants(variants, selected);
+	}, [variants, selected]);
+
+	const exactVariant = useMemo(() => {
+		if (!hasAnyRealSelection(selected)) return null;
+		return validVariants[0] || null;
+	}, [selected, validVariants]);
+
+	const quantity = Math.max(1, Number(selected.quantity || 1));
+	const displayVariant = exactVariant || null;
+
+	const displayName = displayVariant?.name || getGenericDisplayName(builderData, subcategoryId);
+	const displayImage = displayVariant?.image || builderData?.image || "";
+	const displayDescription = displayVariant?.description || builderData?.description || "";
+
+	const unitPrice = Number(displayVariant?.price || 0);
+	const currency = displayVariant?.currency || "USD";
+	const totalPrice = unitPrice * quantity;
+	const qtyAvailable = Number(displayVariant?.qtyAvailable || 0);
+
+	const handleChange = (attr, value) => {
+		setSelected((prev) => {
+			if (attr === "quantity") {
+				return {
+					...prev,
+					quantity: Math.max(1, Number(value || 1)),
+				};
+			}
+
+			hasUserMadeSelectionRef.current = true;
+
+			const manualKeys = new Set(manualKeysRef.current);
+			if (value) manualKeys.add(attr);
+			else manualKeys.delete(attr);
+
+			let next = {
+				...prev,
+				[attr]: value,
+			};
+
+			let compatible = getCompatibleVariants(variants, next);
+
+			if (!compatible.length) {
+				const autoFilledKeys = visibleKeys.filter(
+					(key) => key !== attr && !manualKeys.has(key) && Boolean(next[key])
 				);
 
-				if (matchesOtherSelections) {
-					possibleValues.add(String(candidateValue));
+				for (const key of autoFilledKeys) {
+					const test = { ...next, [key]: "" };
+					const testCompatible = getCompatibleVariants(variants, test);
+					if (testCompatible.length) {
+						next = test;
+						compatible = testCompatible;
+					}
 				}
 			}
 
-			const collected = Array.from(possibleValues);
-			options[key] = collected.length
-				? sortOptionValues(collected, key)
-				: sortOptionValues(attributes[key] || [], key);
+			if (!compatible.length) {
+				const otherManualKeys = visibleKeys.filter(
+					(key) => key !== attr && manualKeys.has(key) && Boolean(next[key])
+				);
+
+				for (const key of otherManualKeys) {
+					const test = { ...next, [key]: "" };
+					const testCompatible = getCompatibleVariants(variants, test);
+					if (testCompatible.length) {
+						next = test;
+						manualKeys.delete(key);
+						compatible = testCompatible;
+					}
+				}
+			}
+
+			if (compatible.length) {
+				next = buildAutofilledSelection(next, compatible[0], visibleKeys, manualKeys);
+			}
+
+			manualKeysRef.current = manualKeys;
+			return next;
 		});
-
-		return options;
-	}, [selected, attributes, variants]);
-
-	const matchingVariant = useMemo(() => {
-		if (!variants.length) return null;
-
-		const selectedKeys = Object.entries(selected)
-			.filter(([key, value]) => key !== "quantity" && Boolean(value))
-			.map(([key]) => key);
-
-		if (!selectedKeys.length) return null;
-
-		return (
-			variants.find((variant) =>
-				selectedKeys.every(
-					(key) =>
-						String(variant.attributes?.[key] || "") ===
-						String(selected[key] || "")
-				)
-			) || null
-		);
-	}, [selected, variants]);
-
-	const handleChange = (attr, value) => {
-		setSelected((prev) => ({ ...prev, [attr]: value }));
 	};
 
 	const handleAddToCart = () => {
-		if (!matchingVariant) {
+		if (!displayVariant) {
 			showToast({
 				message: "Please select a valid product configuration.",
 				variant: "danger",
@@ -308,27 +406,28 @@ export default function ProductDetail() {
 			return;
 		}
 
-		const qty = Math.max(1, Number(selected.quantity || 1));
-
 		addToCart({
-			productId: matchingVariant.productId,
-			vendorOfferingId: matchingVariant.vendorOfferingId || null,
-			quantity: qty,
-			partNumber: matchingVariant.partNumber,
-			sku: matchingVariant.sku,
-			title: matchingVariant.name,
-			image: matchingVariant.image,
-			attributes: matchingVariant.attributes || {},
-			price: Number(matchingVariant.price || 0),
+			productId: displayVariant.productId,
+			quantity,
+			partNumber: displayVariant.partNumber,
+			sku: displayVariant.sku,
+			slug: displayVariant.slug || "",
+			title: displayVariant.name,
+			image: displayVariant.image,
+			attributes: displayVariant.attributes || {},
+			price: Number(displayVariant.price || 0),
 			category: builderData?.categoryId || "",
 			subcategory: builderData?.subcategoryId || "",
-			vendorName: matchingVariant.vendorName || "",
-			vendorPartNumber: matchingVariant.vendorPartNumber || "",
-			shortDescription: matchingVariant.shortDescription || "",
+			shortDescription: displayVariant.shortDescription || "",
+			metadata: {
+				source: "catalog-builder",
+				duplicateCount: displayVariant.duplicateCount || 1,
+				groupedPartNumbers: displayVariant.groupedPartNumbers || [],
+			},
 		});
 
 		showToast({
-			message: qty > 1 ? `Added ${qty} items to cart` : "Added to cart",
+			message: quantity > 1 ? `Added ${quantity} items to cart` : "Added to cart",
 			variant: "success",
 			actionLabel: "View Cart",
 			onAction: () => navigate("/cart"),
@@ -344,16 +443,6 @@ export default function ProductDetail() {
 		return <h2 className='text-center mt-5'>Product not found.</h2>;
 	}
 
-	const displayImage = matchingVariant?.image || builderData?.image || "";
-
-	const displayName =
-		hasSelectedOptions && matchingVariant?.name
-			? matchingVariant.name
-			: builderData?.name || subcategoryId;
-
-	const displayDescription =
-		matchingVariant?.description || builderData?.description || "";
-
 	return (
 		<div className='theme-detail container-fluid px-3 px-sm-5 py-4 py-md-5'>
 			<div className='theme-detail-container py-4 theme-detail fade-in rounded-4 px-3 px-sm-5'>
@@ -362,7 +451,7 @@ export default function ProductDetail() {
 				</div>
 
 				<div className='product-description-card row p-3 rounded-4 m-0'>
-					<div className='col-12 col-lg-4'>
+					<div className='col-12 col-lg-4 mb-4 mb-lg-0'>
 						<div className='product-image-card rounded-4 overflow-hidden'>
 							{displayImage ? (
 								<img
@@ -378,13 +467,49 @@ export default function ProductDetail() {
 						</div>
 					</div>
 
-					<div className='col-12 col-lg-4'>
+					<div className='col-12 col-lg-4 mb-4 mb-lg-0'>
 						<div className='product-description rounded-4 overflow-hidden'>
 							<div className='description-title text-main text-decoration-underline fs-3 text-uppercase'>
 								Description
 							</div>
 							<div className='description-copy fs-5 text-main'>
 								{displayDescription}
+							</div>
+						</div>
+					</div>
+
+					<div className='col-12 col-lg-4'>
+						<div className='product-description rounded-4 overflow-hidden'>
+							<div className='description-title text-main text-decoration-underline fs-3 text-uppercase'>
+								Pricing & Availability
+							</div>
+
+							<div className='description-copy fs-5 text-main'>
+								<div>
+									<strong>Our Price:</strong>{" "}
+									{displayVariant
+										? `${formatCurrency(unitPrice, currency)} each`
+										: "Select options"}
+								</div>
+
+								<div className='mt-2'>
+									<strong>Status:</strong>{" "}
+									{displayVariant
+										? displayVariant.inStock
+											? "Available"
+											: "Available on request"
+										: "Select options"}
+								</div>
+
+								<div className='mt-2'>
+									<strong>Available Qty:</strong>{" "}
+									{displayVariant ? qtyAvailable : "Select options"}
+								</div>
+
+								<div className='mt-2'>
+									<strong>Part Number:</strong>{" "}
+									{displayVariant?.partNumber || "Select options"}
+								</div>
 							</div>
 						</div>
 					</div>
@@ -397,50 +522,35 @@ export default function ProductDetail() {
 					<div className='main-linebreak border-0 border-top border-main py-2' />
 
 					<div className='row m-0 p-0'>
-						{Object.entries(attributes)
-							.filter(
-								([_, values]) => Array.isArray(values) && values.length > 0
-							)
-							.filter(([key]) => (validOptions[key] || []).length > 0)
-							.map(([key, values]) => {
-								const label = formatAttributeLabel(key);
-								const options = validOptions[key] || values;
+						{attributeEntries.map(([key]) => {
+							const label = formatAttributeLabel(key);
+							const options = dropdownOptions[key] || [];
 
-								return (
-									<div
-										key={key}
-										className={
-											needsHalfWidthFields && halfWidthFields.includes(key)
-												? "mb-3 col-6 col-sm-4 col-md-2"
-												: "mb-3 col-12 col-sm-6 col-md-4"
-										}>
-										<label className='form-label text-uppercase small fw-bold mb-0 text-main'>
-											{label}
-										</label>
+							return (
+								<div key={key} className='mb-3 col-12 col-sm-6 col-md-4'>
+									<label className='form-label text-uppercase small fw-bold mb-0 text-main'>
+										{label}
+									</label>
 
-										<select
-											className='product-option-dropdown form-select form-control rounded-3 text-secondary option-select form-input'
-											value={selected[key] || ""}
-											onChange={(e) =>
-												handleChange(key, e.target.value)
-											}>
-											<option value=''>Select {label}</option>
-											{options.map((v) => (
-												<option key={v} value={v}>
-													{v}
-												</option>
-											))}
-										</select>
-									</div>
-								);
-							})}
+									<select
+										className='product-option-dropdown form-select form-control rounded-3 text-secondary option-select form-input'
+										value={selected[key] || ""}
+										onChange={(e) => handleChange(key, e.target.value)}>
+										<option value=''>Select {label}</option>
+										{options.map((option) => (
+											<option
+												key={option.value}
+												value={option.value}
+												disabled={option.disabled}>
+												{option.value}
+											</option>
+										))}
+									</select>
+								</div>
+							);
+						})}
 
-						<div
-							className={
-								needsHalfWidthFields
-									? "mb-3 col-6 col-sm-4 col-md-2"
-									: "mb-3 col-12 col-sm-6 col-md-4"
-							}>
+						<div className='mb-3 col-12 col-sm-6 col-md-4'>
 							<label className='form-label text-uppercase small fw-bold mb-0 text-main'>
 								Quantity
 							</label>
@@ -451,9 +561,7 @@ export default function ProductDetail() {
 									min='1'
 									className='form-control rounded-3 text-secondary option-select form-input pe-4'
 									value={selected.quantity}
-									onChange={(e) =>
-										handleChange("quantity", e.target.value)
-									}
+									onChange={(e) => handleChange("quantity", e.target.value)}
 									placeholder='Enter quantity'
 								/>
 
@@ -463,7 +571,7 @@ export default function ProductDetail() {
 										onClick={() =>
 											handleChange(
 												"quantity",
-												Math.max(1, Number(selected.quantity || 0) + 1)
+												Math.max(1, Number(selected.quantity || 1) + 1)
 											)
 										}
 									/>
@@ -485,14 +593,22 @@ export default function ProductDetail() {
 				<div className='main-linebreak border-0 border-top border-main py-2 w-75 mx-auto' />
 
 				<div className='row bottom-price-row'>
-					<div className='col-12 col-md-4' />
+					<div className='col-12 col-md-4'>
+						<div className='small text-main'>
+							{hasAnyRealSelection(selected)
+								? `${validVariants.length} valid matching option${
+										validVariants.length === 1 ? "" : "s"
+								  }`
+								: `${variants.length} total variants available`}
+						</div>
+					</div>
 
 					<div className='col-12 col-md-4 text-center'>
 						<div className='d-flex justify-content-center align-items-center gap-4'>
 							<button
 								className='btn-main-cta justify-content-center text-center rounded-4 text-uppercase fw-regular fs-4 py-4 text-main-light'
 								onClick={handleAddToCart}
-								disabled={!matchingVariant || !selected.quantity}>
+								disabled={!displayVariant}>
 								Add to Cart
 							</button>
 
@@ -508,16 +624,11 @@ export default function ProductDetail() {
 					</div>
 
 					<div className='col-12 col-md-4 price-container text-end fs-1 text-main font-secondary pt-3 pt-md-0'>
-						{matchingVariant && selected.quantity
-							? `$${(
-									Number(matchingVariant.price || 0) *
-									Number(selected.quantity)
-							  ).toFixed(2)}`
-							: "$0.00"}
+						{displayVariant ? formatCurrency(totalPrice, currency) : "--"}
 						<div className='fs-6 text-muted'>
-							{matchingVariant
-								? `$${Number(matchingVariant.price || 0).toFixed(2)} each`
-								: "$0.00"}
+							{displayVariant
+								? `${formatCurrency(unitPrice, currency)} each`
+								: "Select options for pricing"}
 						</div>
 					</div>
 				</div>

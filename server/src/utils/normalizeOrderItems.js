@@ -1,4 +1,5 @@
-import VendorOffering from "../models/VendorOffering.js";
+import Product from "../models/Product.js";
+import { resolveProductPrice, getPricingContext } from "./resolveProductPrice.js";
 
 function toObjectIdString(value) {
   if (!value) return null;
@@ -36,15 +37,29 @@ function normalizeOne(raw = {}) {
 
   return {
     productId: toObjectIdString(raw.productId),
-    vendorOfferingId: toObjectIdString(raw.vendorOfferingId),
     partNumber: String(raw.partNumber || raw.sku || "").trim(),
+    sku: String(raw.sku || raw.partNumber || "").trim(),
     name: String(raw.name || raw.partNumber || raw.sku || "Product").trim(),
     detail: buildDetail(raw),
     qty,
     unitPrice,
     lineTotal: Number((qty * unitPrice).toFixed(2)),
-    vendorName: String(raw.vendorName || raw?.metadata?.vendorName || "").trim(),
-    vendorPartNumber: String(raw.vendorPartNumber || raw?.metadata?.vendorPartNumber || "").trim(),
+    category: String(raw.category || raw?.metadata?.category || "").trim(),
+    subcategory: String(raw.subcategory || raw?.metadata?.subcategory || "").trim(),
+    shortDescription: String(
+      raw.shortDescription || raw?.metadata?.shortDescription || ""
+    ).trim(),
+    groupedPartNumbers: Array.isArray(raw.groupedPartNumbers)
+      ? raw.groupedPartNumbers.map(String)
+      : Array.isArray(raw?.metadata?.groupedPartNumbers)
+      ? raw.metadata.groupedPartNumbers.map(String)
+      : [],
+    duplicateCount: Math.max(
+      1,
+      Math.round(
+        toPositiveNumber(raw.duplicateCount ?? raw?.metadata?.duplicateCount, 1)
+      )
+    ),
     attributes:
       raw.attributes && typeof raw.attributes === "object" && !Array.isArray(raw.attributes)
         ? raw.attributes
@@ -52,61 +67,96 @@ function normalizeOne(raw = {}) {
   };
 }
 
-export async function normalizeOrderItems(items = [], { repriceFromVendorOfferings = true } = {}) {
+export async function normalizeOrderItems(
+  items = [],
+  {
+    pricingContext = {},
+    repriceFromProducts = true,
+  } = {}
+) {
   if (!Array.isArray(items)) return [];
 
   const normalized = items
     .map(normalizeOne)
-    .filter((item) => item.partNumber || item.vendorPartNumber || item.vendorOfferingId);
+    .filter((item) => item.partNumber || item.sku || item.productId);
 
-  if (!repriceFromVendorOfferings || normalized.length === 0) {
+  if (!normalized.length) return [];
+
+  if (!repriceFromProducts) {
     return normalized.map((item) => ({
       ...item,
       lineTotal: Number((item.qty * item.unitPrice).toFixed(2)),
     }));
   }
 
-  const vendorOfferingIds = normalized
-    .map((item) => item.vendorOfferingId)
-    .filter(Boolean);
+  const productIds = normalized.map((item) => item.productId).filter(Boolean);
+  const partNumbers = normalized.map((item) => item.partNumber).filter(Boolean);
+  const skus = normalized.map((item) => item.sku).filter(Boolean);
 
-  if (!vendorOfferingIds.length) {
-    return normalized.map((item) => ({
-      ...item,
-      lineTotal: Number((item.qty * item.unitPrice).toFixed(2)),
-    }));
-  }
+  const orClauses = [];
+  if (productIds.length) orClauses.push({ _id: { $in: productIds } });
+  if (partNumbers.length) orClauses.push({ "fishbowl.partNum": { $in: partNumbers } });
+  if (skus.length) orClauses.push({ sku: { $in: skus } });
 
-  const offerings = await VendorOffering.find({
-    _id: { $in: vendorOfferingIds },
-    isActive: true,
-    approvalStatus: "approved",
-  }).lean();
+  const products = orClauses.length
+    ? await Product.find({ $or: orClauses }).lean()
+    : [];
 
-  const offeringMap = new Map(offerings.map((offering) => [String(offering._id), offering]));
+  const productById = new Map(products.map((product) => [String(product._id), product]));
+  const productByPartNumber = new Map(
+    products
+      .filter((product) => product?.fishbowl?.partNum)
+      .map((product) => [String(product.fishbowl.partNum), product])
+  );
+  const productBySku = new Map(
+    products
+      .filter((product) => product?.sku)
+      .map((product) => [String(product.sku), product])
+  );
+
+  const resolvedPricingContext = getPricingContext(pricingContext);
 
   return normalized.map((item) => {
-    const offering = item.vendorOfferingId ? offeringMap.get(String(item.vendorOfferingId)) : null;
+    const product =
+      (item.productId && productById.get(String(item.productId))) ||
+      (item.partNumber && productByPartNumber.get(String(item.partNumber))) ||
+      (item.sku && productBySku.get(String(item.sku))) ||
+      null;
 
-    const repricedUnitPrice =
-      offering?.pricing?.price != null ? Number(offering.pricing.price) : item.unitPrice;
+    if (!product) {
+      return {
+        ...item,
+        lineTotal: Number((item.qty * item.unitPrice).toFixed(2)),
+      };
+    }
+
+    const resolved = resolveProductPrice(product, resolvedPricingContext);
 
     const resolvedPartNumber =
-      item.partNumber ||
-      offering?.fishbowlPartNum ||
-      offering?.internalPartNumber ||
-      offering?.websiteSku ||
-      item.vendorPartNumber ||
-      "";
+      product?.fishbowl?.partNum || item.partNumber || product?.sku || item.sku || "";
+
+    const resolvedSku =
+      product?.sku || item.sku || resolvedPartNumber;
+
+    const resolvedName =
+      item.name ||
+      product?.fishbowl?.description ||
+      resolvedSku ||
+      "Product";
+
+    const resolvedUnitPrice = Number(resolved.resolvedPrice || 0);
 
     return {
       ...item,
-      productId: item.productId || (offering?.productId ? String(offering.productId) : null),
-      vendorName: item.vendorName || offering?.vendorName || "",
-      vendorPartNumber: item.vendorPartNumber || offering?.vendorPartNumber || "",
-      partNumber: String(resolvedPartNumber).trim(),
-      unitPrice: Number.isFinite(repricedUnitPrice) ? repricedUnitPrice : item.unitPrice,
-      lineTotal: Number((item.qty * (Number.isFinite(repricedUnitPrice) ? repricedUnitPrice : item.unitPrice)).toFixed(2)),
+      productId: String(product._id),
+      partNumber: resolvedPartNumber,
+      sku: resolvedSku,
+      name: resolvedName,
+      unitPrice: resolvedUnitPrice,
+      priceSource: resolved.source,
+      accountType: resolved.approvedType,
+      priceLabel: resolved.label,
+      lineTotal: Number((item.qty * resolvedUnitPrice).toFixed(2)),
     };
   });
 }

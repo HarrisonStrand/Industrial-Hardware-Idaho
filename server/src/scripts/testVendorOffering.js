@@ -3,10 +3,10 @@ import dotenv from "dotenv";
 
 import Product from "../models/Product.js";
 import ProductEnrichment from "../models/ProductEnrichment.js";
-import VendorOffering from "../models/VendorOffering.js";
+// import VendorOffering from "../models/VendorOffering.js";
 import upsertProductFromFishbowl from "../services/catalog/upsertProductFromFishbowl.js";
 import createProductEnrichmentFromProduct from "../services/catalog/createProductEnrichmentFromProduct.js";
-import createVendorOffering from "../services/catalog/createVendorOffering.js";
+// import createVendorOffering from "../services/catalog/createVendorOffering.js";
 
 dotenv.config();
 

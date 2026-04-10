@@ -1,6 +1,6 @@
 import SyncRun from "../../models/SyncRun.js";
-import createVendorOffering from "../catalog/createVendorOffering.js";
-import createVendorMapping from "../catalog/createVendorMapping.js";
+// import createVendorOffering from "../catalog/createVendorOffering.js";
+// import createVendorMapping from "../catalog/createVendorMapping.js";
 import attachStoredVendorImageToProduct from "../catalog/attachStoredVendorImageToProduct.js";
 
 export async function runVendorCatalogImport({

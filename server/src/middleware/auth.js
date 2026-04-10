@@ -21,6 +21,27 @@ export function requireAuth(req, res, next) {
   }
 }
 
+// Attach user if a valid token exists, but do not block guests
+export function optionalAuth(req, res, next) {
+  try {
+    const token =
+      req.cookies?.token ||
+      (req.headers.authorization?.startsWith("Bearer ")
+        ? req.headers.authorization.slice(7)
+        : null);
+
+    if (!token) {
+      return next();
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // { id, role, email }
+    return next();
+  } catch (err) {
+    return next();
+  }
+}
+
 // Require admin role
 export function requireAdmin(req, res, next) {
   if (!req.user) {

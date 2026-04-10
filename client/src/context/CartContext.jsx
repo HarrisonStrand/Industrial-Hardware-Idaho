@@ -9,20 +9,15 @@ function toSafeNumber(value, fallback = 0) {
 
 function normalizeCatalogCartInput(input = {}) {
 	const quantity = Math.max(1, toSafeNumber(input.quantity, 1));
-
 	const productId = input.productId || null;
-	const vendorOfferingId = input.vendorOfferingId || null;
 
-	const lineId = vendorOfferingId
-		? `catalog:${productId}:${vendorOfferingId}`
-		: `catalog:${productId || input.partNumber || input.sku || "unknown"}`;
+	const lineId = `catalog:${productId || input.partNumber || input.sku || "unknown"}`;
 
 	return {
 		mode: "catalog",
 		lineId,
 		partNumber: input.partNumber || input.sku || "",
 		productId,
-		vendorOfferingId,
 		sku: input.sku || "",
 		slug: input.slug || "",
 		name: input.name || input.title || "Product",
@@ -34,9 +29,16 @@ function normalizeCatalogCartInput(input = {}) {
 			source: "catalog-api",
 			category: input.category || "",
 			subcategory: input.subcategory || "",
-			vendorName: input.vendorName || "",
-			vendorPartNumber: input.vendorPartNumber || "",
 			shortDescription: input.shortDescription || "",
+			groupedPartNumbers: Array.isArray(input.groupedPartNumbers)
+				? input.groupedPartNumbers
+				: Array.isArray(input?.metadata?.groupedPartNumbers)
+				? input.metadata.groupedPartNumbers
+				: [],
+			duplicateCount: toSafeNumber(
+				input.duplicateCount ?? input?.metadata?.duplicateCount,
+				1
+			),
 		},
 	};
 }
@@ -55,12 +57,11 @@ export function CartProvider({ children, openCart }) {
 					item.lineId === snapshot.lineId
 						? {
 								...item,
-								quantity:
-									Math.max(
-										1,
-										toSafeNumber(item.quantity, 0) +
-											toSafeNumber(snapshot.quantity, 0),
-									),
+								quantity: Math.max(
+									1,
+									toSafeNumber(item.quantity, 0) +
+										toSafeNumber(snapshot.quantity, 0)
+								),
 								price: toSafeNumber(snapshot.price, item.price ?? 0),
 								image: snapshot.image || item.image || "",
 								name: snapshot.name || item.name || "Product",
@@ -70,7 +71,7 @@ export function CartProvider({ children, openCart }) {
 									...(snapshot.metadata || {}),
 								},
 						  }
-						: item,
+						: item
 				);
 			}
 
@@ -88,11 +89,9 @@ export function CartProvider({ children, openCart }) {
 		setItems((prev) =>
 			prev
 				.map((item) =>
-					item.lineId === lineId
-						? { ...item, quantity: nextQty }
-						: item,
+					item.lineId === lineId ? { ...item, quantity: nextQty } : item
 				)
-				.filter((item) => toSafeNumber(item.quantity, 0) > 0),
+				.filter((item) => toSafeNumber(item.quantity, 0) > 0)
 		);
 	};
 
@@ -116,14 +115,14 @@ export function CartProvider({ children, openCart }) {
 	const cartTotal = useMemo(() => {
 		return detailedItems.reduce(
 			(sum, item) => sum + toSafeNumber(item.lineTotal, 0),
-			0,
+			0
 		);
 	}, [detailedItems]);
 
 	const cartCount = useMemo(() => {
 		return detailedItems.reduce(
 			(sum, item) => sum + toSafeNumber(item.quantity, 0),
-			0,
+			0
 		);
 	}, [detailedItems]);
 

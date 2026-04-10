@@ -1,6 +1,7 @@
 import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
-import VendorOffering from "../../models/VendorOffering.js";
+import CatalogFamilyAsset from "../../models/CatalogFamilyAsset.js";
+import { resolveProductPrice, getPricingContext } from "../../utils/resolveProductPrice.js";
 
 function toTitle(value = "") {
   return String(value || "")
@@ -19,6 +20,11 @@ function escapeRegex(value = "") {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function asNumber(value, fallback = 0) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
 function collectAttributeOptions(variants = []) {
   const map = new Map();
 
@@ -30,97 +36,201 @@ function collectAttributeOptions(variants = []) {
         value === undefined ||
         value === null ||
         value === "" ||
-        ["fishbowlPartNum", "sku", "internalPartNumber"].includes(key)
+        [
+          "fishbowlPartNum",
+          "sku",
+          "internalPartNumber",
+          "familyKey",
+          "familySlug",
+          "familyTitle",
+          "familyAttributeOptions",
+          "familyImage",
+          "familyImageAlt",
+          "fishbowlDescription",
+          "categoryCanonical",
+          "subcategoryCanonical",
+          "fastenerTypeCanonical",
+        ].includes(key)
       ) {
         continue;
       }
 
-      if (!map.has(key)) map.set(key, new Set());
-
-      if (Array.isArray(value)) {
-        for (const item of value) {
-          if (item !== undefined && item !== null && item !== "") {
-            map.get(key).add(String(item));
-          }
-        }
-      } else {
-        map.get(key).add(String(value));
+      if (!map.has(key)) {
+        map.set(key, new Set());
       }
+
+      map.get(key).add(String(value));
     }
   }
 
   const result = {};
   for (const [key, values] of map.entries()) {
-    result[key] = Array.from(values);
+    result[key] = Array.from(values).sort((a, b) =>
+      String(a).localeCompare(String(b), undefined, {
+        numeric: true,
+        sensitivity: "base",
+      })
+    );
   }
 
   return result;
 }
 
-function groupVariantsByFamily(variants = []) {
-  const families = new Map();
+function buildSpecKey(attributes = {}) {
+  const keys = [
+    "size",
+    "diameter",
+    "threadPitch",
+    "length",
+    "measurementSystem",
+    "material",
+    "finish",
+    "grade",
+    "fastenerTypeCanonical",
+    "fastenerType",
+  ];
 
-  for (const variant of variants) {
-    const attrs = variant.attributes || {};
-    const familyKey = attrs.familyKey || "ungrouped";
+  return keys
+    .map((key) => `${key}:${String(attributes?.[key] || "").trim().toLowerCase()}`)
+    .join("|");
+}
 
-    if (!families.has(familyKey)) {
-      families.set(familyKey, {
-        familyKey,
-        familySlug: attrs.familySlug || "",
-        familyTitle: attrs.familyTitle || variant.name || "Product Family",
-        familyDescription: variant.description || "",
-        familyAttributeOptions: attrs.familyAttributeOptions || {},
-        image: variant.image || "",
-        variants: [],
-      });
-    }
+function sortVariantsForSelection(a, b) {
+  const aInStock = asNumber(a?.qtyAvailable, 0) > 0 ? 1 : 0;
+  const bInStock = asNumber(b?.qtyAvailable, 0) > 0 ? 1 : 0;
 
-    families.get(familyKey).variants.push(variant);
+  if (aInStock !== bInStock) {
+    return bInStock - aInStock;
   }
 
-  return Array.from(families.values()).sort((a, b) =>
-    String(a.familyTitle || "").localeCompare(String(b.familyTitle || ""))
+  const aQty = asNumber(a?.qtyAvailable, 0);
+  const bQty = asNumber(b?.qtyAvailable, 0);
+
+  if (aQty !== bQty) {
+    return bQty - aQty;
+  }
+
+  const aPrice = asNumber(a?.price, 0);
+  const bPrice = asNumber(b?.price, 0);
+
+  if (aPrice !== bPrice) {
+    return aPrice - bPrice;
+  }
+
+  return String(a?.partNumber || "").localeCompare(String(b?.partNumber || ""), undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+}
+
+function dedupeVariants(variants = []) {
+  const grouped = new Map();
+
+  for (const variant of variants) {
+    const specKey = buildSpecKey(variant.attributes || {});
+
+    if (!grouped.has(specKey)) {
+      grouped.set(specKey, []);
+    }
+
+    grouped.get(specKey).push(variant);
+  }
+
+  const deduped = [];
+
+  for (const [, group] of grouped.entries()) {
+    const sorted = [...group].sort(sortVariantsForSelection);
+    const best = sorted[0];
+
+    deduped.push({
+      ...best,
+      duplicateCount: group.length,
+      groupedPartNumbers: sorted.map((item) => item.partNumber).filter(Boolean),
+    });
+  }
+
+  return deduped;
+}
+
+function normalizeText(value = "") {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isLikelyAssemblyText(value = "") {
+  const text = normalizeText(value);
+  if (!text) return false;
+
+  return (
+    text.includes(" assy") ||
+    text.includes("assembly") ||
+    text.includes(" w /") ||
+    text.includes(" w/") ||
+    text.includes("with locknut") ||
+    text.includes("locknut assy")
   );
 }
 
-export async function getCatalogBuilderSubcategory(categoryId, subcategoryId) {
+function isBuilderReadyHexCapScrew(variant) {
+  const attrs = variant?.attributes || {};
+
+  const diameter = String(attrs.diameter || "").trim();
+  const length = String(attrs.length || "").trim();
+  const threadPitch = String(attrs.threadPitch || "").trim();
+  const size = String(attrs.size || "").trim();
+  const fastenerType = normalizeText(
+    attrs.fastenerTypeCanonical || attrs.fastenerType || ""
+  );
+
+  const textToInspect = [
+    variant?.name,
+    variant?.description,
+    attrs?.fishbowlDescription,
+    variant?.partNumber,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  if (isLikelyAssemblyText(textToInspect)) {
+    return false;
+  }
+
+  if (fastenerType && fastenerType !== "hex cap screw") {
+    return false;
+  }
+
+  if (!diameter) return false;
+  if (!length) return false;
+  if (!threadPitch && !size) return false;
+
+  return true;
+}
+
+function shouldApplyBuilderReadyFilter(categoryId, subcategoryId) {
+  return (
+    normalizeText(categoryId) === "bolts" &&
+    normalizeText(subcategoryId) === "hex cap screws"
+  );
+}
+
+export async function getCatalogBuilderSubcategory(
+  categoryId,
+  subcategoryId,
+  options = {}
+) {
   const normalizedCategoryId = normalizeSlug(categoryId);
   const normalizedSubcategoryId = normalizeSlug(subcategoryId);
+  const pricingContext = getPricingContext(options?.pricingContext || {});
 
   if (!normalizedCategoryId || !normalizedSubcategoryId) {
     throw new Error("categoryId and subcategoryId are required");
   }
-
-  console.log("==== CATALOG BUILDER DEBUG START ====");
-  console.log("raw params:", { categoryId, subcategoryId });
-  console.log("normalized params:", {
-    normalizedCategoryId,
-    normalizedSubcategoryId,
-  });
 
   const enrichments = await ProductEnrichment.find({
     category: new RegExp(`^${escapeRegex(normalizedCategoryId)}$`, "i"),
     subcategory: new RegExp(`^${escapeRegex(normalizedSubcategoryId)}$`, "i"),
   }).lean();
 
-  console.log("matching enrichments:", enrichments.length);
-  console.log(
-    "enrichment sample:",
-    enrichments.map((e) => ({
-      id: e._id,
-      productId: e.productId,
-      category: e.category,
-      subcategory: e.subcategory,
-      title: e.title,
-      attributes: e.attributes,
-    }))
-  );
-
   if (!enrichments.length) {
-    console.log("No matching enrichments found for builder query.");
-    console.log("==== CATALOG BUILDER DEBUG END ====");
-
     return {
       categoryId: String(categoryId || ""),
       subcategoryId: String(subcategoryId || ""),
@@ -130,6 +240,12 @@ export async function getCatalogBuilderSubcategory(categoryId, subcategoryId) {
       attributes: {},
       families: [],
       variants: [],
+      totals: {
+        variantCount: 0,
+        familyCount: 0,
+        rawVariantCount: 0,
+        omittedVariantCount: 0,
+      },
     };
   }
 
@@ -139,67 +255,15 @@ export async function getCatalogBuilderSubcategory(categoryId, subcategoryId) {
     _id: { $in: productIds },
   }).lean();
 
-  console.log("matched products:", products.length);
-  console.log(
-    "product sample:",
-    products.map((p) => ({
-      id: p._id,
-      sku: p.sku,
-      internalPartNumber: p.internalPartNumber,
-      isPublished: p.isPublished,
-      isActive: p.isActive,
-      catalogStatus: p.catalogStatus,
-      fishbowlPartNum: p?.fishbowl?.partNum,
-    }))
-  );
-
   const productMap = new Map(products.map((p) => [String(p._id), p]));
-  const matchedProductIds = products.map((p) => p._id);
 
-  const offerings = await VendorOffering.find({
-    productId: { $in: matchedProductIds },
-  }).lean();
-
-  console.log("matched offerings:", offerings.length);
-  console.log(
-    "offering sample:",
-    offerings.map((o) => ({
-      id: o._id,
-      productId: o.productId,
-      vendorName: o.vendorName,
-      vendorPartNumber: o.vendorPartNumber,
-      isActive: o.isActive,
-      approvalStatus: o.approvalStatus,
-      isPreferred: o.isPreferred,
-      price: o?.pricing?.price,
-      qtyAvailable: o?.inventory?.qtyAvailable,
-    }))
-  );
-
-  const offeringsByProductId = new Map();
-
-  for (const offering of offerings) {
-    const key = String(offering.productId);
-    if (!offeringsByProductId.has(key)) offeringsByProductId.set(key, []);
-    offeringsByProductId.get(key).push(offering);
-  }
-
-  const variants = enrichments
+  const rawVariants = enrichments
     .map((enrichment) => {
       const product = productMap.get(String(enrichment.productId));
-      if (!product) {
-        console.log("Skipping enrichment with no matching product:", {
-          enrichmentId: enrichment._id,
-          enrichmentProductId: enrichment.productId,
-        });
-        return null;
-      }
+      if (!product) return null;
 
-      const productOfferings =
-        offeringsByProductId.get(String(enrichment.productId)) || [];
-
-      const preferredOffering =
-        productOfferings.find((o) => o.isPreferred) || productOfferings[0] || null;
+      const resolvedPricing = resolveProductPrice(product, pricingContext);
+      const qtyAvailable = asNumber(product?.inventory?.qtyAvailable, 0);
 
       return {
         productId: product._id,
@@ -212,71 +276,150 @@ export async function getCatalogBuilderSubcategory(categoryId, subcategoryId) {
           product?.fishbowl?.partNum ||
           product?.sku ||
           "",
-        name: enrichment.title || product.name || toTitle(subcategoryId),
+
+        name: enrichment.title || enrichment.shortTitle || toTitle(subcategoryId),
+        familyName: enrichment?.attributes?.familyTitle || toTitle(subcategoryId),
         shortDescription: enrichment.shortDescription || "",
         description: enrichment.description || "",
         image:
           enrichment.images?.find((img) => img.isPrimary)?.url ||
           enrichment.images?.[0]?.url ||
           "",
+
         attributes: {
           ...(enrichment.attributes || {}),
         },
-        price: preferredOffering?.pricing?.price ?? product?.pricing?.basePrice ?? 0,
-        vendorOfferingId: preferredOffering?._id || null,
-        vendorName: preferredOffering?.vendorName || "",
-        vendorPartNumber: preferredOffering?.vendorPartNumber || "",
-        qtyAvailable: preferredOffering?.inventory?.qtyAvailable ?? 0,
-        inStock: (preferredOffering?.inventory?.qtyAvailable ?? 0) > 0,
+
+        price: resolvedPricing.resolvedPrice,
+        baseCatalogPrice: resolvedPricing.baseCatalogPrice,
+        currency: resolvedPricing.currency || "USD",
+        priceSource: resolvedPricing.source || "fishbowl",
+        accountType: resolvedPricing.approvedType,
+        priceLabel: resolvedPricing.label,
+
+        qtyAvailable,
+        qtyOnHand: asNumber(product?.inventory?.qtyOnHand, 0),
+        qtyAllocated: asNumber(product?.inventory?.qtyAllocated, 0),
+        qtyOnOrder: asNumber(product?.inventory?.qtyOnOrder, 0),
+        inStock: qtyAvailable > 0,
+
+        familyKey: enrichment?.attributes?.familyKey || "ungrouped",
+        familySlug: enrichment?.attributes?.familySlug || "",
+        familyTitle:
+          enrichment?.attributes?.familyTitle ||
+          enrichment.title ||
+          enrichment.shortTitle ||
+          toTitle(subcategoryId),
+        familyAttributeOptions:
+          enrichment?.attributes?.familyAttributeOptions || {},
       };
     })
     .filter(Boolean);
 
-  console.log("final variants built:", variants.length);
-  console.log(
-    "variant sample:",
-    variants.map((v) => ({
-      productId: v.productId,
-      enrichmentId: v.enrichmentId,
-      partNumber: v.partNumber,
-      name: v.name,
-      attributes: v.attributes,
-      vendorOfferingId: v.vendorOfferingId,
-      vendorName: v.vendorName,
-      price: v.price,
-      inStock: v.inStock,
-    }))
+  const filteredVariants = shouldApplyBuilderReadyFilter(
+    normalizedCategoryId,
+    normalizedSubcategoryId
+  )
+    ? rawVariants.filter(isBuilderReadyHexCapScrew)
+    : rawVariants;
+
+  const workingVariants =
+    filteredVariants.length > 0 ? filteredVariants : rawVariants;
+
+  const omittedVariantCount = rawVariants.length - workingVariants.length;
+
+  const familyKeys = [
+    ...new Set(workingVariants.map((v) => v.familyKey).filter(Boolean)),
+  ];
+
+  const familyAssets = await CatalogFamilyAsset.find({
+    category: normalizedCategoryId,
+    subcategory: normalizedSubcategoryId,
+    familyKey: { $in: familyKeys },
+  }).lean();
+
+  const familyAssetMap = new Map(
+    familyAssets.map((asset) => [asset.familyKey, asset])
   );
 
-  const families = groupVariantsByFamily(variants);
-  const first = variants[0];
+  const familiesMap = new Map();
 
-  const result = {
+  for (const variant of workingVariants) {
+    const familyKey = variant.familyKey || "ungrouped";
+    const asset = familyAssetMap.get(familyKey);
+
+    if (!familiesMap.has(familyKey)) {
+      familiesMap.set(familyKey, {
+        familyKey,
+        familySlug: variant.familySlug || asset?.familySlug || "",
+        familyTitle:
+          variant.familyTitle ||
+          asset?.familyTitle ||
+          variant.familyName ||
+          variant.name ||
+          "",
+        familyDescription: asset?.familyDescription || variant.description || "",
+        familyAttributeOptions: variant.familyAttributeOptions || {},
+        image: asset?.image?.url || variant.image || "",
+        imageAlt: asset?.image?.alt || "",
+        rawVariants: [],
+      });
+    }
+
+    familiesMap.get(familyKey).rawVariants.push({
+      ...variant,
+      image: variant.image || asset?.image?.url || "",
+    });
+  }
+
+  const families = Array.from(familiesMap.values()).map((family) => {
+    const dedupedVariants = dedupeVariants(family.rawVariants);
+
+    return {
+      familyKey: family.familyKey,
+      familySlug: family.familySlug,
+      familyTitle: family.familyTitle,
+      familyDescription: family.familyDescription,
+      familyAttributeOptions:
+        Object.keys(family.familyAttributeOptions || {}).length > 0
+          ? family.familyAttributeOptions
+          : collectAttributeOptions(dedupedVariants),
+      image: family.image,
+      imageAlt: family.imageAlt,
+      variants: dedupedVariants,
+    };
+  });
+
+  const flattenedVariants = families
+    .flatMap((family) => family.variants || [])
+    .sort(sortVariantsForSelection);
+
+  const first = flattenedVariants[0];
+  const firstFamilyWithImage = families.find((f) => f.image);
+
+  return {
     categoryId: String(categoryId || ""),
     subcategoryId: String(subcategoryId || ""),
     name: toTitle(subcategoryId),
-    description: first?.description || "",
-    image: first?.image || "",
-    attributes: collectAttributeOptions(variants),
+    description: first?.familyTitle
+      ? `${first.familyTitle} options available in this category.`
+      : "",
+    image: firstFamilyWithImage?.image || "",
+    attributes: collectAttributeOptions(flattenedVariants),
     families,
-    variants,
+    variants: flattenedVariants,
+    pricing: {
+      accountType: pricingContext.approvedType,
+      label: pricingContext.label,
+      multiplier: pricingContext.multiplier,
+    },
+    totals: {
+      variantCount: flattenedVariants.length,
+      familyCount: families.length,
+      rawVariantCount: rawVariants.length,
+      omittedVariantCount,
+    },
   };
-
-  console.log("family count:", families.length);
-  console.log(
-    "family sample:",
-    families.map((f) => ({
-      familyKey: f.familyKey,
-      familySlug: f.familySlug,
-      familyTitle: f.familyTitle,
-      variantCount: f.variants.length,
-    }))
-  );
-
-  console.log("final attribute keys:", Object.keys(result.attributes || {}));
-  console.log("==== CATALOG BUILDER DEBUG END ====");
-
-  return result;
 }
 
 export default getCatalogBuilderSubcategory;

@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Order from "../models/Order.js";
 import { generateOrderNumber } from "../utils/orderNumber.js";
 import { normalizeOrderItems, calcAmountTotalCents } from "../utils/normalizeOrderItems.js";
+import { buildPricingContextFromUser } from "../utils/resolveProductPrice.js";
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" })
@@ -69,9 +70,11 @@ async function buildNormalizedOrderPayload({
   currency = "usd",
   paymentMode = "PAY_NOW",
   paymentStatus = "PENDING",
+  pricingContext = {},
 }) {
   const normalizedItems = await normalizeOrderItems(items, {
-    repriceFromVendorOfferings: true,
+    pricingContext,
+    repriceFromProducts: true,
   });
 
   if (!normalizedItems.length) {
@@ -94,7 +97,7 @@ async function buildNormalizedOrderPayload({
     shippingAddress: safeAddress(
       shippingSameAsBilling
         ? billingAddress || user.billingAddress
-        : shippingAddress || user.deliveryAddress,
+        : shippingAddress || user.deliveryAddress
     ),
     shippingSameAsBilling: Boolean(shippingSameAsBilling),
     items: normalizedItems,
@@ -175,6 +178,8 @@ export async function createPayLaterOrder(req, res) {
       });
     }
 
+    const pricingContext = buildPricingContextFromUser(user);
+
     const baseOrderData = await buildNormalizedOrderPayload({
       user,
       items,
@@ -184,6 +189,7 @@ export async function createPayLaterOrder(req, res) {
       currency: "usd",
       paymentMode: "PAY_LATER",
       paymentStatus: "INVOICED",
+      pricingContext,
     });
 
     const order = await Order.create({
@@ -223,6 +229,8 @@ export async function createPayNowIntent(req, res) {
       shippingSameAsBilling = true,
     } = req.body || {};
 
+    const pricingContext = buildPricingContextFromUser(user);
+
     const baseOrderData = await buildNormalizedOrderPayload({
       user,
       items,
@@ -232,6 +240,7 @@ export async function createPayNowIntent(req, res) {
       currency,
       paymentMode: "PAY_NOW",
       paymentStatus: "PENDING",
+      pricingContext,
     });
 
     if (Number.isFinite(Number(amountCents)) && Number(amountCents) > 0) {
@@ -278,7 +287,8 @@ export async function createPayNowIntent(req, res) {
   } catch (err) {
     console.error("PAY-NOW INTENT ERROR:", err);
 
-    const stripeMsg = err?.raw?.message || err?.message || "Failed to create payment intent";
+    const stripeMsg =
+      err?.raw?.message || err?.message || "Failed to create payment intent";
 
     return res.status(err?.statusCode || 500).json({
       error: stripeMsg,
@@ -288,11 +298,6 @@ export async function createPayNowIntent(req, res) {
 }
 
 export async function payNowWithSavedCard(req, res) {
-  console.log("✅ payNowWithSavedCard HIT", new Date().toISOString(), {
-    userId: req.user?.id,
-    amountCents: req.body?.amountCents,
-  });
-
   try {
     if (!stripe) {
       return res.status(500).json({ error: "Stripe is not configured on the server." });
@@ -317,6 +322,8 @@ export async function payNowWithSavedCard(req, res) {
       return res.status(400).json({ error: "No saved card on file" });
     }
 
+    const pricingContext = buildPricingContextFromUser(user);
+
     const baseOrderData = await buildNormalizedOrderPayload({
       user,
       items,
@@ -326,6 +333,7 @@ export async function payNowWithSavedCard(req, res) {
       currency,
       paymentMode: "PAY_NOW",
       paymentStatus: "PENDING",
+      pricingContext,
     });
 
     if (Number.isFinite(Number(amountCents)) && Number(amountCents) > 0) {
@@ -363,12 +371,6 @@ export async function payNowWithSavedCard(req, res) {
       order.payment.status = "FAILED";
     }
     await order.save();
-
-    console.log("✅ payNowWithSavedCard responding with", {
-      orderId: String(order._id),
-      paymentIntentId: pi.id,
-      status: pi.status,
-    });
 
     return res.json({
       success: true,

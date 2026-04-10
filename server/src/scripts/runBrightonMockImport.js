@@ -26,7 +26,7 @@ async function run() {
     console.log("🔌 Connecting to MongoDB...");
     await mongoose.connect(process.env.MONGO_URI);
 
-    const filePath = "data/brighton-mock.csv";
+    const filePath = "data/brighton-mock-description-only.csv";
     console.log(`📄 Loading CSV: ${filePath}`);
 
     const rows = await loadCsvRows(filePath);

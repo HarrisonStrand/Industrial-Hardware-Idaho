@@ -20,6 +20,7 @@ import orderRoutes from "./routes/orderRoutes.js";
 import fishbowlRoutes from "./routes/fishbowlRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
 import catalogBuilderRoutes from "./routes/catalogBuilderRoutes.js";
+// import adminVendorMappingsRoutes from "./routes/adminVendorMappingsRoutes.js";
 
 
 console.log("Stripe key loaded?", Boolean(process.env.STRIPE_SECRET_KEY));
@@ -58,6 +59,7 @@ app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin/users", adminUsersRoutes);
 app.use("/api/admin", adminOrdersRoutes);
+// app.use("/api/admin/vendor-mappings", adminVendorMappingsRoutes);
 
 app.use("/api/fishbowl", fishbowlRoutes);
 app.use("/api/catalog", catalogRoutes);

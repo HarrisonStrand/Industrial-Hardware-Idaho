@@ -20,56 +20,10 @@ import "./Checkout.css";
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const US_STATES = [
-	"AL",
-	"AK",
-	"AZ",
-	"AR",
-	"CA",
-	"CO",
-	"CT",
-	"DE",
-	"FL",
-	"GA",
-	"HI",
-	"ID",
-	"IL",
-	"IN",
-	"IA",
-	"KS",
-	"KY",
-	"LA",
-	"ME",
-	"MD",
-	"MA",
-	"MI",
-	"MN",
-	"MS",
-	"MO",
-	"MT",
-	"NE",
-	"NV",
-	"NH",
-	"NJ",
-	"NM",
-	"NY",
-	"NC",
-	"ND",
-	"OH",
-	"OK",
-	"OR",
-	"PA",
-	"RI",
-	"SC",
-	"SD",
-	"TN",
-	"TX",
-	"UT",
-	"VT",
-	"VA",
-	"WA",
-	"WV",
-	"WI",
-	"WY",
+	"AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
+	"KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
+	"NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
+	"VA","WA","WV","WI","WY",
 ];
 
 function normalizeAddress(a) {
@@ -97,25 +51,16 @@ export default function Checkout() {
 	const [loading, setLoading] = useState(true);
 	const [caps, setCaps] = useState(null);
 
-	// Payment mode
-	const [payMode, setPayMode] = useState("PAY_NOW"); // PAY_NOW | PAY_LATER
-	const [payLaterType, setPayLaterType] = useState("NET30"); // NET30 | HOUSE
+	const [payMode, setPayMode] = useState("PAY_NOW");
+	const [payLaterType, setPayLaterType] = useState("NET30");
 
-	// Saved card info
 	const hasCardOnFile = Boolean(user?.payment?.hasCardOnFile);
 	const [cardSummary, setCardSummary] = useState(null);
 
-	/**
-	 * ✅ UX requested:
-	 * - If NO saved card => show manual entry by default
-	 * - If HAS saved card => default is use saved card; checkbox reveals manual entry
-	 */
 	const [useDifferentCard, setUseDifferentCard] = useState(!hasCardOnFile);
 	const [saveThisCard, setSaveThisCard] = useState(true);
 
 	const [placing, setPlacing] = useState(false);
-
-	// Addresses
 	const [shippingSameAsBilling, setShippingSameAsBilling] = useState(true);
 
 	const [billing, setBilling] = useState({
@@ -150,18 +95,22 @@ export default function Checkout() {
 	const orderItemsPayload = useMemo(() => {
 		return items.map((it) => ({
 			productId: it.productId || null,
-			vendorOfferingId: it.vendorOfferingId || null,
 			partNumber: it.partNumber || it.sku || "",
+			sku: it.sku || "",
 			name: it.name || it.partNumber || "Product",
 			qty: Math.max(1, Number(it.quantity || 1)),
 			unitPrice: Number(it.price || 0),
-			vendorName: it.metadata?.vendorName || "",
-			vendorPartNumber: it.metadata?.vendorPartNumber || "",
 			attributes: it.attributes || {},
+			category: it.metadata?.category || "",
+			subcategory: it.metadata?.subcategory || "",
+			shortDescription: it.metadata?.shortDescription || "",
+			groupedPartNumbers: Array.isArray(it.metadata?.groupedPartNumbers)
+				? it.metadata.groupedPartNumbers
+				: [],
+			duplicateCount: Number(it.metadata?.duplicateCount || 1),
 		}));
 	}, [items]);
 
-	// Prefill from user
 	useEffect(() => {
 		if (!user) return;
 
@@ -180,12 +129,10 @@ export default function Checkout() {
 			address: normalizeAddress(user.deliveryAddress),
 		});
 
-		// Force manual entry ON if no saved card, else default OFF
 		const hasSaved = Boolean(user?.payment?.hasCardOnFile);
 		setUseDifferentCard(!hasSaved);
 	}, [user]);
 
-	// Keep shipping synced if checkbox is on
 	useEffect(() => {
 		if (!shippingSameAsBilling) return;
 		setShipping((prev) => ({
@@ -195,7 +142,6 @@ export default function Checkout() {
 			phone: billing.phone,
 			address: { ...billing.address },
 		}));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		shippingSameAsBilling,
 		billing.firstName,
@@ -204,7 +150,6 @@ export default function Checkout() {
 		billing.address,
 	]);
 
-	// Load capabilities + card summary
 	useEffect(() => {
 		let alive = true;
 
@@ -217,9 +162,7 @@ export default function Checkout() {
 				setCaps(cap);
 
 				if (hasCardOnFile) {
-					const cs = await apiFetch("/api/billing/card-summary").catch(
-						() => null,
-					);
+					const cs = await apiFetch("/api/billing/card-summary").catch(() => null);
 					if (!alive) return;
 					setCardSummary(cs?.card || null);
 				} else {
@@ -265,7 +208,6 @@ export default function Checkout() {
 		if (!req(billing.lastName)) return "Billing last name is required";
 		if (!req(billing.email)) return "Email is required";
 		if (!req(billing.phone)) return "Billing phone is required";
-
 		if (!req(billing.address.address1)) return "Billing address is required";
 		if (!req(billing.address.city)) return "Billing city is required";
 		if (!req(billing.address.state)) return "Billing state is required";
@@ -275,9 +217,7 @@ export default function Checkout() {
 			if (!req(shipping.firstName)) return "Shipping first name is required";
 			if (!req(shipping.lastName)) return "Shipping last name is required";
 			if (!req(shipping.phone)) return "Shipping phone is required";
-
-			if (!req(shipping.address.address1))
-				return "Shipping address is required";
+			if (!req(shipping.address.address1)) return "Shipping address is required";
 			if (!req(shipping.address.city)) return "Shipping city is required";
 			if (!req(shipping.address.state)) return "Shipping state is required";
 			if (!req(shipping.address.zip)) return "Shipping ZIP is required";
@@ -462,7 +402,6 @@ export default function Checkout() {
 				<div className='text-main text-uppercase mb-1 fs-2'>Checkout</div>
 
 				<div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
-					{/* ORDER SUMMARY */}
 					<div className='fs-4 contact-form-title text-main text-uppercase text-start'>
 						Order Summary
 					</div>
@@ -493,7 +432,6 @@ export default function Checkout() {
 						</div>
 					</div>
 
-					{/* ACCOUNT STATUS */}
 					<div className='mt-3 text-muted small'>
 						Account:{" "}
 						<span className='text-main fw-semibold text-uppercase'>
@@ -505,16 +443,15 @@ export default function Checkout() {
 								approvalStatus === "APPROVED"
 									? "text-success fw-semibold"
 									: approvalStatus === "PENDING"
-										? "text-warning fw-semibold"
-										: approvalStatus === "REJECTED"
-											? "text-danger fw-semibold"
-											: "text-muted fw-semibold"
+									? "text-warning fw-semibold"
+									: approvalStatus === "REJECTED"
+									? "text-danger fw-semibold"
+									: "text-muted fw-semibold"
 							}>
 							{approvalStatus === "NONE" ? "RETAIL" : approvalStatus}
 						</span>
 					</div>
 
-					{/* BILLING */}
 					<div className='profile-link-box row align-items-center justify-content-center rounded-4 border border-3 border-main py-3 py-sm-2 py-xl-4 px-3 px-xl-5 fw-semibold g-0 mt-4'>
 						<div className='fs-4 contact-form-title text-main text-uppercase text-start'>
 							Billing
@@ -523,123 +460,57 @@ export default function Checkout() {
 
 						<div className='row g-3 py-3'>
 							<div className='col-12 col-md-6'>
-								<label className='form-input-label text-uppercase form-label text-main mb-0'>
-									First name
-								</label>
-								<input
-									className='form-input form-control rounded-3 text-dark'
-									value={billing.firstName}
-									onChange={(e) => setBillingField("firstName", e.target.value)}
-								/>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>First name</label>
+								<input className='form-input form-control rounded-3 text-dark' value={billing.firstName} onChange={(e) => setBillingField("firstName", e.target.value)} />
 							</div>
 
 							<div className='col-12 col-md-6'>
-								<label className='form-input-label text-uppercase form-label text-main mb-0'>
-									Last name
-								</label>
-								<input
-									className='form-input form-control rounded-3 text-dark'
-									value={billing.lastName}
-									onChange={(e) => setBillingField("lastName", e.target.value)}
-								/>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>Last name</label>
+								<input className='form-input form-control rounded-3 text-dark' value={billing.lastName} onChange={(e) => setBillingField("lastName", e.target.value)} />
 							</div>
 
 							<div className='col-12 col-md-6'>
-								<label className='form-input-label text-uppercase form-label text-main mb-0'>
-									Email
-								</label>
-								<input
-									className='form-input form-control rounded-3 text-dark'
-									value={billing.email}
-									onChange={(e) => setBillingField("email", e.target.value)}
-								/>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>Email</label>
+								<input className='form-input form-control rounded-3 text-dark' value={billing.email} onChange={(e) => setBillingField("email", e.target.value)} />
 							</div>
 
 							<div className='col-12 col-md-6'>
-								<label className='form-input-label text-uppercase form-label text-main mb-0'>
-									Phone
-								</label>
-								<input
-									className='form-input form-control rounded-3 text-dark'
-									value={billing.phone}
-									onChange={(e) => setBillingField("phone", e.target.value)}
-								/>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>Phone</label>
+								<input className='form-input form-control rounded-3 text-dark' value={billing.phone} onChange={(e) => setBillingField("phone", e.target.value)} />
 							</div>
 
 							<div className='col-12'>
-								<label className='form-input-label text-uppercase form-label text-main mb-0'>
-									Address
-								</label>
-								<input
-									className='form-input form-control rounded-3 text-dark'
-									value={billing.address.address1}
-									onChange={(e) =>
-										setBillingAddressField("address1", e.target.value)
-									}
-								/>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>Address</label>
+								<input className='form-input form-control rounded-3 text-dark' value={billing.address.address1} onChange={(e) => setBillingAddressField("address1", e.target.value)} />
 							</div>
 
 							<div className='col-12'>
-								<label className='form-input-label text-uppercase form-label text-main mb-0'>
-									Address line 2
-								</label>
-								<input
-									className='form-input form-control rounded-3 text-dark'
-									value={billing.address.address2}
-									onChange={(e) =>
-										setBillingAddressField("address2", e.target.value)
-									}
-								/>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>Address line 2</label>
+								<input className='form-input form-control rounded-3 text-dark' value={billing.address.address2} onChange={(e) => setBillingAddressField("address2", e.target.value)} />
 							</div>
 
 							<div className='col-12 col-md-4'>
-								<label className='form-input-label text-uppercase form-label text-main mb-0'>
-									City
-								</label>
-								<input
-									className='form-input form-control rounded-3 text-dark'
-									value={billing.address.city}
-									onChange={(e) =>
-										setBillingAddressField("city", e.target.value)
-									}
-								/>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>City</label>
+								<input className='form-input form-control rounded-3 text-dark' value={billing.address.city} onChange={(e) => setBillingAddressField("city", e.target.value)} />
 							</div>
 
 							<div className='col-12 col-md-4'>
-								<label className='form-input-label text-uppercase form-label text-main mb-0'>
-									State
-								</label>
-								<select
-									className='form-input form-control rounded-3 text-dark'
-									value={billing.address.state}
-									onChange={(e) =>
-										setBillingAddressField("state", e.target.value)
-									}>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>State</label>
+								<select className='form-input form-control rounded-3 text-dark' value={billing.address.state} onChange={(e) => setBillingAddressField("state", e.target.value)}>
 									<option value=''>Select</option>
 									{US_STATES.map((s) => (
-										<option key={s} value={s}>
-											{s}
-										</option>
+										<option key={s} value={s}>{s}</option>
 									))}
 								</select>
 							</div>
 
 							<div className='col-12 col-md-4'>
-								<label className='form-input-label text-uppercase form-label text-main mb-0'>
-									ZIP
-								</label>
-								<input
-									className='form-input form-control rounded-3 text-dark'
-									value={billing.address.zip}
-									onChange={(e) =>
-										setBillingAddressField("zip", e.target.value)
-									}
-								/>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>ZIP</label>
+								<input className='form-input form-control rounded-3 text-dark' value={billing.address.zip} onChange={(e) => setBillingAddressField("zip", e.target.value)} />
 							</div>
 						</div>
 					</div>
 
-					{/* SHIPPING */}
 					<div className='mt-4'>
 						<div className='form-check'>
 							<input
@@ -649,9 +520,7 @@ export default function Checkout() {
 								checked={shippingSameAsBilling}
 								onChange={(e) => setShippingSameAsBilling(e.target.checked)}
 							/>
-							<label
-								className='form-check-label text-main fw-semibold'
-								htmlFor='shippingSame'>
+							<label className='form-check-label text-main fw-semibold' htmlFor='shippingSame'>
 								Shipping is the same as billing
 							</label>
 						</div>
@@ -665,120 +534,54 @@ export default function Checkout() {
 
 								<div className='row g-3 py-3'>
 									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>
-											First name
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={shipping.firstName}
-											onChange={(e) =>
-												setShippingField("firstName", e.target.value)
-											}
-										/>
+										<label className='form-input-label text-uppercase form-label text-main mb-0'>First name</label>
+										<input className='form-input form-control rounded-3 text-dark' value={shipping.firstName} onChange={(e) => setShippingField("firstName", e.target.value)} />
 									</div>
 
 									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>
-											Last name
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={shipping.lastName}
-											onChange={(e) =>
-												setShippingField("lastName", e.target.value)
-											}
-										/>
+										<label className='form-input-label text-uppercase form-label text-main mb-0'>Last name</label>
+										<input className='form-input form-control rounded-3 text-dark' value={shipping.lastName} onChange={(e) => setShippingField("lastName", e.target.value)} />
 									</div>
 
 									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>
-											Phone
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={shipping.phone}
-											onChange={(e) =>
-												setShippingField("phone", e.target.value)
-											}
-										/>
+										<label className='form-input-label text-uppercase form-label text-main mb-0'>Phone</label>
+										<input className='form-input form-control rounded-3 text-dark' value={shipping.phone} onChange={(e) => setShippingField("phone", e.target.value)} />
 									</div>
 
 									<div className='col-12'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>
-											Address
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={shipping.address.address1}
-											onChange={(e) =>
-												setShippingAddressField("address1", e.target.value)
-											}
-										/>
+										<label className='form-input-label text-uppercase form-label text-main mb-0'>Address</label>
+										<input className='form-input form-control rounded-3 text-dark' value={shipping.address.address1} onChange={(e) => setShippingAddressField("address1", e.target.value)} />
 									</div>
 
 									<div className='col-12'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>
-											Address line 2
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={shipping.address.address2}
-											onChange={(e) =>
-												setShippingAddressField("address2", e.target.value)
-											}
-										/>
+										<label className='form-input-label text-uppercase form-label text-main mb-0'>Address line 2</label>
+										<input className='form-input form-control rounded-3 text-dark' value={shipping.address.address2} onChange={(e) => setShippingAddressField("address2", e.target.value)} />
 									</div>
 
 									<div className='col-12 col-md-4'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>
-											City
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={shipping.address.city}
-											onChange={(e) =>
-												setShippingAddressField("city", e.target.value)
-											}
-										/>
+										<label className='form-input-label text-uppercase form-label text-main mb-0'>City</label>
+										<input className='form-input form-control rounded-3 text-dark' value={shipping.address.city} onChange={(e) => setShippingAddressField("city", e.target.value)} />
 									</div>
 
 									<div className='col-12 col-md-4'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>
-											State
-										</label>
-										<select
-											className='form-input form-control rounded-3 text-dark'
-											value={shipping.address.state}
-											onChange={(e) =>
-												setShippingAddressField("state", e.target.value)
-											}>
+										<label className='form-input-label text-uppercase form-label text-main mb-0'>State</label>
+										<select className='form-input form-control rounded-3 text-dark' value={shipping.address.state} onChange={(e) => setShippingAddressField("state", e.target.value)}>
 											<option value=''>Select</option>
 											{US_STATES.map((s) => (
-												<option key={s} value={s}>
-													{s}
-												</option>
+												<option key={s} value={s}>{s}</option>
 											))}
 										</select>
 									</div>
 
 									<div className='col-12 col-md-4'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>
-											ZIP
-										</label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={shipping.address.zip}
-											onChange={(e) =>
-												setShippingAddressField("zip", e.target.value)
-											}
-										/>
+										<label className='form-input-label text-uppercase form-label text-main mb-0'>ZIP</label>
+										<input className='form-input form-control rounded-3 text-dark' value={shipping.address.zip} onChange={(e) => setShippingAddressField("zip", e.target.value)} />
 									</div>
 								</div>
 							</div>
 						)}
 					</div>
 
-					{/* PAYMENT MODE */}
 					<div className='mt-4'>
 						<div className='form-input-label text-uppercase text-main ps-0 ps-sm-2 mb-2'>
 							Payment
@@ -786,27 +589,16 @@ export default function Checkout() {
 
 						<div className='d-flex flex-column gap-2'>
 							<label className='d-flex align-items-center gap-2'>
-								<input
-									type='radio'
-									name='payMode'
-									checked={payMode === "PAY_NOW"}
-									onChange={() => setPayMode("PAY_NOW")}
-								/>
+								<input type='radio' name='payMode' checked={payMode === "PAY_NOW"} onChange={() => setPayMode("PAY_NOW")} />
 								<span className='text-main'>Pay now (Retail)</span>
 							</label>
 
 							<label className='d-flex align-items-center gap-2'>
-								<input
-									type='radio'
-									name='payMode'
-									checked={payMode === "PAY_LATER"}
-									onChange={() => setPayMode("PAY_LATER")}
-								/>
+								<input type='radio' name='payMode' checked={payMode === "PAY_LATER"} onChange={() => setPayMode("PAY_LATER")} />
 								<span className='text-main'>Pay later (Invoice)</span>
 							</label>
 						</div>
 
-						{/* PAY LATER */}
 						{payMode === "PAY_LATER" && (
 							<div className='mt-3 p-3 rounded-3 border'>
 								<div className='text-muted small mb-2'>
@@ -835,8 +627,7 @@ export default function Checkout() {
 
 								{!payLaterAllowed && (
 									<div className='text-danger small mt-2'>
-										This pay later option is not available until approved. You
-										can still select Pay now.
+										This pay later option is not available until approved. You can still select Pay now.
 									</div>
 								)}
 
@@ -849,14 +640,12 @@ export default function Checkout() {
 							</div>
 						)}
 
-						{/* PAY NOW */}
 						{payMode === "PAY_NOW" && (
 							<div className='mt-3 p-3 rounded-3 border'>
 								<div className='form-input-label text-uppercase text-main mb-2'>
 									Card
 								</div>
 
-								{/* Saved card => show checkbox to reveal manual entry */}
 								{hasCardOnFile && (
 									<div className='form-check mb-2'>
 										<input
@@ -866,23 +655,18 @@ export default function Checkout() {
 											checked={!useDifferentCard}
 											onChange={(e) => setUseDifferentCard(!e.target.checked)}
 										/>
-										<label
-											className='form-check-label text-main fw-semibold'
-											htmlFor='useSavedCard'>
-											Use saved card{" "}
-											{cardSummary?.last4 ? `(•••• ${cardSummary.last4})` : ""}
+										<label className='form-check-label text-main fw-semibold' htmlFor='useSavedCard'>
+											Use saved card {cardSummary?.last4 ? `(•••• ${cardSummary.last4})` : ""}
 										</label>
 									</div>
 								)}
 
 								{!hasCardOnFile && (
 									<div className='text-muted small'>
-										No card on file. Please enter your card information below to
-										complete checkout.
+										No card on file. Please enter your card information below to complete checkout.
 									</div>
 								)}
 
-								{/* Manual entry section */}
 								{manualCardActive && (
 									<>
 										<div className='form-check mt-2'>
@@ -894,9 +678,7 @@ export default function Checkout() {
 												onChange={(e) => setSaveThisCard(e.target.checked)}
 												disabled={placing}
 											/>
-											<label
-												className='form-check-label text-main fw-semibold'
-												htmlFor='saveThisCard'>
+											<label className='form-check-label text-main fw-semibold' htmlFor='saveThisCard'>
 												Save this card for future purchases
 											</label>
 										</div>
@@ -908,9 +690,7 @@ export default function Checkout() {
 												placing={placing}
 												setPlacing={setPlacing}
 												validateAddresses={validateAddresses}
-												persistCheckoutInfoToProfile={
-													persistCheckoutInfoToProfile
-												}
+												persistCheckoutInfoToProfile={persistCheckoutInfoToProfile}
 												billing={billing}
 												shipping={shippingSameAsBilling ? billing : shipping}
 												shippingSameAsBilling={shippingSameAsBilling}
@@ -923,7 +703,6 @@ export default function Checkout() {
 									</>
 								)}
 
-								{/* Saved card pay now button (only when NOT using manual entry) */}
 								{!manualCardActive && (
 									<button
 										className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light mt-3 w-100'
@@ -934,8 +713,7 @@ export default function Checkout() {
 								)}
 
 								<div className='text-muted small mt-2'>
-									Tip: You can add/update your saved card in{" "}
-									<Link to='/profile'>Account</Link>.
+									Tip: You can add/update your saved card in <Link to='/profile'>Account</Link>.
 								</div>
 							</div>
 						)}
@@ -950,9 +728,7 @@ export default function Checkout() {
 					</div>
 
 					<div className='text-muted small mt-3'>
-						Orders are fulfilled through Fishbowl. This checkout captures
-						payment + order details; Fishbowl is the operational source of truth
-						for fulfillment.
+						Orders are fulfilled through Fishbowl. This checkout captures payment + order details; Fishbowl is the operational source of truth for fulfillment.
 					</div>
 				</div>
 			</div>
@@ -960,10 +736,6 @@ export default function Checkout() {
 	);
 }
 
-/**
- * Manual card entry section using Stripe PaymentElement.
- * Creates a PaymentIntent from your backend and confirms it client-side.
- */
 function PayNowManualCard({
 	amountCents,
 	saveThisCard,
