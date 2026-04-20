@@ -12,30 +12,45 @@ const HIDDEN_ATTRIBUTE_KEYS = new Set([
 	"familyKey",
 	"familySlug",
 	"familyTitle",
+	"familyTitleBase",
+	"familyType",
 	"familyAttributeOptions",
+	"displayMaterial",
+	"displayFinish",
+	"insideDiameter",
+	"outsideDiameter",
 	"size",
 	"material",
+	"finish",
 ]);
 
 const ATTRIBUTE_ORDER = [
 	"measurementSystem",
-	"fastenerType",
-	"finish",
-	"grade",
+	"washerStandard",
+	"washerType",
+	"materialFinish",
 	"diameter",
+	"width",
+	"grade",
+	"thickness",
 	"threadPitch",
 	"length",
 	"drive_type",
+	"fastenerType",
 ];
 
 const INITIAL_SELECTED_STATE = {
 	measurementSystem: "",
+	washerStandard: "",
+	washerType: "",
+	materialFinish: "",
 	drive_type: "",
 	threadPitch: "",
 	quantity: 1,
-	finish: "",
 	grade: "",
 	diameter: "",
+	width: "",
+	thickness: "",
 	length: "",
 	fastenerType: "",
 };
@@ -66,7 +81,7 @@ function parseFraction(value = "") {
 function sortOptionValues(values = [], key = "") {
 	const lower = String(key || "").toLowerCase();
 
-	if (["diameter", "length"].includes(lower)) {
+	if (["diameter", "length", "width", "thickness"].includes(lower)) {
 		return [...values].sort((a, b) => {
 			const aNum = parseFraction(a);
 			const bNum = parseFraction(b);
@@ -84,23 +99,66 @@ function sortOptionValues(values = [], key = "") {
 		String(a).localeCompare(String(b), undefined, {
 			numeric: true,
 			sensitivity: "base",
-		})
+		}),
 	);
 }
 
-function formatAttributeLabel(key = "") {
-	const labelMap = {
-		fastenerType: "Bolt Type",
+function inferProductFamilyLabelContext(builderData = {}, variants = []) {
+	const subcategory = String(builderData?.subcategoryId || "").toLowerCase();
+	const category = String(builderData?.categoryId || "").toLowerCase();
+
+	const familyType =
+		variants.find((variant) => variant?.attributes?.familyType)?.attributes
+			?.familyType || "";
+
+	const combined = `${category} ${subcategory} ${familyType}`.toLowerCase();
+
+	if (combined.includes("washer")) return "washer";
+	if (combined.includes("nut")) return "nut";
+	if (combined.includes("pin")) return "pin";
+	if (combined.includes("abrasive")) return "abrasive";
+	if (combined.includes("bolt") || combined.includes("screw"))
+		return "fastener";
+
+	return "generic";
+}
+
+function shouldHideAttributeForContext(
+	key = "",
+	context = "generic",
+	subcategoryId = "",
+) {
+	const sub = String(subcategoryId || "").toLowerCase();
+
+	if (context === "washer" && key === "length") return true;
+	if (context === "washer" && key === "fastenerType") return true;
+
+	if (sub === "fender washers" && key === "washerStandard") return true;
+	if (sub === "fender washers" && key === "washerType") return true;
+
+	if (sub === "flat washers" && key === "washerType") return true;
+	if (sub === "lock washers" && key === "washerStandard") return true;
+	if (sub === "lock washers" && key === "width") return true;
+
+	return false;
+}
+
+function formatAttributeLabel(key = "", context = "generic") {
+	const baseMap = {
 		measurementSystem: "Measurement System",
 		threadPitch: "Thread Pitch",
 		drive_type: "Drive Type",
 		diameter: "Diameter",
+		width: "Width",
 		length: "Length",
-		finish: "Finish",
+		thickness: "Thickness",
 		grade: "Grade",
+		washerStandard: "Standard",
+		washerType: "Type",
+		materialFinish: "Material / Finish",
 	};
 
-	if (labelMap[key]) return labelMap[key];
+	if (baseMap[key]) return baseMap[key];
 
 	return String(key)
 		.replace(/_/g, " ")
@@ -119,7 +177,7 @@ function formatCurrency(value = 0, currency = "USD") {
 	}
 }
 
-function collectAttributesFromVariants(variants = []) {
+function collectAttributesFromVariants(variants = [], context = "generic") {
 	const map = new Map();
 
 	for (const variant of variants) {
@@ -130,7 +188,8 @@ function collectAttributesFromVariants(variants = []) {
 				value === undefined ||
 				value === null ||
 				value === "" ||
-				HIDDEN_ATTRIBUTE_KEYS.has(key)
+				HIDDEN_ATTRIBUTE_KEYS.has(key) ||
+				shouldHideAttributeForContext(key, context)
 			) {
 				continue;
 			}
@@ -176,7 +235,9 @@ function variantMatchesSelection(variant, selection = {}) {
 }
 
 function getCompatibleVariants(variants = [], selection = {}) {
-	return variants.filter((variant) => variantMatchesSelection(variant, selection));
+	return variants.filter((variant) =>
+		variantMatchesSelection(variant, selection),
+	);
 }
 
 function getAllowedValuesForKey(variants = [], selection = {}, key = "") {
@@ -185,12 +246,14 @@ function getAllowedValuesForKey(variants = [], selection = {}, key = "") {
 	for (const variant of variants) {
 		const attrs = variant?.attributes || {};
 
-		const matchesOtherSelections = Object.entries(selection).every(([selKey, selValue]) => {
-			if (selKey === "quantity") return true;
-			if (selKey === key) return true;
-			if (!selValue) return true;
-			return String(attrs[selKey] || "") === String(selValue);
-		});
+		const matchesOtherSelections = Object.entries(selection).every(
+			([selKey, selValue]) => {
+				if (selKey === "quantity") return true;
+				if (selKey === key) return true;
+				if (!selValue) return true;
+				return String(attrs[selKey] || "") === String(selValue);
+			},
+		);
 
 		if (!matchesOtherSelections) continue;
 
@@ -203,7 +266,12 @@ function getAllowedValuesForKey(variants = [], selection = {}, key = "") {
 	return Array.from(values);
 }
 
-function buildAutofilledSelection(baseSelection = {}, variant = {}, keys = [], manualKeys = new Set()) {
+function buildAutofilledSelection(
+	baseSelection = {},
+	variant = {},
+	keys = [],
+	manualKeys = new Set(),
+) {
 	const next = { ...baseSelection };
 	const attrs = variant?.attributes || {};
 
@@ -219,7 +287,7 @@ function buildAutofilledSelection(baseSelection = {}, variant = {}, keys = [], m
 
 function hasAnyRealSelection(selected = {}) {
 	return Object.entries(selected).some(
-		([key, value]) => key !== "quantity" && Boolean(value)
+		([key, value]) => key !== "quantity" && Boolean(value),
 	);
 }
 
@@ -246,7 +314,10 @@ export default function ProductDetail() {
 		async function load() {
 			try {
 				setLoading(true);
-				const data = await fetchCatalogBuilderSubcategory(categoryId, subcategoryId);
+				const data = await fetchCatalogBuilderSubcategory(
+					categoryId,
+					subcategoryId,
+				);
 
 				if (!alive) return;
 
@@ -273,20 +344,48 @@ export default function ProductDetail() {
 		return Array.isArray(builderData?.variants) ? builderData.variants : [];
 	}, [builderData]);
 
+	const labelContext = useMemo(() => {
+		return inferProductFamilyLabelContext(builderData, variants);
+	}, [builderData, variants]);
+
 	const attributes = useMemo(() => {
 		const topLevel = builderData?.attributes || {};
 		const cleaned = {};
 
 		for (const [key, values] of Object.entries(topLevel)) {
 			if (HIDDEN_ATTRIBUTE_KEYS.has(key)) continue;
+			if (
+				shouldHideAttributeForContext(
+					key,
+					labelContext,
+					builderData?.subcategoryId,
+				)
+			)
+				continue;
+
 			if (Array.isArray(values) && values.length > 0) {
 				cleaned[key] = sortOptionValues(values, key);
 			}
 		}
 
 		if (Object.keys(cleaned).length > 0) return cleaned;
-		return collectAttributesFromVariants(variants);
-	}, [builderData, variants]);
+		return collectAttributesFromVariants(
+			variants.filter(Boolean).map((variant) => ({
+				...variant,
+				attributes: Object.fromEntries(
+					Object.entries(variant.attributes || {}).filter(
+						([key]) =>
+							!shouldHideAttributeForContext(
+								key,
+								labelContext,
+								builderData?.subcategoryId,
+							),
+					),
+				),
+			})),
+			labelContext,
+		);
+	}, [builderData, variants, labelContext]);
 
 	const attributeEntries = useMemo(() => {
 		return getOrderedAttributeEntries(attributes);
@@ -300,18 +399,13 @@ export default function ProductDetail() {
 		const options = {};
 
 		for (const [key, values] of attributeEntries) {
-			const allowed = new Set(
-				getAllowedValuesForKey(variants, selected, key).map(String)
-			);
-
 			options[key] = sortOptionValues(values, key).map((value) => ({
 				value,
-				disabled: !allowed.has(String(value)),
 			}));
 		}
 
 		return options;
-	}, [attributeEntries, variants, selected]);
+	}, [attributeEntries]);
 
 	const validVariants = useMemo(() => {
 		if (!variants.length) return [];
@@ -326,9 +420,11 @@ export default function ProductDetail() {
 	const quantity = Math.max(1, Number(selected.quantity || 1));
 	const displayVariant = exactVariant || null;
 
-	const displayName = displayVariant?.name || getGenericDisplayName(builderData, subcategoryId);
+	const displayName =
+		displayVariant?.name || getGenericDisplayName(builderData, subcategoryId);
 	const displayImage = displayVariant?.image || builderData?.image || "";
-	const displayDescription = displayVariant?.description || builderData?.description || "";
+	const displayDescription =
+		displayVariant?.description || builderData?.description || "";
 
 	const unitPrice = Number(displayVariant?.price || 0);
 	const currency = displayVariant?.currency || "USD";
@@ -346,54 +442,18 @@ export default function ProductDetail() {
 
 			hasUserMadeSelectionRef.current = true;
 
-			const manualKeys = new Set(manualKeysRef.current);
-			if (value) manualKeys.add(attr);
-			else manualKeys.delete(attr);
+			if (attr === "measurementSystem") {
+				return {
+					...INITIAL_SELECTED_STATE,
+					quantity: prev.quantity || 1,
+					measurementSystem: value,
+				};
+			}
 
-			let next = {
+			return {
 				...prev,
 				[attr]: value,
 			};
-
-			let compatible = getCompatibleVariants(variants, next);
-
-			if (!compatible.length) {
-				const autoFilledKeys = visibleKeys.filter(
-					(key) => key !== attr && !manualKeys.has(key) && Boolean(next[key])
-				);
-
-				for (const key of autoFilledKeys) {
-					const test = { ...next, [key]: "" };
-					const testCompatible = getCompatibleVariants(variants, test);
-					if (testCompatible.length) {
-						next = test;
-						compatible = testCompatible;
-					}
-				}
-			}
-
-			if (!compatible.length) {
-				const otherManualKeys = visibleKeys.filter(
-					(key) => key !== attr && manualKeys.has(key) && Boolean(next[key])
-				);
-
-				for (const key of otherManualKeys) {
-					const test = { ...next, [key]: "" };
-					const testCompatible = getCompatibleVariants(variants, test);
-					if (testCompatible.length) {
-						next = test;
-						manualKeys.delete(key);
-						compatible = testCompatible;
-					}
-				}
-			}
-
-			if (compatible.length) {
-				next = buildAutofilledSelection(next, compatible[0], visibleKeys, manualKeys);
-			}
-
-			manualKeysRef.current = manualKeys;
-			return next;
 		});
 	};
 
@@ -427,7 +487,8 @@ export default function ProductDetail() {
 		});
 
 		showToast({
-			message: quantity > 1 ? `Added ${quantity} items to cart` : "Added to cart",
+			message:
+				quantity > 1 ? `Added ${quantity} items to cart` : "Added to cart",
 			variant: "success",
 			actionLabel: "View Cart",
 			onAction: () => navigate("/cart"),
@@ -523,7 +584,7 @@ export default function ProductDetail() {
 
 					<div className='row m-0 p-0'>
 						{attributeEntries.map(([key]) => {
-							const label = formatAttributeLabel(key);
+							const label = formatAttributeLabel(key, labelContext);
 							const options = dropdownOptions[key] || [];
 
 							return (
@@ -538,10 +599,7 @@ export default function ProductDetail() {
 										onChange={(e) => handleChange(key, e.target.value)}>
 										<option value=''>Select {label}</option>
 										{options.map((option) => (
-											<option
-												key={option.value}
-												value={option.value}
-												disabled={option.disabled}>
+											<option key={option.value} value={option.value}>
 												{option.value}
 											</option>
 										))}
@@ -571,7 +629,7 @@ export default function ProductDetail() {
 										onClick={() =>
 											handleChange(
 												"quantity",
-												Math.max(1, Number(selected.quantity || 1) + 1)
+												Math.max(1, Number(selected.quantity || 1) + 1),
 											)
 										}
 									/>
@@ -580,7 +638,7 @@ export default function ProductDetail() {
 										onClick={() =>
 											handleChange(
 												"quantity",
-												Math.max(1, Number(selected.quantity || 1) - 1)
+												Math.max(1, Number(selected.quantity || 1) - 1),
 											)
 										}
 									/>
@@ -598,7 +656,7 @@ export default function ProductDetail() {
 							{hasAnyRealSelection(selected)
 								? `${validVariants.length} valid matching option${
 										validVariants.length === 1 ? "" : "s"
-								  }`
+									}`
 								: `${variants.length} total variants available`}
 						</div>
 					</div>

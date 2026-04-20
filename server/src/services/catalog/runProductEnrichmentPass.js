@@ -1,3 +1,4 @@
+// server/src/services/catalog/runProductEnrichmentPass.js
 import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
 import createProductEnrichmentFromProduct from "./createProductEnrichmentFromProduct.js";
@@ -7,7 +8,9 @@ function normalize(value = "") {
 }
 
 function clean(value = "") {
-	return String(value || "").replace(/\s+/g, " ").trim();
+	return String(value || "")
+		.replace(/\s+/g, " ")
+		.trim();
 }
 
 function slugify(value = "") {
@@ -24,7 +27,7 @@ function uniqueSorted(values = []) {
 			String(a).localeCompare(String(b), undefined, {
 				numeric: true,
 				sensitivity: "base",
-			})
+			}),
 	);
 }
 
@@ -38,87 +41,93 @@ function addToOptions(options, key, value) {
 	options[key].add(String(value).trim());
 }
 
-function canonicalizeFastenerType(value = "", subcategory = "") {
-	const v = clean(value).toLowerCase();
-	const sub = clean(subcategory).toLowerCase();
-
-	if (
-		v === "hex bolt" ||
-		v === "hex bolts" ||
-		v === "hex head bolt" ||
-		v === "hex head bolts" ||
-		v === "hex cap screw" ||
-		v === "hex cap screws" ||
-		sub === "hex cap screws"
-	) {
-		return "hex cap screw";
-	}
-
-	if (v === "carriage bolt" || v === "carriage bolts") {
-		return "carriage bolt";
-	}
-
-	if (v === "lag bolt" || v === "lag bolts" || v === "lag screw" || v === "lag screws") {
-		return "lag screw";
-	}
-
-	if (v === "socket head cap screw" || v === "socket cap screw") {
-		return "socket head cap screw";
-	}
-
-	return clean(value);
-}
-
-function toPluralFamilyType(value = "") {
-	const v = clean(value);
-
-	if (!v) return "Catalog Family";
-	if (v.endsWith("s")) return v;
-
-	if (v === "hex cap screw") return "Hex Cap Screws";
-	if (v === "carriage bolt") return "Carriage Bolts";
-	if (v === "lag screw") return "Lag Screws";
-	if (v === "socket head cap screw") return "Socket Head Cap Screws";
-
-	return `${v}s`;
-}
-
 function buildFamilyKey({ attributes = {}, enrichment = null }) {
-	const category = normalize(enrichment?.category || attributes.categoryCanonical || "");
-	const subcategory = normalize(enrichment?.subcategory || attributes.subcategoryCanonical || "");
-	const fastenerType = normalize(
-		attributes.fastenerTypeCanonical ||
-			canonicalizeFastenerType(attributes.fastenerType, enrichment?.subcategory || "")
+	const category = normalize(
+		enrichment?.category || attributes.categoryCanonical || "",
 	);
-	const finish = normalize(attributes.finish);
-	const grade = normalize(attributes.grade);
-	const material = normalize(attributes.material);
-	const measurementSystem = normalize(attributes.measurementSystem);
+	const subcategory = normalize(
+		enrichment?.subcategory || attributes.subcategoryCanonical || "",
+	);
+	const familyType = normalize(
+		attributes.familyType ||
+			attributes.fastenerTypeCanonical ||
+			attributes.fastenerType ||
+			"",
+	);
 
-	return [
-		category,
-		subcategory,
-		fastenerType,
-		finish,
-		grade,
-		material,
-		measurementSystem,
-	]
-		.filter(Boolean)
-		.join("|");
+	const measurementSystem = normalize(attributes.measurementSystem || "");
+	const washerStandard = normalize(attributes.washerStandard || "");
+	const washerType = normalize(attributes.washerType || "");
+	const diameter = normalize(attributes.diameter || "");
+	const width = normalize(attributes.width || "");
+
+	const finish = normalize(attributes.finish || "");
+	const grade = normalize(attributes.grade || "");
+	const material = normalize(attributes.material || "");
+	const vendor = normalize(enrichment?.websiteVendor || "");
+	const brand = normalize(enrichment?.websiteBrand || "");
+
+	const parts = [category, subcategory, familyType];
+
+	if (familyType === "flat washer") {
+		parts.push(measurementSystem, washerStandard, diameter);
+	} else if (familyType === "fender washer") {
+		parts.push(measurementSystem, diameter, width);
+	} else if (familyType === "lock washer") {
+		parts.push(measurementSystem, washerType, diameter);
+	} else if (familyType.includes("washer")) {
+		parts.push(measurementSystem, diameter);
+	} else if (familyType.includes("cotter pin")) {
+		parts.push(finish, material, measurementSystem);
+	} else if (
+		familyType.includes("hex cap screw") ||
+		familyType.includes("carriage bolt") ||
+		familyType.includes("lag screw") ||
+		familyType.includes("socket head cap screw")
+	) {
+		parts.push(finish, grade, material, measurementSystem);
+	} else if (familyType.includes("abrasive")) {
+		parts.push(grade, measurementSystem);
+	} else if (familyType.includes("auveco")) {
+		parts.push(vendor, brand);
+	} else {
+		parts.push(finish, material, measurementSystem, vendor, brand);
+	}
+
+	return parts.filter(Boolean).join("|");
 }
 
 function buildFamilyTitle({ attributes = {}, enrichment = null }) {
-	const canonicalType =
-		attributes.fastenerTypeCanonical ||
-		canonicalizeFastenerType(attributes.fastenerType, enrichment?.subcategory || "");
+	const familyType =
+		clean(attributes.familyType) ||
+		clean(attributes.fastenerTypeCanonical) ||
+		clean(attributes.fastenerType) ||
+		clean(enrichment?.subcategory) ||
+		"Catalog Family";
 
-	const parts = [
-		clean(attributes.finish),
-		clean(attributes.grade),
-		clean(attributes.material),
-		toPluralFamilyType(canonicalType),
-	].filter(Boolean);
+	const diameter = clean(attributes.diameter || "");
+	const width = clean(attributes.width || "");
+	const washerStandard = clean(attributes.washerStandard || "");
+	const washerType = clean(attributes.washerType || "");
+
+	let parts = [];
+
+	if (familyType === "flat washer") {
+		parts = [washerStandard, diameter, familyType].filter(Boolean);
+	} else if (familyType === "fender washer") {
+		parts = [diameter, width, familyType].filter(Boolean);
+	} else if (familyType === "lock washer") {
+		parts = [washerType, diameter, familyType].filter(Boolean);
+	} else if (familyType.toLowerCase().includes("washer")) {
+		parts = [diameter, familyType].filter(Boolean);
+	} else {
+		parts = [
+			clean(attributes.finish),
+			clean(attributes.grade),
+			clean(attributes.material),
+			familyType,
+		].filter(Boolean);
+	}
 
 	return parts.join(" ") || "Catalog Family";
 }
@@ -144,7 +153,9 @@ export default async function runProductEnrichmentPass({
 } = {}) {
 	const results = [];
 
-	let targetProductIds = Array.isArray(productIds) ? productIds.filter(Boolean) : [];
+	let targetProductIds = Array.isArray(productIds)
+		? productIds.filter(Boolean)
+		: [];
 
 	if (!targetProductIds.length) {
 		const products = await Product.find({}, { _id: 1 }).lean();
@@ -177,20 +188,31 @@ export default async function runProductEnrichmentPass({
 	for (const enrichment of enrichments) {
 		const attrs = enrichment.attributes || {};
 
-		const familyKey = buildFamilyKey({
-			attributes: attrs,
-			enrichment,
-		});
+		const familyKey =
+			clean(attrs.familyKey) ||
+			buildFamilyKey({
+				attributes: attrs,
+				enrichment,
+			});
 
 		if (!familyKey) continue;
 
 		if (!families.has(familyKey)) {
 			families.set(familyKey, {
 				familyKey,
-				familySlug: buildFamilySlug({ attributes: attrs, enrichment }),
-				familyTitle: buildFamilyTitle({ attributes: attrs, enrichment }),
+				familySlug:
+					clean(attrs.familySlug) ||
+					buildFamilySlug({ attributes: attrs, enrichment }),
+				familyTitle:
+					clean(attrs.familyTitle) ||
+					buildFamilyTitle({ attributes: attrs, enrichment }),
 				category: enrichment.category || "",
 				subcategory: enrichment.subcategory || "",
+				familyType:
+					attrs.familyType ||
+					attrs.fastenerTypeCanonical ||
+					attrs.fastenerType ||
+					"",
 				products: [],
 				options: {},
 			});
@@ -206,20 +228,40 @@ export default async function runProductEnrichmentPass({
 			title: enrichment.title || "",
 		});
 
-		addToOptions(family.options, "size", attrs.size);
-		addToOptions(family.options, "diameter", attrs.diameter);
-		addToOptions(family.options, "threadPitch", attrs.threadPitch);
-		addToOptions(family.options, "length", attrs.length);
+		const familyType = String(
+			attrs.familyType ||
+				attrs.fastenerTypeCanonical ||
+				attrs.fastenerType ||
+				"",
+		).toLowerCase();
 
 		addToOptions(family.options, "measurementSystem", attrs.measurementSystem);
-		addToOptions(family.options, "material", attrs.material);
-		addToOptions(family.options, "finish", attrs.finish);
+		addToOptions(family.options, "diameter", attrs.diameter);
 		addToOptions(family.options, "grade", attrs.grade);
-		addToOptions(
-			family.options,
-			"fastenerType",
-			attrs.fastenerTypeCanonical || attrs.fastenerType
-		);
+
+		if (familyType === "flat washer") {
+			addToOptions(family.options, "washerStandard", attrs.washerStandard);
+			addToOptions(family.options, "materialFinish", attrs.materialFinish);
+		} else if (familyType === "fender washer") {
+			addToOptions(family.options, "width", attrs.width);
+			addToOptions(family.options, "materialFinish", attrs.materialFinish);
+		} else if (familyType === "lock washer") {
+			addToOptions(family.options, "washerType", attrs.washerType);
+			addToOptions(family.options, "materialFinish", attrs.materialFinish);
+		} else if (familyType.includes("washer")) {
+			addToOptions(family.options, "materialFinish", attrs.materialFinish);
+		} else {
+			addToOptions(family.options, "size", attrs.size);
+			addToOptions(family.options, "threadPitch", attrs.threadPitch);
+			addToOptions(family.options, "length", attrs.length);
+			addToOptions(family.options, "material", attrs.material);
+			addToOptions(family.options, "finish", attrs.finish);
+			addToOptions(
+				family.options,
+				"fastenerType",
+				attrs.familyType || attrs.fastenerTypeCanonical || attrs.fastenerType,
+			);
+		}
 	}
 
 	const finalFamilies = [];
@@ -243,6 +285,7 @@ export default async function runProductEnrichmentPass({
 			}),
 			category: family.category,
 			subcategory: family.subcategory,
+			familyType: family.familyType,
 			products: family.products,
 			familyAttributeOptions,
 			count: family.products.length,
@@ -261,9 +304,11 @@ export default async function runProductEnrichmentPass({
 							"attributes.familyKey": family.familyKey,
 							"attributes.familySlug": family.familySlug,
 							"attributes.familyTitle": family.familyTitle,
-							"attributes.familyAttributeOptions": family.familyAttributeOptions,
+							"attributes.familyType": family.familyType,
+							"attributes.familyAttributeOptions":
+								family.familyAttributeOptions,
 						},
-					}
+					},
 				);
 			}
 		}

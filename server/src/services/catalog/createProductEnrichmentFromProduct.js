@@ -1,8 +1,12 @@
+// server/src/services/catalog/createProductEnrichmentFromProduct.js
 import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
+import detectProductFamilyFromDescription from "./detectProductFamilyFromDescription.js";
 
 function cleanText(value = "") {
-	return String(value || "").replace(/\s+/g, " ").trim();
+	return String(value || "")
+		.replace(/\s+/g, " ")
+		.trim();
 }
 
 function uniqueStrings(values = []) {
@@ -17,91 +21,39 @@ function slugify(value = "") {
 		.replace(/^-+|-+$/g, "");
 }
 
-function normalizeWebsiteTaxonomy(parsed = {}, product = null) {
-	const rawCategory = cleanText(parsed.category || product?.categoryHints?.[0] || "");
-	const rawSubcategory = cleanText(parsed.subcategory || product?.categoryHints?.[1] || "");
-	const fastenerType = cleanText(parsed.fastenerType || "");
+async function buildUniqueSlug({
+	title = "",
+	product = null,
+	existingEnrichmentId = null,
+}) {
+	const baseFromTitle = slugify(title);
+	const baseFromPart =
+		slugify(product?.fishbowl?.partNum || "") || slugify(product?.sku || "");
+	const fallbackBase = baseFromTitle || baseFromPart || "product";
 
-	const categoryKey = rawCategory.toLowerCase();
-	const subcategoryKey = rawSubcategory.toLowerCase();
-	const fastenerTypeKey = fastenerType.toLowerCase();
+	const candidates = uniqueStrings([
+		fallbackBase,
+		`${fallbackBase}-${slugify(product?.fishbowl?.partNum || "")}`,
+		`${fallbackBase}-${slugify(product?.sku || "")}`,
+		slugify(product?.fishbowl?.partNum || ""),
+		slugify(product?.sku || ""),
+	]).filter(Boolean);
 
-	let category = "";
-	let subcategory = "";
+	for (const candidate of candidates) {
+		const existing = await ProductEnrichment.findOne({ "seo.slug": candidate })
+			.select({ _id: 1, productId: 1 })
+			.lean();
 
-	if (categoryKey === "fasteners") {
-		category = "bolts";
-	} else if (categoryKey) {
-		category = categoryKey;
+		if (!existing) return candidate;
+		if (
+			existingEnrichmentId &&
+			String(existing._id) === String(existingEnrichmentId)
+		) {
+			return candidate;
+		}
 	}
 
-	if (
-		subcategoryKey === "hex bolts" ||
-		subcategoryKey === "hex bolt" ||
-		subcategoryKey === "hex head bolts" ||
-		subcategoryKey === "hex head bolt" ||
-		fastenerTypeKey === "hex bolt" ||
-		fastenerTypeKey === "hex head bolt" ||
-		fastenerTypeKey === "hex cap screw" ||
-		fastenerTypeKey === "hex cap screws"
-	) {
-		subcategory = "hex cap screws";
-	} else if (subcategoryKey) {
-		subcategory = subcategoryKey;
-	}
-
-	if (!category) {
-		if (subcategory.includes("washer")) category = "washers";
-		else if (subcategory.includes("nut")) category = "nuts";
-		else category = "bolts";
-	}
-
-	return { category, subcategory };
-}
-
-function canonicalizeFastenerType(value = "", subcategory = "") {
-	const v = cleanText(value).toLowerCase();
-	const sub = cleanText(subcategory).toLowerCase();
-
-	if (
-		v === "hex bolt" ||
-		v === "hex bolts" ||
-		v === "hex head bolt" ||
-		v === "hex head bolts" ||
-		v === "hex cap screw" ||
-		v === "hex cap screws" ||
-		sub === "hex cap screws"
-	) {
-		return "hex cap screw";
-	}
-
-	if (v === "carriage bolt" || v === "carriage bolts") {
-		return "carriage bolt";
-	}
-
-	if (v === "lag bolt" || v === "lag bolts" || v === "lag screw" || v === "lag screws") {
-		return "lag screw";
-	}
-
-	if (v === "socket head cap screw" || v === "socket cap screw") {
-		return "socket head cap screw";
-	}
-
-	return cleanText(value);
-}
-
-function toPluralFamilyType(value = "") {
-	const v = cleanText(value);
-
-	if (!v) return "Catalog Family";
-	if (v.endsWith("s")) return v;
-
-	if (v === "hex cap screw") return "Hex Cap Screws";
-	if (v === "carriage bolt") return "Carriage Bolts";
-	if (v === "lag screw") return "Lag Screws";
-	if (v === "socket head cap screw") return "Socket Head Cap Screws";
-
-	return `${v}s`;
+	return `${fallbackBase}-${String(product?._id || "").slice(-6)}`;
 }
 
 function buildVariantTitle({ product = null, fallbackPartNum = "" }) {
@@ -110,7 +62,7 @@ function buildVariantTitle({ product = null, fallbackPartNum = "" }) {
 			product?.fishbowl?.raw?.original?.description ||
 			product?.fishbowl?.raw?.original?.partDescription ||
 			product?.fishbowl?.raw?.original?.name ||
-			""
+			"",
 	);
 
 	if (fishbowlDescription) return fishbowlDescription;
@@ -123,20 +75,28 @@ function buildShortDescription({ title = "", product = null }) {
 	return cleanText(`${title}${partNum ? ` (${partNum})` : ""}`.trim());
 }
 
-function buildDescription({ title = "", parsed = {}, product = null }) {
+function buildDescription({ title = "", family = {}, product = null }) {
 	const lines = [];
 
 	if (title) {
-		lines.push(`${title} is a catalog item imported from Fishbowl and prepared for ecommerce enrichment.`);
+		lines.push(
+			`${title} is a catalog item imported from Fishbowl and prepared for ecommerce enrichment.`,
+		);
 	}
 
 	const specBits = [
-		parsed.size ? `Size: ${parsed.size}` : "",
-		parsed.length ? `Length: ${parsed.length}` : "",
-		parsed.material ? `Material: ${parsed.material}` : "",
-		parsed.finish ? `Finish: ${parsed.finish}` : "",
-		parsed.grade ? `Grade: ${parsed.grade}` : "",
-		parsed.fastenerType ? `Type: ${parsed.fastenerType}` : "",
+		family.washerStandard ? `Standard: ${family.washerStandard}` : "",
+		family.size ? `Size: ${family.size}` : "",
+		family.diameter ? `Diameter: ${family.diameter}` : "",
+		family.insideDiameter ? `Inside Diameter: ${family.insideDiameter}` : "",
+		family.outsideDiameter ? `Outside Diameter: ${family.outsideDiameter}` : "",
+		family.thickness ? `Thickness: ${family.thickness}` : "",
+		family.threadPitch ? `Thread Pitch: ${family.threadPitch}` : "",
+		family.length ? `Length: ${family.length}` : "",
+		family.material ? `Material: ${family.material}` : "",
+		family.finish ? `Finish: ${family.finish}` : "",
+		family.grade ? `Grade: ${family.grade}` : "",
+		family.familyType ? `Type: ${family.familyType}` : "",
 	].filter(Boolean);
 
 	if (specBits.length > 0) {
@@ -150,58 +110,93 @@ function buildDescription({ title = "", parsed = {}, product = null }) {
 	return cleanText(lines.join(" "));
 }
 
-function buildBulletPoints(parsed = {}) {
+function buildBulletPoints(family = {}) {
 	return [
-		parsed.size ? `Size: ${parsed.size}` : "",
-		parsed.diameter ? `Diameter: ${parsed.diameter}` : "",
-		parsed.threadPitch ? `Thread Pitch: ${parsed.threadPitch}` : "",
-		parsed.length ? `Length: ${parsed.length}` : "",
-		parsed.material ? `Material: ${parsed.material}` : "",
-		parsed.finish ? `Finish: ${parsed.finish}` : "",
-		parsed.grade ? `Grade: ${parsed.grade}` : "",
-		parsed.fastenerType ? `Type: ${parsed.fastenerType}` : "",
-		parsed.measurementSystem ? `Measurement System: ${parsed.measurementSystem}` : "",
+		family.washerStandard ? `Standard: ${family.washerStandard}` : "",
+		family.size ? `Size: ${family.size}` : "",
+		family.diameter ? `Diameter: ${family.diameter}` : "",
+		family.insideDiameter ? `Inside Diameter: ${family.insideDiameter}` : "",
+		family.outsideDiameter ? `Outside Diameter: ${family.outsideDiameter}` : "",
+		family.thickness ? `Thickness: ${family.thickness}` : "",
+		family.threadPitch ? `Thread Pitch: ${family.threadPitch}` : "",
+		family.length ? `Length: ${family.length}` : "",
+		family.material ? `Material: ${family.material}` : "",
+		family.finish ? `Finish: ${family.finish}` : "",
+		family.grade ? `Grade: ${family.grade}` : "",
+		family.familyType ? `Type: ${family.familyType}` : "",
+		family.measurementSystem
+			? `Measurement System: ${family.measurementSystem}`
+			: "",
+		family.category ? `Category: ${family.category}` : "",
+		family.subcategory ? `Subcategory: ${family.subcategory}` : "",
 	].filter(Boolean);
 }
 
-function buildTags({ parsed = {}, product = null, normalizedTaxonomy = {}, canonicalFastenerType = "" }) {
+function buildTags({ family = {}, product = null }) {
 	return uniqueStrings([
-		normalizedTaxonomy.category ? slugify(normalizedTaxonomy.category) : "",
-		normalizedTaxonomy.subcategory ? slugify(normalizedTaxonomy.subcategory) : "",
-		canonicalFastenerType ? slugify(canonicalFastenerType) : "",
-		parsed.fastenerType ? slugify(parsed.fastenerType) : "",
-		parsed.finish ? slugify(parsed.finish) : "",
-		parsed.material ? slugify(parsed.material) : "",
-		parsed.grade ? slugify(parsed.grade) : "",
-		...(Array.isArray(product?.searchKeywords) ? product.searchKeywords.map(slugify) : []),
+		...(family.tags || []),
+		family.category ? slugify(family.category) : "",
+		family.subcategory ? slugify(family.subcategory) : "",
+		family.familyType ? slugify(family.familyType) : "",
+		family.washerStandard ? slugify(family.washerStandard) : "",
+		family.finish ? slugify(family.finish) : "",
+		family.material ? slugify(family.material) : "",
+		family.grade ? slugify(family.grade) : "",
+		...(Array.isArray(product?.searchKeywords)
+			? product.searchKeywords.map(slugify)
+			: []),
 	]);
 }
 
-function buildFamilyTitle({ parsed = {}, canonicalFastenerType = "" }) {
-	const parts = [
-		cleanText(parsed.finish),
-		cleanText(parsed.grade),
-		cleanText(parsed.material),
-		toPluralFamilyType(canonicalFastenerType),
-	].filter(Boolean);
-
-	return parts.join(" ") || "Catalog Family";
-}
-
-function buildAttributes(parsed = {}, product = null, normalizedTaxonomy = {}, canonicalFastenerType = "") {
+function buildAttributes({ family = {}, parsed = {}, product = null }) {
 	return {
-		size: parsed.size || "",
-		diameter: parsed.diameter || "",
-		threadPitch: parsed.threadPitch || "",
-		length: parsed.length || "",
-		measurementSystem: parsed.measurementSystem || "",
-		material: parsed.material || "",
-		finish: parsed.finish || "",
-		grade: parsed.grade || "",
-		fastenerType: parsed.fastenerType || "",
-		fastenerTypeCanonical: canonicalFastenerType || "",
-		categoryCanonical: normalizedTaxonomy.category || "",
-		subcategoryCanonical: normalizedTaxonomy.subcategory || "",
+		size: family.size || parsed.size || "",
+		diameter: family.diameter || parsed.diameter || "",
+		insideDiameter:
+			family.insideDiameter || parsed.insideDiameter || parsed.id || "",
+		outsideDiameter:
+			family.outsideDiameter || parsed.outsideDiameter || parsed.od || "",
+		width: family.width || parsed.width || "",
+		thickness: family.thickness || parsed.thickness || "",
+		washerStandard:
+			family.washerStandard ||
+			parsed.washerStandard ||
+			parsed.standard ||
+			parsed.pattern ||
+			"",
+		washerType:
+			family.washerType ||
+			parsed.washerType ||
+			parsed.type ||
+			"",
+		threadPitch: family.threadPitch || parsed.threadPitch || "",
+		length: family.familyType?.includes("washer")
+			? ""
+			: family.length || parsed.length || "",
+		measurementSystem:
+			family.measurementSystem || parsed.measurementSystem || "",
+		material: family.material || parsed.material || "",
+		finish: family.finish || parsed.finish || "",
+		displayMaterial:
+			family.displayMaterial || family.material || family.finish || "",
+		displayFinish:
+			family.displayFinish || family.finish || family.material || "",
+		materialFinish:
+			family.materialFinish ||
+			family.displayMaterial ||
+			family.displayFinish ||
+			family.material ||
+			family.finish ||
+			"",
+		grade: family.grade || parsed.grade || "",
+		fastenerType: family.familyType || parsed.fastenerType || "",
+		fastenerTypeCanonical: family.familyType || parsed.fastenerType || "",
+		categoryCanonical: family.category || parsed.category || "",
+		subcategoryCanonical: family.subcategory || parsed.subcategory || "",
+		familyType: family.familyType || "",
+		familyKey: family.familyKey || "",
+		familySlug: family.familySlug || "",
+		familyTitle: family.familyTitle || "",
 		fishbowlPartNum: product?.fishbowl?.partNum || "",
 		fishbowlDescription: cleanText(product?.fishbowl?.description || ""),
 		sku: product?.sku || "",
@@ -209,37 +204,18 @@ function buildAttributes(parsed = {}, product = null, normalizedTaxonomy = {}, c
 	};
 }
 
-function buildSeo({ title = "", parsed = {}, product = null, existingSlug = "" }) {
-	const slugBase =
-		title ||
-		product?.fishbowl?.description ||
-		product?.fishbowl?.partNum ||
-		product?.sku ||
-		"product";
-
-	const slug = existingSlug || slugify(slugBase);
-
-	const metaTitle = cleanText(title || product?.fishbowl?.description || product?.sku || "Product");
-
-	const metaDescription = cleanText(
-		[
-			title || "",
-			parsed.finish || "",
-			parsed.material || "",
-			parsed.fastenerType || "",
-		]
-			.filter(Boolean)
-			.join(" ")
+function buildSeo({ title = "", product = null, slug = "" }) {
+	const metaTitle = cleanText(
+		title || product?.fishbowl?.description || product?.sku || "Product",
 	);
 
 	return {
 		slug,
 		metaTitle,
-		metaDescription: metaDescription || metaTitle,
-		keywords: uniqueStrings([
-			...(parsed.keywords || []),
-			...(Array.isArray(product?.searchKeywords) ? product.searchKeywords : []),
-		]),
+		metaDescription: metaTitle,
+		keywords: uniqueStrings(
+			Array.isArray(product?.searchKeywords) ? product.searchKeywords : [],
+		),
 		canonicalUrl: "",
 	};
 }
@@ -250,7 +226,6 @@ export async function createProductEnrichmentFromProduct(productId) {
 	}
 
 	const product = await Product.findById(productId);
-
 	if (!product) {
 		throw new Error("Product not found");
 	}
@@ -258,21 +233,17 @@ export async function createProductEnrichmentFromProduct(productId) {
 	const existing = await ProductEnrichment.findOne({ productId: product._id });
 	const parsed = product?.fishbowl?.raw?.parsedAttributes || {};
 
-	const fallbackPartNum = cleanText(product?.fishbowl?.partNum || product?.sku || "");
-	const normalizedTaxonomy = normalizeWebsiteTaxonomy(parsed, product);
-	const canonicalFastenerType = canonicalizeFastenerType(
-		parsed.fastenerType,
-		normalizedTaxonomy.subcategory
+	const fallbackPartNum = cleanText(
+		product?.fishbowl?.partNum || product?.sku || "",
 	);
+	const family = detectProductFamilyFromDescription({
+		product,
+		parsed,
+	});
 
 	const title = buildVariantTitle({
 		product,
 		fallbackPartNum,
-	});
-
-	const familyTitle = buildFamilyTitle({
-		parsed,
-		canonicalFastenerType,
 	});
 
 	const shortTitle = title;
@@ -283,28 +254,32 @@ export async function createProductEnrichmentFromProduct(productId) {
 
 	const description = buildDescription({
 		title,
+		family,
+		product,
+	});
+
+	const bulletPoints = buildBulletPoints(family);
+	const tags = buildTags({
+		family,
+		product,
+	});
+
+	const attributes = buildAttributes({
+		family,
 		parsed,
 		product,
 	});
 
-	const bulletPoints = buildBulletPoints(parsed);
-	const tags = buildTags({
-		parsed,
+	const uniqueSlug = await buildUniqueSlug({
+		title,
 		product,
-		normalizedTaxonomy,
-		canonicalFastenerType,
+		existingEnrichmentId: existing?._id || null,
 	});
-	const attributes = buildAttributes(
-		parsed,
-		product,
-		normalizedTaxonomy,
-		canonicalFastenerType
-	);
+
 	const seo = buildSeo({
 		title,
-		parsed,
 		product,
-		existingSlug: existing?.seo?.slug || "",
+		slug: existing?.seo?.slug || uniqueSlug,
 	});
 
 	if (!existing) {
@@ -317,12 +292,12 @@ export async function createProductEnrichmentFromProduct(productId) {
 			bulletPoints,
 			websiteBrand: product.brand || "",
 			websiteVendor: product.vendor || "",
-			category: normalizedTaxonomy.category,
-			subcategory: normalizedTaxonomy.subcategory,
+			category: family.category || "uncategorized",
+			subcategory: family.subcategory || "needs classification",
 			tags,
 			attributes: {
 				...attributes,
-				familyTitleBase: familyTitle,
+				familyTitleBase: family.familyTitle || "Catalog Family",
 			},
 			images: [],
 			seo,
@@ -334,19 +309,36 @@ export async function createProductEnrichmentFromProduct(productId) {
 			},
 			contentStatus: "auto-mapped",
 			imageStatus: "none",
+			quality: {
+				builderReady: false,
+				renderable: false,
+				publishReady: false,
+				completenessScore: 0,
+				missingRequiredAttributes: [],
+				missingRecommendedAttributes: [],
+				issues: [],
+				suggestedFamilyKey: family.familyKey || "",
+				suggestedFamilyConfidence: 0,
+				similarFamilies: [],
+				lastEvaluatedAt: null,
+			},
 			overrideFlags: {
 				lockTitle: false,
 				lockDescription: false,
 				lockImages: false,
 				lockCategory: false,
 			},
-			notes: "Auto-generated from Fishbowl product data and parsed attributes.",
+			notes:
+				"Auto-generated from Fishbowl product data and generalized family detection.",
 		});
 
 		product.enrichmentId = enrichment._id;
 		product.hasEnrichment = true;
 
-		if (product.catalogStatus === "draft" || product.catalogStatus === "mapped") {
+		if (
+			product.catalogStatus === "draft" ||
+			product.catalogStatus === "mapped"
+		) {
 			product.catalogStatus = "enriched";
 		}
 
@@ -379,8 +371,8 @@ export async function createProductEnrichmentFromProduct(productId) {
 	}
 
 	if (!lockCategory) {
-		existing.category = normalizedTaxonomy.category;
-		existing.subcategory = normalizedTaxonomy.subcategory;
+		existing.category = family.category || "uncategorized";
+		existing.subcategory = family.subcategory || "needs classification";
 	}
 
 	existing.websiteBrand = product.brand || existing.websiteBrand || "";
@@ -390,7 +382,7 @@ export async function createProductEnrichmentFromProduct(productId) {
 	existing.attributes = {
 		...(existing.attributes || {}),
 		...attributes,
-		familyTitleBase: familyTitle,
+		familyTitleBase: family.familyTitle || "Catalog Family",
 	};
 
 	existing.contentStatus =

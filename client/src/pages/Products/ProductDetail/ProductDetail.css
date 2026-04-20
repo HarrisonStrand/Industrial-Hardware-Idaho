@@ -77,3 +77,35 @@ input[type="number"] {
 .quantity-arrows i:hover {
 	color: var(--alt-color);
 }
+
+.option-box {
+	box-shadow: 0 3px 4px rgba(0, 0, 0, 0.15);
+	border: 1px solid rgba(0, 0, 0, 0.25);
+	background: white;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.option-box-selected {
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.35) inset;
+	background: rgb(from var(--main-light) r g b / 0.35);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+	border: 2px solid rgb(from var(--main-color) r g b / 0.65);
+}
+
+.section-box {
+	box-shadow: 0 3px 4px rgba(0, 0, 0, 0.25);
+}
+
+.builder-reset-shell {
+	transition:
+		opacity 0.28s ease,
+		transform 0.28s ease,
+		filter 0.28s ease;
+}
+
+.builder-resetting {
+	opacity: 0.5;
+	transform: translateY(10px) scale(0.985);
+	filter: saturate(0.9) blur(1px);
+	pointer-events: none;
+}

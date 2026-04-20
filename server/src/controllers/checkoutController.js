@@ -178,7 +178,7 @@ export async function createPayLaterOrder(req, res) {
       });
     }
 
-    const pricingContext = buildPricingContextFromUser(user);
+    const pricingContext = await buildPricingContextFromUser(user);
 
     const baseOrderData = await buildNormalizedOrderPayload({
       user,
@@ -229,7 +229,7 @@ export async function createPayNowIntent(req, res) {
       shippingSameAsBilling = true,
     } = req.body || {};
 
-    const pricingContext = buildPricingContextFromUser(user);
+    const pricingContext = await buildPricingContextFromUser(user);
 
     const baseOrderData = await buildNormalizedOrderPayload({
       user,
@@ -322,7 +322,7 @@ export async function payNowWithSavedCard(req, res) {
       return res.status(400).json({ error: "No saved card on file" });
     }
 
-    const pricingContext = buildPricingContextFromUser(user);
+    const pricingContext = await buildPricingContextFromUser(user);
 
     const baseOrderData = await buildNormalizedOrderPayload({
       user,

@@ -13,15 +13,16 @@ import contactRoutes from "./routes/contact.js";
 
 import checkoutRoutes from "./routes/checkoutRoutes.js";
 import adminUsersRoutes from "./routes/adminUsersRoutes.js";
-import adminOrdersRoutes from "./routes/adminOrdersRoutes.js"
+import adminOrdersRoutes from "./routes/adminOrdersRoutes.js";
+import adminPricingRoutes from "./routes/adminPricingRoutes.js";
 import stripeWebhookRoutes from "./routes/stripeWebhookRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 
 import fishbowlRoutes from "./routes/fishbowlRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
 import catalogBuilderRoutes from "./routes/catalogBuilderRoutes.js";
+import productRoutes from "./routes/productRoutes.js";
 // import adminVendorMappingsRoutes from "./routes/adminVendorMappingsRoutes.js";
-
 
 console.log("Stripe key loaded?", Boolean(process.env.STRIPE_SECRET_KEY));
 console.log("🔥 RUNNING server/src/server.js build:", new Date().toISOString());
@@ -39,15 +40,12 @@ app.use((req, _res, next) => {
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:3000"
-    ],
-    credentials: true
+    origin: ["http://localhost:5173", "http://localhost:3000"],
+    credentials: true,
   })
 );
 
-// ✅ health should not depend on DB connection
+// health should not depend on DB connection
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 app.use("/api/auth", authRoutes);
@@ -59,11 +57,13 @@ app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin/users", adminUsersRoutes);
 app.use("/api/admin", adminOrdersRoutes);
+app.use("/api/admin/pricing-settings", adminPricingRoutes);
 // app.use("/api/admin/vendor-mappings", adminVendorMappingsRoutes);
 
 app.use("/api/fishbowl", fishbowlRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/catalog-builder", catalogBuilderRoutes);
+app.use("/api/products", productRoutes);
 
 app.use("/public", express.static(path.resolve("public")));
 

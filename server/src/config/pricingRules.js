@@ -1,4 +1,4 @@
-export const ACCOUNT_PRICE_RULES = {
+export const DEFAULT_ACCOUNT_PRICE_RULES = {
   RETAIL: {
     label: "Retail",
     multiplier: 1.0,
@@ -21,7 +21,21 @@ export function normalizeApprovedType(value = "RETAIL") {
   return "RETAIL";
 }
 
-export function getAccountPriceRule(value = "RETAIL") {
-  const type = normalizeApprovedType(value);
-  return ACCOUNT_PRICE_RULES[type] || ACCOUNT_PRICE_RULES.RETAIL;
+function sanitizeRuleValue(rule = {}, fallback = {}) {
+  const multiplier = Number(rule?.multiplier);
+  return {
+    label: String(rule?.label || fallback?.label || "").trim(),
+    multiplier:
+      Number.isFinite(multiplier) && multiplier >= 0
+        ? Number(multiplier)
+        : Number(fallback?.multiplier ?? 1),
+  };
+}
+
+export function sanitizeAccountRules(input = {}) {
+  return {
+    RETAIL: sanitizeRuleValue(input?.RETAIL, DEFAULT_ACCOUNT_PRICE_RULES.RETAIL),
+    HOUSE: sanitizeRuleValue(input?.HOUSE, DEFAULT_ACCOUNT_PRICE_RULES.HOUSE),
+    NET30: sanitizeRuleValue(input?.NET30, DEFAULT_ACCOUNT_PRICE_RULES.NET30),
+  };
 }

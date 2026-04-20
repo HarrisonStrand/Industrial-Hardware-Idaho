@@ -18,7 +18,7 @@ router.get("/:categoryId/:subcategoryId", optionalAuth, async (req, res) => {
     if (req.user?.id) {
       const user = await User.findById(req.user.id).lean();
       if (user) {
-        pricingContext = buildPricingContextFromUser(user);
+        pricingContext = await buildPricingContextFromUser(user);
       }
     }
 

@@ -1,5 +1,9 @@
 import Product from "../models/Product.js";
-import { resolveProductPrice, getPricingContext } from "./resolveProductPrice.js";
+import {
+  resolveProductPrice,
+  getPricingContext,
+  getPricingSettings,
+} from "./resolveProductPrice.js";
 
 function toObjectIdString(value) {
   if (!value) return null;
@@ -114,51 +118,58 @@ export async function normalizeOrderItems(
       .map((product) => [String(product.sku), product])
   );
 
-  const resolvedPricingContext = getPricingContext(pricingContext);
+  const pricingSettings = await getPricingSettings();
+  const resolvedPricingContext = await getPricingContext(pricingContext, pricingSettings);
 
-  return normalized.map((item) => {
-    const product =
-      (item.productId && productById.get(String(item.productId))) ||
-      (item.partNumber && productByPartNumber.get(String(item.partNumber))) ||
-      (item.sku && productBySku.get(String(item.sku))) ||
-      null;
+  return Promise.all(
+    normalized.map(async (item) => {
+      const product =
+        (item.productId && productById.get(String(item.productId))) ||
+        (item.partNumber && productByPartNumber.get(String(item.partNumber))) ||
+        (item.sku && productBySku.get(String(item.sku))) ||
+        null;
 
-    if (!product) {
+      if (!product) {
+        return {
+          ...item,
+          lineTotal: Number((item.qty * item.unitPrice).toFixed(2)),
+        };
+      }
+
+      const resolved = await resolveProductPrice(
+        product,
+        resolvedPricingContext,
+        pricingSettings
+      );
+
+      const resolvedPartNumber =
+        product?.fishbowl?.partNum || item.partNumber || product?.sku || item.sku || "";
+
+      const resolvedSku =
+        product?.sku || item.sku || resolvedPartNumber;
+
+      const resolvedName =
+        item.name ||
+        product?.fishbowl?.description ||
+        resolvedSku ||
+        "Product";
+
+      const resolvedUnitPrice = Number(resolved.resolvedPrice || 0);
+
       return {
         ...item,
-        lineTotal: Number((item.qty * item.unitPrice).toFixed(2)),
+        productId: String(product._id),
+        partNumber: resolvedPartNumber,
+        sku: resolvedSku,
+        name: resolvedName,
+        unitPrice: resolvedUnitPrice,
+        priceSource: resolved.source,
+        accountType: resolved.approvedType,
+        priceLabel: resolved.label,
+        lineTotal: Number((item.qty * resolvedUnitPrice).toFixed(2)),
       };
-    }
-
-    const resolved = resolveProductPrice(product, resolvedPricingContext);
-
-    const resolvedPartNumber =
-      product?.fishbowl?.partNum || item.partNumber || product?.sku || item.sku || "";
-
-    const resolvedSku =
-      product?.sku || item.sku || resolvedPartNumber;
-
-    const resolvedName =
-      item.name ||
-      product?.fishbowl?.description ||
-      resolvedSku ||
-      "Product";
-
-    const resolvedUnitPrice = Number(resolved.resolvedPrice || 0);
-
-    return {
-      ...item,
-      productId: String(product._id),
-      partNumber: resolvedPartNumber,
-      sku: resolvedSku,
-      name: resolvedName,
-      unitPrice: resolvedUnitPrice,
-      priceSource: resolved.source,
-      accountType: resolved.approvedType,
-      priceLabel: resolved.label,
-      lineTotal: Number((item.qty * resolvedUnitPrice).toFixed(2)),
-    };
-  });
+    })
+  );
 }
 
 export function calcAmountTotalCents(items = []) {

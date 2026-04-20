@@ -42,6 +42,53 @@ const FishbowlLinkSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const ReviewIssueSchema = new mongoose.Schema(
+  {
+    code: { type: String, default: "" },
+    severity: {
+      type: String,
+      enum: ["info", "warning", "error"],
+      default: "warning",
+    },
+    field: { type: String, default: "" },
+    message: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const ReviewSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ["needs-review", "ready", "approved", "published"],
+      default: "needs-review",
+      index: true,
+    },
+
+    qualityScore: { type: Number, default: 0 },
+    renderable: { type: Boolean, default: false, index: true },
+    publishReady: { type: Boolean, default: false, index: true },
+
+    missingRequiredAttributes: [{ type: String }],
+    missingRecommendedAttributes: [{ type: String }],
+    issues: [ReviewIssueSchema],
+
+    suggestedFamilyKey: { type: String, default: "" },
+
+    reviewedAt: { type: Date, default: null },
+    reviewedBy: { type: mongoose.Schema.Types.Mixed, default: null },
+
+    approvedAt: { type: Date, default: null },
+    approvedBy: { type: mongoose.Schema.Types.Mixed, default: null },
+
+    publishedAt: { type: Date, default: null },
+    publishedBy: { type: mongoose.Schema.Types.Mixed, default: null },
+
+    adminNotes: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const ProductSchema = new mongoose.Schema(
   {
     sku: { type: String, required: true, unique: true, index: true },
@@ -54,6 +101,7 @@ const ProductSchema = new mongoose.Schema(
       default: "",
       index: true,
     },
+
     brand: {
       type: String,
       default: "",
@@ -78,6 +126,8 @@ const ProductSchema = new mongoose.Schema(
     hasImages: { type: Boolean, default: false, index: true },
     needsReview: { type: Boolean, default: true, index: true },
 
+    review: { type: ReviewSchema, default: () => ({}) },
+
     categoryHints: [{ type: String }],
     searchKeywords: [{ type: String }],
 
@@ -101,5 +151,11 @@ ProductSchema.index({ brand: 1, isPublished: 1 });
 ProductSchema.index({ catalogStatus: 1, isCurated: 1 });
 ProductSchema.index({ "fishbowl.partNum": 1 });
 ProductSchema.index({ internalPartNumber: 1 });
+
+ProductSchema.index({
+  "review.status": 1,
+  "review.publishReady": 1,
+  isPublished: 1,
+});
 
 export default mongoose.model("Product", ProductSchema);

@@ -26,8 +26,10 @@ import AdminDashboard from "./pages/AdminDashboard/AdminDashboard.jsx";
 import AdminAccounts from "./pages/AdminDashboard/AdminAccounts.jsx";
 import AdminOrders from "./pages/AdminDashboard/AdminOrders.jsx";
 import AdminProducts from "./pages/AdminDashboard/AdminProducts.jsx";
+import AdminPricing from "./pages/AdminDashboard/AdminPricing.jsx";
 import ProductList from "./pages/Products/ProductList/ProductList.jsx";
 import ProductDetail from "./pages/Products/ProductDetail/ProductDetail.jsx";
+import ProductDetailFacetPanel from "./pages/Products/ProductDetail/ProductDetailFacetPanel.jsx";
 import CatalogProductRedirect from "./pages/Catalog/CatalogProductRedirect.jsx";
 import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
@@ -54,7 +56,12 @@ export default function App() {
 	const [cartOpen, setCartOpen] = useState(false);
 	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 
-	const routeKey = location.pathname + location.search;
+	const isAdminDashboardRoute =
+		location.pathname.startsWith("/admin/dashboard");
+
+	const routeKey = isAdminDashboardRoute
+		? "/admin/dashboard-shell"
+		: location.pathname + location.search;
 
 	useEffect(() => {
 		const handleResize = () => setScreenWidth(window.innerWidth);
@@ -105,6 +112,10 @@ export default function App() {
 								element={<ProductDetail />}
 							/>
 							<Route
+								path='/products/:categoryId/:subcategoryId/faceted'
+								element={<ProductDetailFacetPanel />}
+							/>
+							<Route
 								path='/catalog/product/:slug'
 								element={<CatalogProductRedirect />}
 							/>
@@ -142,10 +153,9 @@ export default function App() {
 								}
 							/>
 
-							{/* Admin routes */}
 							<Route
 								path='/admin'
-								element={<Navigate to='/admin/dashboard' replace />}
+								element={<Navigate to='/admin/dashboard/accounts' replace />}
 							/>
 
 							<Route
@@ -154,34 +164,14 @@ export default function App() {
 									<ProtectedRoute requireAdmin>
 										<AdminDashboard />
 									</ProtectedRoute>
-								}
-							/>
-							<Route
-								path='/admin/dashboard/accounts'
-								element={
-									<ProtectedRoute requireAdmin>
-										<AdminAccounts />
-									</ProtectedRoute>
-								}
-							/>
-							<Route
-								path='/admin/dashboard/orders'
-								element={
-									<ProtectedRoute requireAdmin>
-										<AdminOrders />
-									</ProtectedRoute>
-								}
-							/>
-							<Route
-								path='/admin/dashboard/products'
-								element={
-									<ProtectedRoute requireAdmin>
-										<AdminProducts />
-									</ProtectedRoute>
-								}
-							/>
+								}>
+								<Route index element={<Navigate to='accounts' replace />} />
+								<Route path='accounts' element={<AdminAccounts />} />
+								<Route path='orders' element={<AdminOrders />} />
+								<Route path='products' element={<AdminProducts />} />
+								<Route path='pricing' element={<AdminPricing />} />
+							</Route>
 
-							{/* Backward-compatible admin aliases */}
 							<Route
 								path='/admin/accounts'
 								element={<Navigate to='/admin/dashboard/accounts' replace />}
@@ -193,6 +183,10 @@ export default function App() {
 							<Route
 								path='/admin/products'
 								element={<Navigate to='/admin/dashboard/products' replace />}
+							/>
+							<Route
+								path='/admin/pricing'
+								element={<Navigate to='/admin/dashboard/pricing' replace />}
 							/>
 						</Routes>
 					</motion.main>

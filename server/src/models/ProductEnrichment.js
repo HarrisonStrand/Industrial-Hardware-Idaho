@@ -34,6 +34,50 @@ const SeoSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const QualityIssueSchema = new mongoose.Schema(
+  {
+    code: { type: String, default: "" },
+    severity: {
+      type: String,
+      enum: ["info", "warning", "error"],
+      default: "warning",
+    },
+    field: { type: String, default: "" },
+    message: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
+const SimilarFamilyCandidateSchema = new mongoose.Schema(
+  {
+    familyKey: { type: String, default: "" },
+    familyTitle: { type: String, default: "" },
+    confidence: { type: Number, default: 0 },
+    reasons: [{ type: String }],
+  },
+  { _id: false }
+);
+
+const QualitySchema = new mongoose.Schema(
+  {
+    builderReady: { type: Boolean, default: false, index: true },
+    renderable: { type: Boolean, default: false, index: true },
+    publishReady: { type: Boolean, default: false, index: true },
+    completenessScore: { type: Number, default: 0 },
+
+    missingRequiredAttributes: [{ type: String }],
+    missingRecommendedAttributes: [{ type: String }],
+    issues: [QualityIssueSchema],
+
+    suggestedFamilyKey: { type: String, default: "" },
+    suggestedFamilyConfidence: { type: Number, default: 0 },
+    similarFamilies: [SimilarFamilyCandidateSchema],
+
+    lastEvaluatedAt: { type: Date, default: null },
+  },
+  { _id: false }
+);
+
 const ProductEnrichmentSchema = new mongoose.Schema(
   {
     productId: {
@@ -83,6 +127,8 @@ const ProductEnrichmentSchema = new mongoose.Schema(
       index: true,
     },
 
+    quality: { type: QualitySchema, default: () => ({}) },
+
     overrideFlags: {
       lockTitle: { type: Boolean, default: false },
       lockDescription: { type: Boolean, default: false },
@@ -102,5 +148,11 @@ ProductEnrichmentSchema.index({
 });
 ProductEnrichmentSchema.index({ contentStatus: 1, imageStatus: 1 });
 ProductEnrichmentSchema.index({ "seo.slug": 1 }, { unique: true, sparse: true });
+ProductEnrichmentSchema.index({
+  "quality.publishReady": 1,
+  "quality.renderable": 1,
+});
+ProductEnrichmentSchema.index({ productId: 1, category: 1, subcategory: 1 });
+ProductEnrichmentSchema.index({ productId: 1, "attributes.familyType": 1 });
 
 export default mongoose.model("ProductEnrichment", ProductEnrichmentSchema);
