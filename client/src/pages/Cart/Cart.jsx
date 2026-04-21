@@ -27,17 +27,17 @@ export default function Cart() {
 					</div>
 				</div>
 
-				<div className='row justify-content-between cta-button-row'>
-					<div className='col-12 col-lg-6 text-start'>
+				<div className='row justify-content-between cta-button-row align-items-center'>
+					<div className='col col-lg-6 text-start'>
 						<Link to='/products'>
-							<button className='continue-btn text-uppercase font-secondary fw-light rounded-3 text-main p-3 w-25'>
+							<button className='continue-btn text-uppercase font-secondary fw-light rounded-3 text-main p-3'>
 								Continue Shopping
 							</button>
 						</Link>
 					</div>
-					<div className='col-12 col-lg-6 text-end'>
+					<div className='col col-lg-6 text-end'>
 						<Link to='/checkout'>
-							<button className='checkout-btn text-uppercase font-secondary fw-regular rounded-3 text-main-light p-3 w-25'>
+							<button className='checkout-btn text-uppercase font-secondary fw-regular rounded-3 text-main-light p-4 p-sm-3 px-sm-5'>
 								Checkout
 							</button>
 						</Link>

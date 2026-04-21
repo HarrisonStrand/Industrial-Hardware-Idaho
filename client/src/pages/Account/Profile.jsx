@@ -456,7 +456,7 @@ export default function Profile() {
             </div>
 
             {/* Edit / Cancel */}
-            <div className='col col-sm-1 edit-btn text-center text-sm-end'>
+            <div className='col col-sm-2 edit-btn text-center text-sm-end'>
               {!isEditing ? (
                 <button
                   className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main'
@@ -477,7 +477,7 @@ export default function Profile() {
             </div>
 
             {/* Sign out */}
-            <div className='col col-sm-1 signout-btn text-center text-sm-end'>
+            <div className='col col-sm-2 signout-btn text-center text-sm-end'>
               <button
                 className='btn-main-cta text-center rounded-3 text-uppercase py-2 text-main-light'
                 onClick={handleSignOut}
