@@ -27,6 +27,7 @@ import AdminAccounts from "./pages/AdminDashboard/AdminAccounts.jsx";
 import AdminOrders from "./pages/AdminDashboard/AdminOrders.jsx";
 import AdminProducts from "./pages/AdminDashboard/AdminProducts.jsx";
 import AdminPricing from "./pages/AdminDashboard/AdminPricing.jsx";
+import AdminReviews from "./pages/AdminDashboard/AdminReviews.jsx";
 import ProductList from "./pages/Products/ProductList/ProductList.jsx";
 import ProductDetail from "./pages/Products/ProductDetail/ProductDetail.jsx";
 import ProductDetailFacetPanel from "./pages/Products/ProductDetail/ProductDetailFacetPanel.jsx";
@@ -169,6 +170,7 @@ export default function App() {
 								<Route path='accounts' element={<AdminAccounts />} />
 								<Route path='orders' element={<AdminOrders />} />
 								<Route path='products' element={<AdminProducts />} />
+								<Route path='reviews' element={<AdminReviews />} />
 								<Route path='pricing' element={<AdminPricing />} />
 							</Route>
 

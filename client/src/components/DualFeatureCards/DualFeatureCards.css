@@ -5,8 +5,11 @@
 
 /* Outer banner wrapper */
 .dual-card-overlay {
-  border: 1px solid rgba(from var(--accent-light) r g b / 0.8);
-  background-color: rgba(from var(--accent-light) r g b / 0.5);
+      border: 1px solid rgba(from var(--main-color) r g b / 0.15);
+    background-color: rgba(from var(--main-color) r g b / 0.15);
+    box-shadow: 0px 4px 8px 1px rgba(0, 0, 0, 0.3);
+  /* border: 1px solid rgba(from var(--accent-light) r g b / 0.8);
+  background-color: rgba(from var(--accent-light) r g b / 0.5); */
   box-shadow: 0px 4px 8px 1px rgba(0, 0, 0, 0.3);
 }
 

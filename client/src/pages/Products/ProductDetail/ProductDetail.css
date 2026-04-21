@@ -98,14 +98,38 @@ input[type="number"] {
 
 .builder-reset-shell {
 	transition:
-		opacity 0.28s ease,
-		transform 0.28s ease,
-		filter 0.28s ease;
+		opacity 0.45s ease,
+		transform 0.45s ease,
+		filter 0.45s ease;
+	will-change: opacity, transform, filter;
 }
 
 .builder-resetting {
-	opacity: 0.5;
-	transform: translateY(10px) scale(0.985);
-	filter: saturate(0.9) blur(1px);
+	opacity: 0.45;
+	transform: translateY(14px) scale(0.985);
+	filter: blur(1.5px) saturate(0.9);
 	pointer-events: none;
+}
+
+.section-box {
+	transition:
+		opacity 0.35s ease,
+		transform 0.35s ease,
+		box-shadow 0.6s ease,
+		border-color 0.6s ease;
+}
+
+.builder-resetting .section-box {
+	opacity: 0.25;
+	transform: translateY(8px);
+}
+
+.builder-resetting .badge,
+.builder-resetting .option-box,
+.builder-resetting .option-box-selected {
+	transition:
+		opacity 0.3s ease,
+		transform 0.3s ease;
+	opacity: 0.25;
+	transform: translateY(4px);
 }

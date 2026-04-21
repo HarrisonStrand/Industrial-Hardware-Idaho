@@ -633,17 +633,30 @@ const handleAddToCart = () => {
 	setIsResettingBuilder(true);
 
 	window.setTimeout(() => {
-		setSelected(INITIAL_SELECTED_STATE);
-		setExpandedSections({});
-		setActiveSectionKey("");
-		setDetailOffset(0);
-		setIsResettingBuilder(false);
-
 		window.scrollTo({
 			top: 0,
 			behavior: "smooth",
 		});
-	}, 260);
+	}, 120);
+
+	window.setTimeout(() => {
+		setSelected(INITIAL_SELECTED_STATE);
+		setExpandedSections({});
+		setActiveSectionKey("");
+		setDetailOffset(0);
+	}, 420);
+
+	window.setTimeout(() => {
+		setIsResettingBuilder(false);
+
+		const firstKey = filteredAttributeEntries?.[0]?.[0];
+		if (firstKey && sectionRefs.current[firstKey]) {
+			sectionRefs.current[firstKey].scrollIntoView({
+				behavior: "smooth",
+				block: "center",
+			});
+		}
+	}, 760);
 };
 
 	if (loading) {

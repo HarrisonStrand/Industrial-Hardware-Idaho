@@ -5,6 +5,7 @@ import { BrandContext } from "../../context/BrandContext";
 import FeatureBanner from "../../components/FeatureBanner/FeatureBanner";
 import LogoSlider from "../../components/LogoSlider/LogoSlider";
 import DualFeatureCards from "../../components/DualFeatureCards/DualFeatureCards";
+import HomeReviews from "../../components/HomeReviews/HomeReviews";
 
 export default function Home() {
   const brand = useContext(BrandContext);
@@ -23,6 +24,7 @@ export default function Home() {
 						</div>
 					</div>
 					<LogoSlider/>
+					<HomeReviews/>
 					<DualFeatureCards/>
     </div>
   );

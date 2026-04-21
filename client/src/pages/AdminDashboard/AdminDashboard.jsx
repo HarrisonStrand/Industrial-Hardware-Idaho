@@ -8,9 +8,7 @@ function navButtonClass(isActive) {
 		"py-2",
 		"px-4",
 		"text-decoration-none",
-		isActive
-			? "btn-main-cta text-main-light"
-			: "btn-secondary-cta text-main",
+		isActive ? "btn-main-cta text-main-light" : "btn-secondary-cta text-main",
 	].join(" ");
 }
 
@@ -23,7 +21,8 @@ export default function AdminDashboard() {
 				</div>
 
 				<div className='text-muted small mb-3'>
-					Manage accounts, orders, products, and pricing from one persistent panel.
+					Manage accounts, orders, products, and pricing from one persistent
+					panel.
 				</div>
 
 				<div className='main-linebreak border-0 border-top border-main py-2' />
@@ -51,6 +50,12 @@ export default function AdminDashboard() {
 						to='/admin/dashboard/pricing'
 						className={({ isActive }) => navButtonClass(isActive)}>
 						Pricing
+					</NavLink>
+
+					<NavLink
+						to='/admin/dashboard/reviews'
+						className={({ isActive }) => navButtonClass(isActive)}>
+						Reviews
 					</NavLink>
 				</div>
 

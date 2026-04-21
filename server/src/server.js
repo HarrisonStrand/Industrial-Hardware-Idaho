@@ -15,6 +15,7 @@ import checkoutRoutes from "./routes/checkoutRoutes.js";
 import adminUsersRoutes from "./routes/adminUsersRoutes.js";
 import adminOrdersRoutes from "./routes/adminOrdersRoutes.js";
 import adminPricingRoutes from "./routes/adminPricingRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 import stripeWebhookRoutes from "./routes/stripeWebhookRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 
@@ -58,6 +59,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin/users", adminUsersRoutes);
 app.use("/api/admin", adminOrdersRoutes);
 app.use("/api/admin/pricing-settings", adminPricingRoutes);
+app.use("/api/reviews", reviewRoutes);
 // app.use("/api/admin/vendor-mappings", adminVendorMappingsRoutes);
 
 app.use("/api/fishbowl", fishbowlRoutes);
