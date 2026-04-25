@@ -110,12 +110,16 @@ export default function App() {
 							<Route path='/products' element={<ProductList />} />
 							<Route
 								path='/products/:categoryId/:subcategoryId'
-								element={<ProductDetail />}
-							/>
-							<Route
-								path='/products/:categoryId/:subcategoryId/faceted'
 								element={<ProductDetailFacetPanel />}
 							/>
+							{/* <Route
+								path='/products/:categoryId/:subcategoryId'
+								element={<ProductDetail />}
+							/> */}
+							{/* <Route
+								path='/products/:categoryId/:subcategoryId/faceted'
+								element={<ProductDetailFacetPanel />}
+							/> */}
 							<Route
 								path='/catalog/product/:slug'
 								element={<CatalogProductRedirect />}

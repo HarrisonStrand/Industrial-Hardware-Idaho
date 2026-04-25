@@ -4,7 +4,9 @@ import ProductEnrichment from "../../models/ProductEnrichment.js";
 import createProductEnrichmentFromProduct from "./createProductEnrichmentFromProduct.js";
 
 function normalize(value = "") {
-	return String(value || "").trim().toLowerCase();
+	return String(value || "")
+		.trim()
+		.toLowerCase();
 }
 
 function clean(value = "") {
@@ -251,8 +253,19 @@ export default async function runProductEnrichmentPass({
 		} else if (familyType.includes("washer")) {
 			addToOptions(family.options, "materialFinish", attrs.materialFinish);
 		} else {
+			addToOptions(
+				family.options,
+				"driveType",
+				attrs.driveType || attrs.drive_type,
+			);
+			addToOptions(family.options, "materialFinish", attrs.materialFinish);
 			addToOptions(family.options, "size", attrs.size);
 			addToOptions(family.options, "threadPitch", attrs.threadPitch);
+			addToOptions(
+				family.options,
+				"threadSeries",
+				attrs.threadSeries || attrs.thread_series,
+			);
 			addToOptions(family.options, "length", attrs.length);
 			addToOptions(family.options, "material", attrs.material);
 			addToOptions(family.options, "finish", attrs.finish);

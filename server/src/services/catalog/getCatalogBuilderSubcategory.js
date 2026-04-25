@@ -82,6 +82,21 @@ function normalizeVariantAttributesForBuilder(
 		};
 	}
 
+	if (sub === "hex cap screws") {
+		return {
+			measurementSystem: attrs.measurementSystem || "",
+			diameter: attrs.diameter || "",
+			threadSeries: attrs.threadSeries || attrs.thread_series || "",
+			threadPitch: attrs.threadPitch || "",
+			length: attrs.length || "",
+			drive_type: attrs.drive_type || attrs.driveType || "",
+			materialFinish: attrs.materialFinish || "",
+			grade: attrs.grade || "",
+			headType: attrs.headType || "",
+			fastenerType: attrs.fastenerTypeCanonical || attrs.fastenerType || "",
+		};
+	}
+
 	return attrs;
 }
 
@@ -150,18 +165,31 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 							"diameter",
 							"grade",
 						]
-					: [
-							"size",
-							"diameter",
-							"threadPitch",
-							"length",
-							"measurementSystem",
-							"material",
-							"finish",
-							"grade",
-							"fastenerTypeCanonical",
-							"fastenerType",
-						];
+					: sub === "hex cap screws"
+						? [
+								"measurementSystem",
+								"diameter",
+								"threadSeries",
+								"threadPitch",
+								"length",
+								"driveType",
+								"drive_type",
+								"materialFinish",
+								"grade",
+								"fastenerTypeCanonical",
+							]
+						: [
+								"size",
+								"diameter",
+								"threadPitch",
+								"length",
+								"measurementSystem",
+								"material",
+								"finish",
+								"grade",
+								"fastenerTypeCanonical",
+								"fastenerType",
+							];
 
 	return keys
 		.map(
@@ -260,6 +288,7 @@ function isLikelyAssemblyText(value = "") {
 function isBuilderReadyHexCapScrew(variant) {
 	const attrs = variant?.attributes || {};
 
+	const driveType = String(attrs.driveType || attrs.drive_type || "").trim();
 	const diameter = String(attrs.diameter || "").trim();
 	const length = String(attrs.length || "").trim();
 	const threadPitch = String(attrs.threadPitch || "").trim();
@@ -429,8 +458,12 @@ export async function getCatalogBuilderSubcategory(
 		? rawVariants.filter(isBuilderReadyHexCapScrew)
 		: rawVariants;
 
-	const workingVariants =
-		filteredVariants.length > 0 ? filteredVariants : rawVariants;
+	const workingVariants = shouldApplyBuilderReadyFilter(
+		normalizedCategoryId,
+		normalizedSubcategoryId,
+	)
+		? filteredVariants
+		: rawVariants;
 
 	const omittedVariantCount = rawVariants.length - workingVariants.length;
 
@@ -513,7 +546,10 @@ export async function getCatalogBuilderSubcategory(
 			? `${first.familyTitle} options available in this category.`
 			: "",
 		image: firstFamilyWithImage?.image || "",
-		attributes: collectAttributeOptions(flattenedVariants, normalizedSubcategoryId),
+		attributes: collectAttributeOptions(
+			flattenedVariants,
+			normalizedSubcategoryId,
+		),
 		families,
 		variants: flattenedVariants,
 		pricing: {

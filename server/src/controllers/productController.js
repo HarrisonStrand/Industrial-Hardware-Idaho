@@ -498,48 +498,193 @@ export const listAdminReviewProducts = async (req, res) => {
       { $count: "totalItems" },
     ];
 
-    const rowsPipeline = [
-      ...basePipeline,
-      { $sort: { updatedAt: -1, createdAt: -1 } },
-      { $skip: skip },
-      { $limit: limit },
-      {
-        $project: {
-          productId: "$_id",
-          enrichmentId: "$enrichment._id",
-          sku: { $ifNull: ["$sku", ""] },
-          partNumber: {
-            $ifNull: ["$fishbowl.partNum", { $ifNull: ["$sku", ""] }],
-          },
-          title: {
-            $ifNull: [
-              "$enrichment.title",
-              {
-                $ifNull: [
-                  "$fishbowl.description",
-                  { $ifNull: ["$fishbowl.partNum", "$sku"] },
+const normalizedSearch = normalizeQueryValue(search);
+const escapedSearch = escapeRegex(normalizedSearch);
+
+const rowsPipeline = [
+  ...basePipeline,
+  ...(normalizedSearch
+    ? [
+        {
+          $addFields: {
+            _searchRank: {
+              $switch: {
+                branches: [
+                  {
+                    case: {
+                      $eq: [
+                        { $toLower: { $ifNull: ["$fishbowl.partNum", ""] } },
+                        normalizedSearch.toLowerCase(),
+                      ],
+                    },
+                    then: 100,
+                  },
+                  {
+                    case: {
+                      $eq: [
+                        { $toLower: { $ifNull: ["$sku", ""] } },
+                        normalizedSearch.toLowerCase(),
+                      ],
+                    },
+                    then: 95,
+                  },
+                  {
+                    case: {
+                      $eq: [
+                        {
+                          $toLower: {
+                            $ifNull: ["$internalPartNumber", ""],
+                          },
+                        },
+                        normalizedSearch.toLowerCase(),
+                      ],
+                    },
+                    then: 90,
+                  },
+                  {
+                    case: {
+                      $regexMatch: {
+                        input: { $ifNull: ["$fishbowl.partNum", ""] },
+                        regex: `^${escapedSearch}`,
+                        options: "i",
+                      },
+                    },
+                    then: 80,
+                  },
+                  {
+                    case: {
+                      $regexMatch: {
+                        input: { $ifNull: ["$sku", ""] },
+                        regex: `^${escapedSearch}`,
+                        options: "i",
+                      },
+                    },
+                    then: 75,
+                  },
+                  {
+                    case: {
+                      $regexMatch: {
+                        input: { $ifNull: ["$internalPartNumber", ""] },
+                        regex: `^${escapedSearch}`,
+                        options: "i",
+                      },
+                    },
+                    then: 70,
+                  },
+                  {
+                    case: {
+                      $regexMatch: {
+                        input: { $ifNull: ["$fishbowl.partNum", ""] },
+                        regex: escapedSearch,
+                        options: "i",
+                      },
+                    },
+                    then: 60,
+                  },
+                  {
+                    case: {
+                      $regexMatch: {
+                        input: { $ifNull: ["$sku", ""] },
+                        regex: escapedSearch,
+                        options: "i",
+                      },
+                    },
+                    then: 55,
+                  },
+                  {
+                    case: {
+                      $regexMatch: {
+                        input: { $ifNull: ["$internalPartNumber", ""] },
+                        regex: escapedSearch,
+                        options: "i",
+                      },
+                    },
+                    then: 50,
+                  },
+                  {
+                    case: {
+                      $regexMatch: {
+                        input: { $ifNull: ["$enrichment.title", ""] },
+                        regex: escapedSearch,
+                        options: "i",
+                      },
+                    },
+                    then: 25,
+                  },
+                  {
+                    case: {
+                      $regexMatch: {
+                        input: { $ifNull: ["$enrichment.attributes.fishbowlPartNum", ""] },
+                        regex: escapedSearch,
+                        options: "i",
+                      },
+                    },
+                    then: 20,
+                  },
+                  {
+                    case: {
+                      $regexMatch: {
+                        input: { $ifNull: ["$enrichment.seo.slug", ""] },
+                        regex: escapedSearch,
+                        options: "i",
+                      },
+                    },
+                    then: 10,
+                  },
                 ],
+                default: 0,
               },
-            ],
-          },
-          reviewStatus: { $ifNull: ["$review.status", "needs-review"] },
-          qualityScore: { $ifNull: ["$review.qualityScore", 0] },
-          renderable: { $ifNull: ["$review.renderable", false] },
-          publishReady: { $ifNull: ["$review.publishReady", false] },
-          isPublished: { $ifNull: ["$isPublished", false] },
-          category: { $ifNull: ["$enrichment.category", ""] },
-          subcategory: { $ifNull: ["$enrichment.subcategory", ""] },
-          familyType: { $ifNull: ["$enrichment.attributes.familyType", ""] },
-          issueCodes: {
-            $map: {
-              input: { $ifNull: ["$review.issues", []] },
-              as: "issue",
-              in: "$$issue.code",
             },
           },
         },
+      ]
+    : [
+        {
+          $addFields: {
+            _searchRank: 0,
+          },
+        },
+      ]),
+  { $sort: { _searchRank: -1, updatedAt: -1, createdAt: -1 } },
+  { $skip: skip },
+  { $limit: limit },
+  {
+    $project: {
+      productId: "$_id",
+      enrichmentId: "$enrichment._id",
+      sku: { $ifNull: ["$sku", ""] },
+      partNumber: {
+        $ifNull: ["$fishbowl.partNum", { $ifNull: ["$sku", ""] }],
       },
-    ];
+      title: {
+        $ifNull: [
+          "$enrichment.title",
+          {
+            $ifNull: [
+              "$fishbowl.description",
+              { $ifNull: ["$fishbowl.partNum", "$sku"] },
+            ],
+          },
+        ],
+      },
+      reviewStatus: { $ifNull: ["$review.status", "needs-review"] },
+      qualityScore: { $ifNull: ["$review.qualityScore", 0] },
+      renderable: { $ifNull: ["$review.renderable", false] },
+      publishReady: { $ifNull: ["$review.publishReady", false] },
+      isPublished: { $ifNull: ["$isPublished", false] },
+      category: { $ifNull: ["$enrichment.category", ""] },
+      subcategory: { $ifNull: ["$enrichment.subcategory", ""] },
+      familyType: { $ifNull: ["$enrichment.attributes.familyType", ""] },
+      issueCodes: {
+        $map: {
+          input: { $ifNull: ["$review.issues", []] },
+          as: "issue",
+          in: "$$issue.code",
+        },
+      },
+    },
+  },
+];
 
     const [countResult, items] = await Promise.all([
       Product.aggregate(countPipeline),

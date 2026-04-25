@@ -56,7 +56,27 @@ async function buildUniqueSlug({
 	return `${fallbackBase}-${String(product?._id || "").slice(-6)}`;
 }
 
-function buildVariantTitle({ product = null, fallbackPartNum = "" }) {
+function buildVariantTitle({
+	product = null,
+	fallbackPartNum = "",
+	family = {},
+}) {
+	const familyType = cleanText(family.familyType || "");
+	const grade = cleanText(family.grade || "");
+	const finishLabel = buildBoltFinishLabel(family);
+	const specString = buildBoltSpecString(family);
+
+	if (familyType.toLowerCase() === "hex cap screw") {
+		const parts = [
+			grade ? toDisplayCase(grade) : "",
+			"Hex Cap Screw",
+			specString ? `- ${specString}` : "",
+			finishLabel ? `- ${finishLabel}` : "",
+		].filter(Boolean);
+
+		return cleanText(parts.join(" "));
+	}
+
 	const fishbowlDescription = cleanText(
 		product?.fishbowl?.description ||
 			product?.fishbowl?.raw?.original?.description ||
@@ -68,6 +88,38 @@ function buildVariantTitle({ product = null, fallbackPartNum = "" }) {
 	if (fishbowlDescription) return fishbowlDescription;
 	if (fallbackPartNum) return fallbackPartNum;
 	return "Untitled Product";
+}
+
+function toDisplayCase(value = "") {
+	return String(value || "")
+		.replace(/\s+/g, " ")
+		.trim()
+		.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function buildBoltSpecString(family = {}) {
+	const diameter = cleanText(family.diameter || "");
+	const threadPitch = cleanText(family.threadPitch || "");
+	const length = cleanText(family.length || "");
+
+	if (!diameter || !length) return "";
+
+	if (threadPitch) {
+		return `${diameter}-${threadPitch} x ${length}`;
+	}
+
+	return `${diameter} x ${length}`;
+}
+
+function buildBoltFinishLabel(family = {}) {
+	const finish = cleanText(family.finish || "");
+	const material = cleanText(family.material || "");
+
+	if (material.toLowerCase() === "stainless steel") {
+		return toDisplayCase(family.grade || material);
+	}
+
+	return toDisplayCase(finish || material);
 }
 
 function buildShortDescription({ title = "", product = null }) {
@@ -150,6 +202,23 @@ function buildTags({ family = {}, product = null }) {
 
 function buildAttributes({ family = {}, parsed = {}, product = null }) {
 	return {
+		threadSeries:
+			family.threadSeries || parsed.threadSeries || parsed.thread_series || "",
+		thread_series:
+			family.threadSeries || parsed.threadSeries || parsed.thread_series || "",
+		threadCoverage:
+			family.threadCoverage ||
+			parsed.threadCoverage ||
+			parsed.thread_coverage ||
+			"",
+		thread_coverage:
+			family.threadCoverage ||
+			parsed.threadCoverage ||
+			parsed.thread_coverage ||
+			"",
+		headType: family.headType || parsed.headType || parsed.head_type || "",
+		driveType: family.driveType || parsed.driveType || parsed.drive_type || "",
+		drive_type: family.driveType || parsed.driveType || parsed.drive_type || "",
 		size: family.size || parsed.size || "",
 		diameter: family.diameter || parsed.diameter || "",
 		insideDiameter:
@@ -164,11 +233,7 @@ function buildAttributes({ family = {}, parsed = {}, product = null }) {
 			parsed.standard ||
 			parsed.pattern ||
 			"",
-		washerType:
-			family.washerType ||
-			parsed.washerType ||
-			parsed.type ||
-			"",
+		washerType: family.washerType || parsed.washerType || parsed.type || "",
 		threadPitch: family.threadPitch || parsed.threadPitch || "",
 		length: family.familyType?.includes("washer")
 			? ""
@@ -244,6 +309,7 @@ export async function createProductEnrichmentFromProduct(productId) {
 	const title = buildVariantTitle({
 		product,
 		fallbackPartNum,
+		family,
 	});
 
 	const shortTitle = title;

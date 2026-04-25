@@ -26,33 +26,37 @@ const HIDDEN_ATTRIBUTE_KEYS = new Set([
 
 const ATTRIBUTE_ORDER = [
 	"measurementSystem",
-	"washerStandard",
-	"washerType",
-	"materialFinish",
 	"diameter",
-	"width",
-	"grade",
-	"thickness",
+	"threadSeries",
 	"threadPitch",
 	"length",
 	"drive_type",
+	"materialFinish",
+	"grade",
+	"washerStandard",
+	"washerType",
+	"width",
+	"thickness",
 	"fastenerType",
+	"headType",
 ];
 
 const INITIAL_SELECTED_STATE = {
 	measurementSystem: "",
+	diameter: "",
+	threadSeries: "",
+	threadPitch: "",
+	length: "",
+	drive_type: "",
+	materialFinish: "",
+	grade: "",
 	washerStandard: "",
 	washerType: "",
-	materialFinish: "",
-	drive_type: "",
-	threadPitch: "",
-	quantity: 1,
-	grade: "",
-	diameter: "",
 	width: "",
 	thickness: "",
-	length: "",
 	fastenerType: "",
+	headType: "",
+	quantity: 1,
 };
 
 function getDisplayQuantityValue(value) {
@@ -151,6 +155,9 @@ function shouldHideAttributeForContext(
 	if (sub === "lock washers" && key === "washerStandard") return true;
 	if (sub === "lock washers" && key === "width") return true;
 
+	if (sub === "hex cap screws" && key === "headType") return true;
+	if (sub === "hex cap screws" && key === "fastenerType") return true;
+
 	return false;
 }
 
@@ -158,6 +165,7 @@ function formatAttributeLabel(key = "") {
 	const baseMap = {
 		measurementSystem: "Measurement System",
 		threadPitch: "Thread Pitch",
+		threadSeries: "Thread Series",
 		drive_type: "Drive Type",
 		diameter: "Diameter",
 		width: "Width",
@@ -167,6 +175,8 @@ function formatAttributeLabel(key = "") {
 		washerStandard: "Standard",
 		washerType: "Type",
 		materialFinish: "Material / Finish",
+		headType: "Head Type",
+		fastenerType: "Fastener Type",
 	};
 
 	if (baseMap[key]) return baseMap[key];
@@ -238,6 +248,35 @@ function getOrderedAttributeEntries(attributes = {}) {
 			if (bIndex === -1) return -1;
 			return aIndex - bIndex;
 		});
+}
+
+function reorderAttributeEntriesForSubcategory(
+	entries = [],
+	subcategoryId = "",
+) {
+	const sub = String(subcategoryId || "").toLowerCase();
+	if (sub !== "hex cap screws") return entries;
+
+const boltOrder = [
+	"measurementSystem",
+	"diameter",
+	"threadSeries",
+	"threadPitch",
+	"length",
+	"drive_type",
+	"materialFinish",
+	"grade",
+];
+
+	return [...entries].sort(([a], [b]) => {
+		const aIndex = boltOrder.indexOf(a);
+		const bIndex = boltOrder.indexOf(b);
+
+		if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+		if (aIndex === -1) return 1;
+		if (bIndex === -1) return -1;
+		return aIndex - bIndex;
+	});
 }
 
 function variantMatchesSelection(variant, selection = {}) {
@@ -441,9 +480,12 @@ export default function ProductDetailFacetPanel() {
 		);
 	}, [builderData, variants, labelContext, selected]);
 
-	const attributeEntries = useMemo(() => {
-		return getOrderedAttributeEntries(attributes);
-	}, [attributes]);
+const attributeEntries = useMemo(() => {
+	return reorderAttributeEntriesForSubcategory(
+		getOrderedAttributeEntries(attributes),
+		builderData?.subcategoryId,
+	);
+}, [attributes, builderData?.subcategoryId]);
 
 	const filteredAttributeEntries = useMemo(() => {
 		return attributeEntries
