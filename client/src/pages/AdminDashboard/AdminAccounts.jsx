@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch";
 import { useToast } from "../../context/ToastContext";
+import "./AdminAccounts.css";
 
 export default function AdminAccounts() {
   const { showToast } = useToast();

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch";
 import { useToast } from "../../context/ToastContext";
+import "./AdminPricing.css";
 
 function roundTo(value, places = 2) {
 	const factor = 10 ** places;
@@ -339,25 +340,25 @@ async function save() {
 							<div className='text-main text-uppercase fs-5 mb-3'>{type}</div>
 
 							<div className='mb-3'>
-								<label className='form-label text-main text-uppercase small fw-bold mb-1'>
+								<label className='form-input-label form-label text-main text-uppercase small fw-bold mb-1'>
 									Label
 								</label>
 								<input
-									className='form-control rounded-3'
+									className='form-select form-control rounded-3 form-input'
 									value={form[type].label}
 									onChange={(e) => setLabel(type, e.target.value)}
 								/>
 							</div>
 
 							<div className='mb-3'>
-								<label className='form-label text-main text-uppercase small fw-bold mb-1'>
+								<label className='form-input-label form-label text-main text-uppercase small fw-bold mb-1'>
 									Margin %
 								</label>
 								<input
 									type='text'
 									inputMode='decimal'
 									placeholder='0%'
-									className='form-control rounded-3'
+									className='form-select form-control rounded-3 form-input'
 									value={displayPercentValue(
 										form[type].marginPercent,
 										focusedField === `${type}-margin`,
@@ -388,7 +389,7 @@ async function save() {
 							</div>
 
 							<div className='mb-3'>
-								<label className='form-label text-main text-uppercase small fw-bold mb-1'>
+								<label className='form-input-label form-label text-main text-uppercase small fw-bold mb-1'>
 									Markup %
 								</label>
 
@@ -396,7 +397,7 @@ async function save() {
 									type='text'
 									inputMode='decimal'
 									placeholder='0%'
-									className='form-control rounded-3'
+									className='form-select form-control rounded-3 form-input'
 									value={displayPercentValue(
 										form[type].markupPercent,
 										focusedField === `${type}-markup`,

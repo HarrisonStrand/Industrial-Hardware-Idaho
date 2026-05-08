@@ -34,6 +34,24 @@ transition: var(--transition-base);
 	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
+.theme-card-container {
+  background: rgb(from var(--main-light) r g b / 0.75);
+  border: 1px solid rgb(from var(--main-light) r g b / 0.75);
+	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+.theme-sub-card-container {
+  background: rgba(255, 255, 255, 0.75) !important;
+  border: 1px solid rgba(255, 255, 255, 0.75) !important;
+	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25) !important;
+}
+
+.theme-sub-card-container-active {
+  background: rgb(from var(--main-color) r g b / 0.25) !important;
+  border: 1px solid rgb(from var(--main-color) r g b / 0.45) !important;
+	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25) !important;
+}
+
 .theme-link-box {
   background: rgb(from var(--main-light) r g b / 0.25);
 	box-shadow: 2px 3px 4px 0px rgba(0, 0, 0, 0.25);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch.js";
+import "./AdminReviews.css";
 
 const REVIEW_BUCKETS = [
   { key: "pending", label: "Pending" },

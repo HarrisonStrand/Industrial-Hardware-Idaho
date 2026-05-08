@@ -20,6 +20,22 @@ function normalizeSlug(value = "") {
 		.replace(/-/g, " ");
 }
 
+
+function normalizeNumberedImperialDiameter(diameter = "", threadPitch = "", measurementSystem = "") {
+	const system = String(measurementSystem || "").trim().toLowerCase();
+	if (system !== "imperial") return String(diameter || "");
+
+	const rawDiameter = String(diameter || "").trim();
+	const rawPitch = String(threadPitch || "").trim();
+	if (!rawDiameter || !rawPitch) return rawDiameter;
+
+	if (/^#?\d+$/.test(rawDiameter) && /^\d+(?:\.\d+)?$/.test(rawPitch)) {
+		return `${rawDiameter.replace(/^#/, "")}-${rawPitch}`;
+	}
+
+	return rawDiameter;
+}
+
 function normalizeVariantAttributesForBuilder(
 	attributes = {},
 	subcategoryId = "",
@@ -83,11 +99,19 @@ function normalizeVariantAttributesForBuilder(
 	}
 
 	if (sub === "hex cap screws") {
+		const measurementSystem = attrs.measurementSystem || "";
+		const threadPitch = attrs.threadPitch || "";
+		const normalizedDiameter = normalizeNumberedImperialDiameter(
+			attrs.diameter || "",
+			threadPitch,
+			measurementSystem,
+		);
+
 		return {
-			measurementSystem: attrs.measurementSystem || "",
-			diameter: attrs.diameter || "",
+			measurementSystem,
+			diameter: normalizedDiameter,
 			threadSeries: attrs.threadSeries || attrs.thread_series || "",
-			threadPitch: attrs.threadPitch || "",
+			threadPitch: threadPitch,
 			length: attrs.length || "",
 			drive_type: attrs.drive_type || attrs.driveType || "",
 			materialFinish: attrs.materialFinish || "",
@@ -310,9 +334,12 @@ function isBuilderReadyHexCapScrew(variant) {
 		return false;
 	}
 
-	if (fastenerType && fastenerType !== "hex cap screw") {
-		return false;
-	}
+if (
+	fastenerType &&
+	!["hex cap screw", "heavy hex bolt", "structural bolt"].includes(fastenerType)
+) {
+	return false;
+}
 
 	if (!diameter) return false;
 	if (!length) return false;
@@ -379,6 +406,9 @@ export async function getCatalogBuilderSubcategory(
 
 	const products = await Product.find({
 		_id: { $in: productIds },
+		isPublished: true,
+		isActive: true,
+		catalogStatus: "published",
 	}).lean();
 
 	const productMap = new Map(products.map((p) => [String(p._id), p]));

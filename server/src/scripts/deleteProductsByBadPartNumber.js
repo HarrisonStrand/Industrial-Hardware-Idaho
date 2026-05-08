@@ -5,6 +5,7 @@ import Product from "../models/Product.js";
 import ProductEnrichment from "../models/ProductEnrichment.js";
 
 const BAD_PART_PATTERN = /(zz|void|delete)/i;
+const TEST_PART_PATTERN = /^FB-/i;
 
 function buildBadPartQuery() {
   return {
@@ -12,6 +13,9 @@ function buildBadPartQuery() {
       { "fishbowl.partNum": BAD_PART_PATTERN },
       { sku: BAD_PART_PATTERN },
       { internalPartNumber: BAD_PART_PATTERN },
+      { "fishbowl.partNum": TEST_PART_PATTERN },
+      { sku: TEST_PART_PATTERN },
+      { internalPartNumber: TEST_PART_PATTERN },
     ],
   };
 }

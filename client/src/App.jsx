@@ -8,6 +8,8 @@ import CartDrawer from "./components/Cart/CartDrawer/CartDrawer.jsx";
 import MobileCartBar from "./components/Cart/MobileCartBar/MobileCartBar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from "./components/Footer/Footer.jsx";
+import FeatureGate from "./components/SiteAccess/FeatureGate.jsx";
+import { SITE_ACCESS } from "./config/siteAccess.js";
 
 import { CartProvider } from "./context/CartContext";
 
@@ -110,28 +112,74 @@ export default function App() {
 							<Route path='/products' element={<ProductList />} />
 							<Route
 								path='/products/:categoryId/:subcategoryId'
-								element={<ProductDetailFacetPanel />}
+								element={
+									<FeatureGate
+										enabled={SITE_ACCESS.productBuilder.enabled}
+										title={SITE_ACCESS.productBuilder.title}
+										description={SITE_ACCESS.productBuilder.description}
+										backTo='/products'
+										backLabel='Back to Products'>
+										<ProductDetailFacetPanel />
+									</FeatureGate>
+								}
 							/>
-							{/* <Route
-								path='/products/:categoryId/:subcategoryId'
-								element={<ProductDetail />}
-							/> */}
-							{/* <Route
-								path='/products/:categoryId/:subcategoryId/faceted'
-								element={<ProductDetailFacetPanel />}
-							/> */}
 							<Route
 								path='/catalog/product/:slug'
 								element={<CatalogProductRedirect />}
 							/>
 
-							<Route path='/cart' element={<Cart />} />
-							<Route path='/checkout' element={<Checkout />} />
+							<Route
+								path='/cart'
+								element={
+									<FeatureGate
+										enabled={SITE_ACCESS.cart.enabled}
+										title={SITE_ACCESS.cart.title}
+										description={SITE_ACCESS.cart.description}
+										backTo='/products'
+										backLabel='Continue Browsing'>
+										<Cart />
+									</FeatureGate>
+								}
+							/>
+							<Route
+								path='/checkout'
+								element={
+									<FeatureGate
+										enabled={SITE_ACCESS.checkout.enabled}
+										title={SITE_ACCESS.checkout.title}
+										description={SITE_ACCESS.checkout.description}
+										backTo='/cart'
+										backLabel='Back to Cart'>
+										<Checkout />
+									</FeatureGate>
+								}
+							/>
 							<Route
 								path='/order-confirmation/:orderId'
-								element={<OrderConfirmation />}
+								element={
+									<FeatureGate
+										enabled={SITE_ACCESS.checkout.enabled}
+										title='Order confirmation is not live yet'
+										description='We are still finalizing the checkout and order flow for launch.'
+										backTo='/'
+										backLabel='Back Home'>
+										<OrderConfirmation />
+									</FeatureGate>
+								}
 							/>
-							<Route path='/order-status' element={<OrderStatus />} />
+							<Route
+								path='/order-status'
+								element={
+									<FeatureGate
+										enabled={SITE_ACCESS.orderStatus.enabled}
+										title={SITE_ACCESS.orderStatus.title}
+										description={SITE_ACCESS.orderStatus.description}
+										backTo='/'
+										backLabel='Back Home'>
+										<OrderStatus />
+									</FeatureGate>
+								}
+							/>
 
 							<Route path='/privacy-policy' element={<PrivacyPolicy />} />
 							<Route path='/terms-conditions' element={<TermsConditions />} />

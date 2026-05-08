@@ -87,10 +87,53 @@ function parseFraction(value = "") {
 	return null;
 }
 
+
+function parseDiameterSortValue(value = "") {
+	const str = String(value || "").trim();
+	if (!str) return { group: 99, primary: Number.POSITIVE_INFINITY, secondary: 0 };
+
+	const metricMatch = str.match(/^M(\d+(?:\.\d+)?)$/i);
+	if (metricMatch) {
+		return { group: 2, primary: Number(metricMatch[1]), secondary: 0 };
+	}
+
+	const numberedMatch = str.match(/^#?(\d+)-(\d+(?:\.\d+)?)$/);
+	if (numberedMatch) {
+		return {
+			group: 0,
+			primary: Number(numberedMatch[1]),
+			secondary: Number(numberedMatch[2]),
+		};
+	}
+
+	const fraction = parseFraction(str);
+	if (fraction !== null) {
+		return { group: 1, primary: fraction, secondary: 0 };
+	}
+
+	return { group: 3, primary: Number.POSITIVE_INFINITY, secondary: 0 };
+}
+
 function sortOptionValues(values = [], key = "") {
 	const lower = String(key || "").toLowerCase();
 
-	if (["diameter", "length", "width", "thickness"].includes(lower)) {
+	if (lower === "diameter") {
+		return [...values].sort((a, b) => {
+			const aSort = parseDiameterSortValue(a);
+			const bSort = parseDiameterSortValue(b);
+
+			if (aSort.group !== bSort.group) return aSort.group - bSort.group;
+			if (aSort.primary !== bSort.primary) return aSort.primary - bSort.primary;
+			if (aSort.secondary !== bSort.secondary) return aSort.secondary - bSort.secondary;
+
+			return String(a).localeCompare(String(b), undefined, {
+				numeric: true,
+				sensitivity: "base",
+			});
+		});
+	}
+
+	if (["length", "width", "thickness"].includes(lower)) {
 		return [...values].sort((a, b) => {
 			const aNum = parseFraction(a);
 			const bNum = parseFraction(b);

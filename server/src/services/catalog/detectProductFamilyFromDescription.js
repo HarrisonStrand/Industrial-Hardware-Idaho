@@ -38,6 +38,11 @@ function detectMeasurementSystem(text = "") {
 	return "imperial";
 }
 
+function looksImperialByStandard(text = "") {
+	const raw = String(text || "");
+	return /\buss\b/i.test(raw) || /\bsae\b/i.test(raw);
+}
+
 function detectFinish(text = "") {
 	const value = normalize(text);
 
@@ -52,6 +57,9 @@ function detectFinish(text = "") {
 	if (value.includes("phosphate")) return "phosphate";
 	if (value.includes("plain")) return "plain";
 	if (value.includes("zinc")) return "zinc";
+	if (/\bgalv\b/i.test(text)) return "galvanized";
+	if (/\bcad(?:mium)?(?:-|\s)?plated\b/i.test(text)) return "cad plated";
+	if (/\bzp\b/i.test(text)) return "zinc";
 
 	return "";
 }
@@ -60,32 +68,40 @@ function detectMaterial(text = "") {
 	const raw = String(text || "");
 	const value = normalize(raw);
 
+	if (/\bnyl\b/i.test(raw)) return "nylon";
+	if (/\bnylon\b/i.test(raw)) return "nylon";
+
 	if (/\bs\/s\b/i.test(raw)) return "stainless steel";
 	if (/\bstainless\b/i.test(raw)) return "stainless steel";
 	if (/\bss\b/i.test(raw)) return "stainless steel";
 	if (/ss$/i.test(clean(raw))) return "stainless steel";
 	if (/fwss/i.test(raw)) return "stainless steel";
 
-	if (/\balum\b/i.test(raw)) return "aluminum";
 	if (/\balu\b/i.test(raw)) return "aluminum";
+	if (/\balum\b/i.test(raw)) return "aluminum";
 	if (/\baluminum\b/i.test(raw)) return "aluminum";
-	if (/\bplastic\b/i.test(raw)) return "plastic";
-	if (/\bnylon\b/i.test(raw)) return "nylon";
+
+	if (/\bbrs\b/i.test(raw)) return "brass";
 	if (/\bbrass\b/i.test(raw)) return "brass";
+
+	if (/\bsilicon bronze\b/i.test(raw)) return "silicon bronze";
+	if (/\bplastic\b/i.test(raw)) return "plastic";
 	if (/\bcarbon steel\b/i.test(raw)) return "steel";
 	if (/\bsteel\b/i.test(raw)) return "steel";
 
-	// washer shorthand / common catalog hints for default steel items
 	if (
 		value.includes("gr2") ||
 		value.includes("grade 2") ||
+		value.includes("a307") ||
+		value.includes("a325") ||
 		/\buss\b/i.test(raw) ||
 		/\bsae\b/i.test(raw) ||
 		/\bf436\b/i.test(raw) ||
-		value.includes("flat washer") ||
-		value.includes("lockwasher") ||
-		value.includes("lock washer") ||
-		value.includes("fender washer")
+		value.includes("hex bolt") ||
+		value.includes("hex head bolt") ||
+		value.includes("hex cap screw") ||
+		value.includes("structural bolt") ||
+		/\bc\/s\b/i.test(raw)
 	) {
 		return "steel";
 	}
@@ -108,6 +124,7 @@ function normalizeMaterialAndFinish({ material = "", finish = "" }) {
 		nylon: "nylon",
 		plastic: "plastic",
 		brass: "brass",
+		"silicon bronze": "silicon bronze",
 		"carbon steel": "steel",
 		steel: "steel",
 	};
@@ -115,6 +132,7 @@ function normalizeMaterialAndFinish({ material = "", finish = "" }) {
 	const finishMap = {
 		zinc: "zinc",
 		plain: "plain",
+		Plain: "plain",
 		"black oxide": "black oxide",
 		"black-oxide": "black oxide",
 		chrome: "chrome",
@@ -123,27 +141,25 @@ function normalizeMaterialAndFinish({ material = "", finish = "" }) {
 		hdg: "hot dip galvanized",
 		"yellow zinc": "yellow zinc",
 		"zinc yellow": "yellow zinc",
+		"cad plated": "cad plated",
 	};
 
 	nextMaterial = materialMap[nextMaterial] || nextMaterial;
 	nextFinish = finishMap[nextFinish] || nextFinish;
 
-	// If we still don't know material for a washer-family style item,
-	// default it to steel so the finish fallback can work.
-	if (!nextMaterial) {
-		nextMaterial = "steel";
-	}
-
-	// Non-coated base materials
 	if (
-		["stainless steel", "aluminum", "nylon", "plastic", "brass"].includes(
-			nextMaterial,
-		)
+		[
+			"stainless steel",
+			"aluminum",
+			"nylon",
+			"plastic",
+			"brass",
+			"silicon bronze",
+		].includes(nextMaterial)
 	) {
 		nextFinish = "";
 	}
 
-	// Default standard steel items to zinc unless something explicit was detected
 	if (nextMaterial === "steel" && !nextFinish) {
 		nextFinish = "zinc";
 	}
@@ -168,6 +184,8 @@ function normalizeMaterialAndFinish({ material = "", finish = "" }) {
 function detectGrade(text = "") {
 	const value = normalize(text);
 
+	if (/\ba325\b/i.test(value)) return "A325";
+	if (/\ba307\b/i.test(value)) return "A307";
 	if (/\bgrade\s*8\b/i.test(value)) return "grade 8";
 	if (/\bgr\s*8\b/i.test(value)) return "grade 8";
 	if (/\bgrade\s*5\b/i.test(value)) return "grade 5";
@@ -181,22 +199,29 @@ function detectGenericDimensions(text = "") {
 	const cleaned = clean(text);
 
 	const size = firstMatch(cleaned, [
-		/\b(\d+(?:\/\d+)?\s*x\s*\d+(?:\/\d+)?(?:\s*-\s*\d+(?:\/\d+)?)?)\b/i,
+		/\b(\d+(?:-\d+\/\d+|\/\d+)?\s*x\s*\d+(?:-\d+\/\d+|\/\d+)?(?:\s*-\s*\d+(?:\/\d+)?)?)\b/i,
 		/\b(\d+(?:\/\d+)?\s*x\s*\d+(?:\/\d+)?)\b/i,
+		/\b(m\d+(?:\.\d+)?\s*x\s*\d+(?:\.\d+)?\s*x\s*\d+(?:mm)?)\b/i,
+		/\b(m\d+(?:\.\d+)?x\d+(?:\.\d+)?x\d+(?:mm)?)\b/i,
 	]);
 
 	const diameter = firstMatch(cleaned, [
-		/\b(\d+(?:\/\d+)?)\s*x\s*\d+(?:\/\d+)?(?:\.\d+)?\b/i,
-		/\bdiam(?:eter)?\s*[:\-]?\s*(\d+(?:\/\d+)?)\b/i,
+		/\b(m\d+(?:\.\d+)?)\s*x\s*\d+(?:\.\d+)?\s*x\s*\d+(?:mm)?\b/i,
+		/\b(m\d+(?:\.\d+)?)x\d+(?:\.\d+)?x\d+(?:mm)?\b/i,
+		/\b(\d+(?:-\d+\/\d+|\/\d+)?)\s*x\s*\d+(?:-\d+\/\d+|\/\d+)?(?:\.\d+)?\b/i,
+		/\bdiam(?:eter)?\s*[:\-]?\s*(\d+(?:-\d+\/\d+|\/\d+)?)\b/i,
 	]);
 
 	const length = firstMatch(cleaned, [
-		/\b\d+(?:\/\d+)?\s*x\s*(\d+(?:\/\d+)?(?:\.\d+)?)\b/i,
-		/\blength\s*[:\-]?\s*(\d+(?:\/\d+)?(?:\.\d+)?)\b/i,
+		/\bm\d+(?:\.\d+)?\s*x\s*\d+(?:\.\d+)?\s*x\s*(\d+(?:mm)?)\b/i,
+		/\bm\d+(?:\.\d+)?x\d+(?:\.\d+)?x(\d+(?:mm)?)\b/i,
+		/\b\d+(?:-\d+\/\d+|\/\d+)?\s*x\s*(\d+(?:-\d+\/\d+|\/\d+)?(?:\.\d+)?)\b/i,
+		/\blength\s*[:\-]?\s*(\d+(?:-\d+\/\d+|\/\d+)?(?:\.\d+)?)\b/i,
 	]);
 
 	const threadPitch = firstMatch(cleaned, [
-		/\b\d+(?:\/\d+)?-(\d+)\b/i,
+		/\bm\d+(?:\.\d+)?-(\d+(?:\.\d+)?)\b/i,
+		/\b\d+(?:-\d+\/\d+|\/\d+)?-(\d+(?:\.\d+)?)\b/i,
 		/\b(\d+\s*tpi)\b/i,
 	]);
 
@@ -215,14 +240,6 @@ function fractionFromSixteenthsCode(code = "") {
 	const digits = raw.replace(/\D/g, "");
 	if (!digits) return "";
 
-	// Fishbowl bolt format uses 4 digits as:
-	// first 2 = whole inches
-	// last 2 = sixteenths
-	// examples:
-	// 0200 => 2
-	// 0308 => 3 1/2
-	// 0408 => 4 1/2
-	// 0112 => 1 3/4
 	if (/^\d{4}$/.test(digits)) {
 		const whole = Number(digits.slice(0, 2));
 		const sixteenths = Number(digits.slice(2, 4));
@@ -233,14 +250,12 @@ function fractionFromSixteenthsCode(code = "") {
 
 		const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 		const divisor = gcd(sixteenths, 16);
-
 		const num = sixteenths / divisor;
 		const den = 16 / divisor;
 
 		return whole > 0 ? `${whole} ${num}/${den}` : `${num}/${den}`;
 	}
 
-	// fallback for any older oddball coding
 	const wholeSixteenths = Number(digits);
 	if (!Number.isFinite(wholeSixteenths) || wholeSixteenths <= 0) return "";
 
@@ -251,7 +266,6 @@ function fractionFromSixteenthsCode(code = "") {
 
 	const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 	const divisor = gcd(remainder, 16);
-
 	const num = remainder / divisor;
 	const den = 16 / divisor;
 
@@ -259,12 +273,8 @@ function fractionFromSixteenthsCode(code = "") {
 }
 
 function imperialThreadPitchAndSeriesFromCode(code = "", seriesCode = "") {
-	const normalized = String(code || "")
-		.trim()
-		.toUpperCase();
-	const series = String(seriesCode || "")
-		.trim()
-		.toUpperCase();
+	const normalized = String(code || "").trim().toUpperCase();
+	const series = String(seriesCode || "").trim().toUpperCase();
 
 	if (normalized === "010") {
 		return {
@@ -287,10 +297,15 @@ function imperialThreadPitchAndSeriesFromCode(code = "", seriesCode = "") {
 		"07": { C: "14", F: "20" },
 		"08": { C: "13", F: "20" },
 		"09": { C: "12", F: "18" },
-		10: { C: "11", F: "18" },
-		12: { C: "10", F: "16" },
-		14: { C: "9", F: "14" },
-		16: { C: "8", F: "12" },
+		"10": { C: "11", F: "18" },
+		"12": { C: "10", F: "16" },
+		"14": { C: "9", F: "14" },
+		"16": { C: "8", F: "12" },
+		"18": { C: "7", F: "8" },
+		"20": { C: "7", F: "8" },
+		"22": { C: "6", F: "8" },
+		"24": { C: "6", F: "8" },
+		"26": { C: "4.5", F: "6" },
 
 		"040": { C: "20", F: "28" },
 		"050": { C: "18", F: "24" },
@@ -298,10 +313,15 @@ function imperialThreadPitchAndSeriesFromCode(code = "", seriesCode = "") {
 		"070": { C: "14", F: "20" },
 		"080": { C: "13", F: "20" },
 		"090": { C: "12", F: "18" },
-		100: { C: "11", F: "18" },
-		120: { C: "10", F: "16" },
-		140: { C: "9", F: "14" },
-		160: { C: "8", F: "12" },
+		"100": { C: "11", F: "18" },
+		"120": { C: "10", F: "16" },
+		"140": { C: "9", F: "14" },
+		"160": { C: "8", F: "12" },
+		"180": { C: "7", F: "8" },
+		"200": { C: "7", F: "8" },
+		"220": { C: "6", F: "8" },
+		"240": { C: "6", F: "8" },
+		"260": { C: "4.5", F: "6" },
 	};
 
 	const row = threadMap[normalized];
@@ -316,9 +336,7 @@ function imperialThreadPitchAndSeriesFromCode(code = "", seriesCode = "") {
 }
 
 function imperialDiameterFromCode(code = "") {
-	const normalized = String(code || "")
-		.trim()
-		.toUpperCase();
+	const normalized = String(code || "").trim().toUpperCase();
 
 	const map = {
 		"010": "#10",
@@ -330,10 +348,15 @@ function imperialDiameterFromCode(code = "") {
 		"07": "7/16",
 		"08": "1/2",
 		"09": "9/16",
-		10: "5/8",
-		12: "3/4",
-		14: "7/8",
-		16: "1",
+		"10": "5/8",
+		"12": "3/4",
+		"14": "7/8",
+		"16": "1",
+		"18": "1-1/8",
+		"20": "1-1/4",
+		"22": "1-3/8",
+		"24": "1-1/2",
+		"26": "2",
 
 		"040": "1/4",
 		"050": "5/16",
@@ -341,95 +364,73 @@ function imperialDiameterFromCode(code = "") {
 		"070": "7/16",
 		"080": "1/2",
 		"090": "9/16",
-		100: "5/8",
-		120: "3/4",
-		140: "7/8",
-		160: "1",
-	};
-
-	return map[normalized] || "";
-}
-
-function imperialThreadPitchFromCode(code = "", gradeDigit = "") {
-	const normalized = String(code || "")
-		.trim()
-		.toUpperCase();
-
-	if (normalized === "010") return "24";
-	if (normalized === "011") return "32";
-
-	// coarse/fine could eventually vary by series, but this is a safe starting map
-	const map = {
-		"040": "20",
-		"050": "18",
-		"060": "16",
-		"080": "13",
-		100: "11",
-		120: "10",
-		140: "9",
-		160: "8",
-		"06": "16",
-		10: "11",
+		"100": "5/8",
+		"120": "3/4",
+		"140": "7/8",
+		"160": "1",
+		"180": "1-1/8",
+		"200": "1-1/4",
+		"220": "1-3/8",
+		"240": "1-1/2",
+		"260": "2",
 	};
 
 	return map[normalized] || "";
 }
 
 function metricDiameterFromCode(code = "") {
-	const normalized = String(code || "")
-		.trim()
-		.toUpperCase();
+	const normalized = String(code || "").trim().toUpperCase();
 
 	const map = {
+		"030": "M3",
 		"040": "M4",
 		"050": "M5",
 		"060": "M6",
 		"080": "M8",
-		100: "M10",
-		120: "M12",
-		160: "M16",
-		200: "M20",
+		"100": "M10",
+		"120": "M12",
+		"160": "M16",
+		"180": "M18",
+		"200": "M20",
 	};
 
 	return map[normalized] || "";
 }
 
 function metricThreadPitchFromDiameter(diameter = "") {
-	const normalized = String(diameter || "")
-		.trim()
-		.toUpperCase();
+	const normalized = String(diameter || "").trim().toUpperCase();
 
 	const map = {
-		M4: "0.7",
-		M5: "0.8",
-		M6: "1.0",
+		M3: "0.50",
+		M4: "0.70",
+		M5: "0.80",
+		M6: "1.00",
 		M8: "1.25",
-		M10: "1.5",
+		M10: "1.50",
 		M12: "1.75",
-		M16: "2.0",
-		M20: "2.5",
+		M16: "2.00",
+		M18: "2.50",
+		M20: "2.50",
+		M24: "3.00",
+		M30: "3.50",
 	};
 
 	return map[normalized] || "";
 }
 
 function decodeImperialHexCapPartNumber(partNum = "") {
-	const raw = String(partNum || "")
-		.trim()
-		.toUpperCase();
+	const raw = String(partNum || "").trim().toUpperCase();
 	if (!raw) return null;
 
-	// optional 2-letter finish/material prefix, then CS, then grade digit,
-	// then thread series C/F, then diameter code, then length code, then optional P or T
 	const match = raw.match(
-		/^(?:([A-Z]{2}))?(CS)(\d)([CF])(\d{2,3})(\d{4})(P|T)?$/i,
+		/^(?:([A-Z]{2}))?(CS)(\d)([CF])(\d{2,3})(\d{4})(P|T|TAP)?$/i,
 	);
 	if (!match) return null;
 
 	const [
 		,
 		prefix = "",
-		typeCode = "",
+		,
 		gradeDigit = "",
 		seriesCode = "",
 		diaCode = "",
@@ -446,12 +447,16 @@ function decodeImperialHexCapPartNumber(partNum = "") {
 
 	if (prefix === "SS") {
 		materialHint = "stainless steel";
+	} else if (prefix === "AL" || prefix === "AU") {
+		materialHint = "aluminum";
+	} else if (prefix === "BR") {
+		materialHint = "brass";
 	} else {
 		materialHint = "steel";
 	}
 
 	const isPlain = suffixCode === "P";
-	const isTapBolt = suffixCode === "T";
+	const isTapBolt = suffixCode === "T" || suffixCode === "TAP";
 
 	if (isPlain) finishHint = "plain";
 	else if (prefix === "HH") finishHint = "hot dip galvanized";
@@ -462,16 +467,25 @@ function decodeImperialHexCapPartNumber(partNum = "") {
 	let grade = "";
 	if (materialHint === "stainless steel") {
 		grade = "";
+	} else if (
+		materialHint === "aluminum" ||
+		materialHint === "brass" ||
+		materialHint === "nylon" ||
+		materialHint === "silicon bronze"
+	) {
+		grade = "";
 	} else if (gradeDigit === "5") {
 		grade = "grade 5";
 	} else if (gradeDigit === "8") {
 		grade = "grade 8";
+	} else if (gradeDigit === "2") {
+		grade = "grade 2";
 	} else if (gradeDigit) {
 		grade = `grade ${gradeDigit}`;
 	}
 
 	return {
-		familyType: typeCode === "CS" ? "hex cap screw" : "",
+		familyType: "hex cap screw",
 		measurementSystem: "imperial",
 		diameter,
 		length,
@@ -485,18 +499,17 @@ function decodeImperialHexCapPartNumber(partNum = "") {
 }
 
 function decodeMetricHexCapPartNumber(partNum = "") {
-	const raw = String(partNum || "")
-		.trim()
-		.toUpperCase();
+	const raw = String(partNum || "").trim().toUpperCase();
 	if (!raw) return null;
 
 	const match = raw.match(/^(MM)(CS)(\d{2,3})(\d{4})(SS|P)?$/i);
 	if (!match) return null;
 
-	const [, , typeCode = "", diaCode = "", lenCode = "", suffix = ""] = match;
+	const [, , , diaCode = "", lenCode = "", suffix = ""] = match;
 
 	const diameter = metricDiameterFromCode(diaCode);
-	const length = fractionFromSixteenthsCode(lenCode);
+	const lengthValue = String(lenCode || "").replace(/^0+/, "") || "0";
+	const length = `${Number(lengthValue)}mm`;
 	const threadPitch = metricThreadPitchFromDiameter(diameter);
 
 	const materialHint = suffix === "SS" ? "stainless steel" : "steel";
@@ -504,7 +517,7 @@ function decodeMetricHexCapPartNumber(partNum = "") {
 		suffix === "P" ? "plain" : materialHint === "steel" ? "zinc" : "";
 
 	return {
-		familyType: typeCode === "CS" ? "hex cap screw" : "",
+		familyType: "hex cap screw",
 		measurementSystem: "metric",
 		diameter,
 		length,
@@ -516,6 +529,12 @@ function decodeMetricHexCapPartNumber(partNum = "") {
 	};
 }
 
+function getPartNumberText(product = null, parsed = {}) {
+	return clean(
+		parsed.fishbowlPartNum || product?.fishbowl?.partNum || product?.sku || "",
+	);
+}
+
 function decodeHexCapPartNumber(product = null, parsed = {}) {
 	const partNum = getPartNumberText(product, parsed).toUpperCase();
 
@@ -523,7 +542,7 @@ function decodeHexCapPartNumber(product = null, parsed = {}) {
 		return decodeMetricHexCapPartNumber(partNum);
 	}
 
-	if (partNum.includes("CS")) {
+	if (/^(?:SS|HH|SB|AN|AL|BR)?CS\d/i.test(partNum)) {
 		return decodeImperialHexCapPartNumber(partNum);
 	}
 
@@ -536,13 +555,41 @@ function detectBoltHeadType(text = "", familyType = "") {
 
 	if (family === "hex cap screw") return "hex";
 	if (family === "socket head cap screw") return "socket";
+	if (family === "structural bolt") return "hex";
+	if (family === "heavy hex bolt") return "hex";
 	if (family === "carriage bolt") return "carriage";
 	if (family === "lag screw") return "hex";
 
-	if (value.includes("hex cap screw")) return "hex";
-	if (value.includes("hex head bolt")) return "hex";
-	if (value.includes("socket head cap screw")) return "socket";
-	if (value.includes("socket cap screw")) return "socket";
+	if (
+		value.includes("hex cap screw") ||
+		value.includes("hex head bolt") ||
+		value.includes("hex bolt") ||
+		value.includes("heavy hex bolt") ||
+		value.includes("structural bolt") ||
+		value.includes("hex hd") ||
+		value.includes("hx hd")
+	) {
+		return "hex";
+	}
+
+	if (
+		value.includes("socket head cap screw") ||
+		value.includes("socket cap screw") ||
+		value.includes("soc. hd") ||
+		value.includes("soc hd") ||
+		value.includes("socket hd")
+	) {
+		return "socket";
+	}
+
+	if (
+		value.includes("square hd") ||
+		value.includes("sq. hd") ||
+		value.includes("sq hd")
+	) {
+		return "square";
+	}
+
 	if (value.includes("carriage bolt")) return "carriage";
 	if (value.includes("lag bolt") || value.includes("lag screw")) return "hex";
 
@@ -561,12 +608,421 @@ function detectBoltDriveType(text = "", familyType = "") {
 	if (value.includes("slotted")) return "slotted";
 	if (value.includes("allen")) return "hex socket";
 	if (value.includes("internal hex")) return "hex socket";
-	if (family === "socket head cap screw") return "hex socket";
-	if (family === "hex cap screw") return "hex";
+
+	if (
+		value.includes("soc. hd") ||
+		value.includes("soc hd") ||
+		value.includes("socket hd") ||
+		value.includes("socket head")
+	) {
+		return "hex socket";
+	}
+
+	if (
+		family === "socket head cap screw"
+	) {
+		return "hex socket";
+	}
+
+	if (
+		family === "hex cap screw" ||
+		family === "structural bolt" ||
+		family === "heavy hex bolt"
+	) {
+		return "hex";
+	}
+
 	if (family === "carriage bolt") return "";
 	if (family === "lag screw") return "hex";
 
 	return "";
+}
+
+function looksLikeSocketHead(text = "") {
+	const value = normalize(text);
+	return (
+		value.includes("soc. hd") ||
+		value.includes("soc hd") ||
+		value.includes("socket hd") ||
+		value.includes("socket head") ||
+		value.includes("soc.c/s") ||
+		value.includes("soc c/s") ||
+		value.includes("soc. cap")
+	);
+}
+
+function looksLikeSquareHead(text = "") {
+	const value = normalize(text);
+	return (
+		value.includes("sq. hd") ||
+		value.includes("sq hd") ||
+		value.includes("square hd") ||
+		value.includes("square head")
+	);
+}
+
+function looksLikeFlatHead(text = "") {
+	const value = normalize(text);
+	return (
+		value.includes("flt hd") ||
+		value.includes("flat hd") ||
+		value.includes("flat head")
+	);
+}
+
+function looksLikeHexCapShorthand(text = "") {
+	const value = normalize(text);
+
+	return (
+		value.includes("hex hd c/s") ||
+		value.includes("hex hd. c/s") ||
+		value.includes("hx hd c/s") ||
+		value.includes("hx hd. c/s") ||
+		value.includes("hex hd bolt") ||
+		value.includes("hex bolt") ||
+		value.includes("hex head bolt") ||
+		value.includes("heavy hex bolt") ||
+		value.includes("structural bolt") ||
+		value.includes("a325") ||
+		value.includes("a307") ||
+		value.includes("galv.hex bolt") ||
+		value.includes("galv. hex bolt") ||
+		value.includes("chrome hex hd c/s") ||
+		value.includes("chrome hx hd c/s") ||
+		value.includes("hex hd") ||
+		(/\bc\/s\b/i.test(text) &&
+			(/\buss\b/i.test(text) ||
+				/\bsae\b/i.test(text) ||
+				/\bhex\b/i.test(text) ||
+				/\bhx\b/i.test(text) ||
+				/\bm\d+/i.test(text)))
+	);
+}
+
+function detectImperialThreadedSize(text = "") {
+	const raw = String(text || "");
+	const match = raw.match(/\b(#?\d+)-(\d+(?:\.\d+)?)\s*x\s*([0-9./"-]+)\b/i);
+	if (!match) return null;
+
+	const [, diameterCode = "", threadPitch = "", length = ""] = match;
+	const normalizedDiameter =
+		String(diameterCode) === "10"
+			? "#10"
+			: String(diameterCode).startsWith("#")
+				? String(diameterCode)
+				: `#${diameterCode}`;
+
+	return {
+		size: `${normalizedDiameter}-${clean(threadPitch)}`,
+		diameter: normalizedDiameter,
+		threadPitch: clean(threadPitch),
+		threadSeries: "",
+		length: clean(String(length).replace(/"/g, "").replace(/-/g, " ")),
+	};
+}
+
+function detectImperialThreadedDescription(text = "") {
+	const raw = String(text || "");
+
+	const patterns = [
+		/\b(\d+(?:-\d+\/\d+|\/\d+)?)[\"”]?\s*-\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:-\d+\/\d+|\/\d+)?)[\"”]?\b/i,
+		/\b(\d+(?:-\d+\/\d+|\/\d+)?)[\"”]?\s*-\s*(\d+(?:\.\d+)?)\s*(?:thread size)?[, ]+\s*(\d+(?:-\d+\/\d+|\/\d+)?)[\"”]?\s*(?:long)?\b/i,
+	];
+
+	for (const pattern of patterns) {
+		const match = raw.match(pattern);
+		if (!match) continue;
+
+		const [, diameter = "", threadPitch = "", length = ""] = match;
+
+		return {
+			size: `${clean(diameter)}-${clean(threadPitch)}`,
+			diameter: clean(diameter).replace(/"/g, ""),
+			threadPitch: clean(threadPitch),
+			length: clean(length).replace(/"/g, ""),
+		};
+	}
+
+	return null;
+}
+
+function detectMetricThreadedSize(text = "") {
+	const raw = String(text || "");
+
+	const patterns = [
+		/\b(M\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:mm)?)\b/i,
+		/\b(M\d+(?:\.\d+)?)x(\d+(?:\.\d+)?)x(\d+(?:mm)?)\b/i,
+		/\b(M\d+(?:\.\d+)?)x(\d+(?:mm)?)-(\d+(?:\.\d+)?)\b/i,
+		/\b(\d+(?:\.\d+)?)x(\d+(?:mm)?)-(\d+(?:\.\d+)?)\b/i,
+	];
+
+	for (const pattern of patterns) {
+		const match = raw.match(pattern);
+		if (!match) continue;
+
+		if (/^M/i.test(match[1])) {
+			const [, diameter = "", threadPitch = "", length = ""] = match;
+			return {
+				size: `${clean(diameter)}-${clean(threadPitch)}`,
+				diameter: clean(diameter).toUpperCase(),
+				threadPitch: clean(threadPitch),
+				threadSeries: "",
+				length: clean(length).toLowerCase().includes("mm")
+					? clean(length)
+					: `${clean(length)}mm`,
+				measurementSystem: "metric",
+			};
+		}
+
+		const [, diameter = "", length = "", threadPitch = ""] = match;
+		return {
+			size: `M${clean(diameter)}-${clean(threadPitch)}`,
+			diameter: `M${clean(diameter)}`,
+			threadPitch: clean(threadPitch),
+			threadSeries: "",
+			length: clean(length).toLowerCase().includes("mm")
+				? clean(length)
+				: `${clean(length)}mm`,
+			measurementSystem: "metric",
+		};
+	}
+
+	return null;
+}
+
+function inferImperialThreadSeries(diameter = "", threadPitch = "") {
+	const dia = clean(diameter);
+	const pitch = clean(threadPitch);
+
+	if (!dia || !pitch) return "";
+
+	const coarseMap = {
+		"#10": "24",
+		"1/4": "20",
+		"5/16": "18",
+		"3/8": "16",
+		"7/16": "14",
+		"1/2": "13",
+		"9/16": "12",
+		"5/8": "11",
+		"3/4": "10",
+		"7/8": "9",
+		"1": "8",
+		"1-1/8": "7",
+		"1-1/4": "7",
+		"1-3/8": "6",
+		"1-1/2": "6",
+		"2": "4.5",
+	};
+
+	const fineMap = {
+		"#10": "32",
+		"1/4": "28",
+		"5/16": "24",
+		"3/8": "24",
+		"7/16": "20",
+		"1/2": "20",
+		"9/16": "18",
+		"5/8": "18",
+		"3/4": "16",
+		"7/8": "14",
+		"1": "12",
+		"1-1/8": "8",
+		"1-1/4": "8",
+		"1-3/8": "8",
+		"1-1/2": "8",
+		"2": "6",
+	};
+
+	if (coarseMap[dia] === pitch) return "coarse";
+	if (fineMap[dia] === pitch) return "fine";
+
+	return "";
+}
+
+function inferImperialCoarsePitchFromDiameter(diameter = "") {
+	const dia = clean(diameter);
+
+	const coarseMap = {
+		"#10": "24",
+		"1/4": "20",
+		"5/16": "18",
+		"3/8": "16",
+		"7/16": "14",
+		"1/2": "13",
+		"9/16": "12",
+		"5/8": "11",
+		"3/4": "10",
+		"7/8": "9",
+		"1": "8",
+		"1-1/8": "7",
+		"1-1/4": "7",
+		"1-3/8": "6",
+		"1-1/2": "6",
+		"2": "4.5",
+	};
+
+	return coarseMap[dia] || "";
+}
+
+function inferImperialSeriesFromPitch(diameter = "", threadPitch = "") {
+	return inferImperialThreadSeries(diameter, threadPitch);
+}
+
+function detectImperialShorthandCapScrew(text = "") {
+	const raw = String(text || "");
+
+	const gradeMatch = raw.match(/\bGR\s*(\d+)\b/i);
+	const a307 = /\bA307\b/i.test(raw);
+	const a325 = /\bA325\b/i.test(raw);
+
+	const sizeMatch = raw.match(
+		/\b(?:GR\s*\d+\s+)?C\/S(?:\s+\w+)?\s+(?:USS|SAE)?\s*(\d+(?:-\d+\/\d+|\/\d+)?)X(\d+(?:-\d+\/\d+|\/\d+)?)\b/i,
+	);
+
+	if (!sizeMatch) return null;
+
+	const diameter = clean(sizeMatch[1]);
+	const length = clean(sizeMatch[2]);
+
+	let grade = "";
+	let familyType = "hex cap screw";
+	let finish = "";
+	let material = "steel";
+
+	if (a325) {
+		grade = "A325";
+		familyType = "structural bolt";
+		finish = /\bgalv\b|\bgalvanized\b/i.test(raw) ? "galvanized" : "plain";
+	} else if (a307) {
+		grade = "A307";
+		familyType = "heavy hex bolt";
+		finish = /\bgalv\b|\bgalvanized\b/i.test(raw)
+			? "galvanized"
+			: /\bzinc\b|\bzp\b/i.test(raw)
+				? "zinc"
+				: "plain";
+	} else if (gradeMatch?.[1]) {
+		grade = `grade ${clean(gradeMatch[1])}`;
+		familyType = "hex cap screw";
+		finish = detectFinish(raw) || "zinc";
+	}
+
+	const threadPitch = inferImperialCoarsePitchFromDiameter(diameter);
+	const threadSeries = threadPitch ? "coarse" : "";
+
+	return {
+		diameter,
+		length,
+		threadPitch,
+		threadSeries,
+		grade,
+		finish,
+		material,
+		measurementSystem: "imperial",
+		familyType,
+	};
+}
+
+function detectStructuralBoltDescription(text = "") {
+	const raw = String(text || "");
+
+	if (!/\ba325\b/i.test(raw) && !/\bstructural bolt\b/i.test(raw)) {
+		return null;
+	}
+
+	const match = raw.match(
+		/\bA325(?:\s+STRUCTURAL\s+BOLT)?\s+(\d+(?:-\d+\/\d+|\/\d+)?)X(\d+(?:-\d+\/\d+|\/\d+)?)\b/i,
+	);
+
+	if (!match) return null;
+
+	const [, diameter = "", length = ""] = match;
+	const cleanDiameter = clean(diameter);
+	const cleanLength = clean(length);
+	const finish =
+		/\bgalv\b|\bgalvanized\b/i.test(raw) ? "galvanized" : "plain";
+	const threadPitch = inferImperialCoarsePitchFromDiameter(cleanDiameter);
+	const threadSeries = threadPitch ? "coarse" : "";
+
+	return {
+		familyType: "structural bolt",
+		category: "bolts",
+		subcategory: "hex cap screws",
+		fastenerType: "hex cap screw",
+		diameter: cleanDiameter,
+		length: cleanLength,
+		threadPitch,
+		threadSeries,
+		measurementSystem: "imperial",
+		material: "steel",
+		finish,
+		grade: "A325",
+	};
+}
+
+
+function detectCompactMetricCapScrew(text = "", product = null) {
+	const raw = String(text || "");
+	const partNum = getPartNumberText(product).toUpperCase();
+	if (!partNum.startsWith("MM") && !/\bmm\b/i.test(raw)) return null;
+
+	const patterns = [
+		/\bC\/S\s+(\d+(?:\.\d+)?)MMX(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)(?:\s*(S\/S|SS))?\b/i,
+		/\bC\/S\s+(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)MM[\s-]?(\d+(?:\.\d+)?)(?:\s*(S\/S|SS))?\b/i,
+		/\b(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)MM[\s-]?(\d+(?:\.\d+)?)(?:\s*(S\/S|SS))?\b/i,
+		/\bC\/S\s+(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)[\s]+(\d+(?:\.\d+)?)(?:\s*(PL|ZC|S\/S|SS))?\b/i,
+		/\b(\d+(?:\.\d+)?)MMX(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)(?:\s*(S\/S|SS))?\b/i,
+		/\b(\d+(?:\.\d+)?)X(\d+(?:\.\d+)?)[\s]+(\d+(?:\.\d+)?)(?:\s*(ZC|PL))\b/i,
+	];
+	for (const pattern of patterns) {
+		const m = raw.match(pattern);
+		if (!m) continue;
+		const [, d = '', l = '', pitch = '', suffix = ''] = m;
+		const isStainless = /S\/S|SS/i.test(suffix) || /SS$/i.test(partNum) || /\bS\/S\b/i.test(raw);
+		return {
+			measurementSystem: 'metric',
+			diameter: `M${clean(d)}`,
+			length: `${clean(l)}mm`,
+			threadPitch: clean(pitch),
+			threadSeries: '',
+			material: isStainless ? 'stainless steel' : 'steel',
+			finish: isStainless ? '' : /\bPL\b/i.test(raw) ? 'plain' : 'zinc',
+			grade: isStainless ? (/\b316\b/i.test(raw) ? '316' : '304') : (/\b12\.9\b/i.test(raw) ? '12.9' : (/\b10\.9\b/i.test(raw) ? '10.9' : '8.8')),
+		};
+	}
+	return null;
+}
+
+function detectStainlessOneInchCapScrew(text = '', product = null) {
+	const raw = String(text || '');
+	const partNum = getPartNumberText(product).toUpperCase();
+	const m = partNum.match(/^SSCS160(\d{4})(C)?(?:\s*TAP)?$/i);
+	if (!m) return null;
+	const lenCode = m[1] || '';
+	const isTap = /TAP/i.test(partNum) || /TAP/i.test(raw);
+	return {
+		measurementSystem: 'imperial',
+		diameter: '1',
+		length: fractionFromSixteenthsCode(lenCode),
+		threadPitch: '8',
+		threadSeries: 'coarse',
+		material: 'stainless steel',
+		finish: '',
+		grade: /316/i.test(raw) ? '316' : '304',
+		threadCoverage: isTap ? 'full' : '',
+	};
+}
+
+function detectRoundStockA307(text = '') {
+	const raw = String(text || '');
+	if (!/\bround stock\b/i.test(raw) || !/\bA307\b/i.test(raw)) return null;
+	const m = raw.match(/(\d+(?:-\d+\/\d+|\/\d+)?)\s*["”]?\s*X\s*(\d+)\s*['′]?/i);
+	if (!m) return null;
+	const diameter = clean(m[1]);
+	const length = clean(m[2]);
+	const pitch = inferImperialCoarsePitchFromDiameter(diameter);
+	return {measurementSystem:'imperial', diameter, length, threadPitch:pitch, threadSeries: pitch ? 'coarse':'', grade:'A307', material:'steel', finish:'zinc'};
 }
 
 function detectWasherStandard(text = "", parsed = {}) {
@@ -866,18 +1322,7 @@ function detectCotterPinFamily(text = "", parsed = {}) {
 	};
 }
 
-function getPartNumberText(product = null, parsed = {}) {
-	return clean(
-		parsed.fishbowlPartNum || product?.fishbowl?.partNum || product?.sku || "",
-	);
-}
-
-function detectBoltMaterial(
-	text = "",
-	product = null,
-	parsed = {},
-	decoded = null,
-) {
+function detectBoltMaterial(text = "", product = null, parsed = {}, decoded = null) {
 	const rawText = String(text || "");
 
 	if (clean(parsed.material)) return clean(parsed.material);
@@ -887,7 +1332,10 @@ function detectBoltMaterial(
 	if (/\bstainless\b/i.test(rawText)) return "stainless steel";
 	if (/[\s/(-]ss[\s/)-]?/i.test(` ${rawText} `)) return "stainless steel";
 
-	return detectMaterial(text) || "steel";
+	const detected = detectMaterial(text);
+	if (detected) return detected;
+
+	return "steel";
 }
 
 function detectBoltFinish(
@@ -911,10 +1359,18 @@ function detectBoltFinish(
 	if (value.includes("zinc yellow")) return "yellow zinc";
 	if (value.includes("black oxide")) return "black oxide";
 	if (value.includes("phosphate")) return "phosphate";
+	if (/\bgalv\b/i.test(rawText)) return "galvanized";
+	if (/\bcad(?:mium)?(?:-|\s)?plated\b/i.test(rawText)) return "cad plated";
+	if (/\bzp\b/i.test(rawText)) return "zinc";
 	if (value.includes("galvanized")) return "galvanized";
+	if (value.includes("chrome")) return "chrome";
 	if (value.includes("zinc")) return "zinc";
 
 	if (mat === "stainless steel") return "";
+	if (mat === "aluminum") return "";
+	if (mat === "brass") return "";
+	if (mat === "nylon") return "";
+	if (mat === "silicon bronze") return "";
 
 	return "zinc";
 }
@@ -932,19 +1388,53 @@ function detectBoltGrade(
 	const rawText = String(text || "");
 	const mat = clean(material).toLowerCase();
 	const system = clean(measurementSystem).toLowerCase();
+	const value = normalize(rawText);
 
 	if (mat === "stainless steel") {
 		if (/\b316\b/i.test(rawText)) return "316";
 		return "304";
 	}
 
+	if (
+		mat === "nylon" ||
+		mat === "aluminum" ||
+		mat === "brass" ||
+		mat === "silicon bronze"
+	) {
+		return "";
+	}
+
 	if (system === "metric") {
 		if (/\b12\.9\b/i.test(rawText)) return "12.9";
 		if (/\b10\.9\b/i.test(rawText)) return "10.9";
+		if (/\b8\.8\b/i.test(rawText)) return "8.8";
 		return "8.8";
 	}
 
-	return clean(decoded?.grade || detectGrade(text) || "");
+	if (/\ba325\b/i.test(rawText)) return "A325";
+	if (/\bg36\b/i.test(rawText)) return "grade 8";
+	if (/\ba307\b/i.test(rawText)) return "A307";
+
+	const decodedGrade = clean(decoded?.grade || detectGrade(text) || "");
+	if (decodedGrade) return decodedGrade;
+
+	const looksSteelHexBolt =
+		value.includes("hex bolt") ||
+		value.includes("hex head bolt") ||
+		value.includes("heavy hex bolt") ||
+		value.includes("structural bolt") ||
+		value.includes("hex hd c/s") ||
+		value.includes("hx hd c/s") ||
+		looksLikeHexCapShorthand(text);
+
+	if (looksSteelHexBolt) {
+		if (value.includes("galv")) return "grade 2";
+		if (value.includes("galvanized")) return "grade 2";
+		if (value.includes("chrome")) return "grade 5";
+		if (value.includes("plain")) return "grade 2";
+	}
+
+	return "";
 }
 
 function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
@@ -952,30 +1442,105 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 	const decoded = decodeHexCapPartNumber(product, parsed);
 	const partNum = getPartNumberText(product, parsed).toUpperCase();
 
+	const socketLike = looksLikeSocketHead(text);
+	const squareLike = looksLikeSquareHead(text);
+	const flatLike = looksLikeFlatHead(text);
+
+	const isAssemblyLike =
+		value.includes("assy") ||
+		value.includes("assembly") ||
+		value.includes("bolt assy") ||
+		value.includes("bolt assembly") ||
+		value.includes("kit") ||
+		value.includes("assortment") ||
+		value.includes("auto assortment") ||
+		value.includes(" w/") ||
+		value.includes(" with ") ||
+		/\(\d+\)\s*\d/i.test(text);
+
+	const isToolingLike =
+		value.includes("combo drill") ||
+		value.includes("countersink");
+
+	const isExcludedBA =
+		/^BA/i.test(partNum) || /\bBA\d/i.test(partNum);
+	const isExcludedFT = /^SSCSFT/i.test(partNum);
+	const isExcludedSSCSC = /^SSCS\d{3,4}\d{4}C(?:\s*TAP)?$/i.test(partNum);
+
+	const isNonHexHeadLike =
+		socketLike ||
+		squareLike ||
+		flatLike ||
+		value.includes("button hd") ||
+		value.includes("button head");
+
+	if (isAssemblyLike || isToolingLike || isExcludedBA || isExcludedFT || isExcludedSSCSC || isNonHexHeadLike) {
+		return null;
+	}
+
 	const looksLikeEncodedHexCap =
-		partNum.startsWith("MMCS") || /(?:^|[A-Z]{0,2})CS\d/i.test(partNum);
+		partNum.startsWith("MMCS") ||
+		/^(?:SS|HH|SB|AN|AL|BR)?CS\d/i.test(partNum);
+
+	const shorthand = detectImperialShorthandCapScrew(text);
+	const structural = detectStructuralBoltDescription(text);
+	const compactMetric = detectCompactMetricCapScrew(text, product);
+	const stainlessOneInch = detectStainlessOneInchCapScrew(text, product);
+	const roundStock = detectRoundStockA307(text);
 
 	const isHexCap =
-		value.includes("hex cap screw") ||
-		value.includes("hex head bolt") ||
-		value.includes("hex bolt") ||
-		decoded?.familyType === "hex cap screw" ||
-		looksLikeEncodedHexCap;
+		!isNonHexHeadLike &&
+		(
+			value.includes("hex cap screw") ||
+			value.includes("hex head bolt") ||
+			value.includes("hex bolt") ||
+			looksLikeHexCapShorthand(text) ||
+			shorthand?.familyType === "hex cap screw" ||
+			decoded?.familyType === "hex cap screw" ||
+			looksLikeEncodedHexCap
+		);
+
+	const isHeavyHex =
+		!isNonHexHeadLike &&
+		(
+			value.includes("heavy hex bolt") ||
+			value.includes("a307") ||
+			shorthand?.familyType === "heavy hex bolt"
+		);
+
+	const isStructural =
+		!isNonHexHeadLike &&
+		(
+			value.includes("structural bolt") ||
+			value.includes("a325") ||
+			structural?.familyType === "structural bolt" ||
+			shorthand?.familyType === "structural bolt"
+		);
 
 	const isCarriage = value.includes("carriage bolt");
 	const isLag = value.includes("lag bolt") || value.includes("lag screw");
-	const isSocket =
-		value.includes("socket head cap screw") ||
-		value.includes("socket cap screw");
 
-	if (!isHexCap && !isCarriage && !isLag && !isSocket) return null;
+	if (!isHexCap && !isHeavyHex && !isStructural && !isCarriage && !isLag) {
+		return null;
+	}
 
 	const dims = detectGenericDimensions(text);
+	const threadedSize = detectImperialThreadedSize(text);
+	const imperialThreadedDescription = detectImperialThreadedDescription(text);
+	const metricThreadedSize = looksImperialByStandard(text)
+		? null
+		: detectMetricThreadedSize(text);
 
 	let familyType = "fastener";
 	let subcategory = "fasteners";
 
-	if (isHexCap) {
+	if (isStructural) {
+		familyType = "structural bolt";
+		subcategory = "hex cap screws";
+	} else if (isHeavyHex) {
+		familyType = "heavy hex bolt";
+		subcategory = "hex cap screws";
+	} else if (isHexCap) {
 		familyType = "hex cap screw";
 		subcategory = "hex cap screws";
 	} else if (isCarriage) {
@@ -984,43 +1549,152 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 	} else if (isLag) {
 		familyType = "lag screw";
 		subcategory = "lag screws";
-	} else if (isSocket) {
-		familyType = "socket head cap screw";
-		subcategory = "socket head cap screws";
 	}
 
+	const forceMetric =
+		partNum.startsWith("MM") ||
+		/^M\d/i.test(clean(parsed.size || "")) ||
+		/^M\d/i.test(clean(compactMetric?.diameter || "")) ||
+		/^M\d/i.test(clean(metricThreadedSize?.diameter || "")) ||
+		/^M\d/i.test(clean(decoded?.diameter || ""));
+
 	const measurementSystem =
+		(forceMetric ? "metric" : "") ||
+		(/^M\d/i.test(clean(parsed.diameter || "")) ? "metric" : "") ||
 		parsed.measurementSystem ||
+		compactMetric?.measurementSystem ||
+		stainlessOneInch?.measurementSystem ||
+		roundStock?.measurementSystem ||
+		structural?.measurementSystem ||
+		shorthand?.measurementSystem ||
+		(/^M\d/i.test(clean(parsed.diameter || "")) ? "metric" : "") ||
+		(/^M\d/i.test(clean(metricThreadedSize?.diameter || "")) ? "metric" : "") ||
+		(/^M\d/i.test(clean(decoded?.diameter || "")) ? "metric" : "") ||
+		(looksImperialByStandard(text) ? "imperial" : "") ||
+		metricThreadedSize?.measurementSystem ||
 		decoded?.measurementSystem ||
 		detectMeasurementSystem(text);
 
-	const diameter = parsed.diameter || decoded?.diameter || dims.diameter || "";
+	const decodedDiameter = clean(decoded?.diameter || "");
+	const decodedPitch = clean(decoded?.threadPitch || "");
+	const decodedLength = clean(decoded?.length || "");
 
-	const length = parsed.length || decoded?.length || dims.length || "";
+	const structuralDiameter = clean(structural?.diameter || "");
+	const structuralPitch = clean(structural?.threadPitch || "");
+	const structuralLength = clean(structural?.length || "");
 
-	const threadPitch =
-		parsed.threadPitch || decoded?.threadPitch || dims.threadPitch || "";
+	const shorthandDiameter = clean(shorthand?.diameter || "");
+	const shorthandPitch = clean(shorthand?.threadPitch || "");
+	const shorthandLength = clean(shorthand?.length || "");
+
+	const imperialTextDiameter = clean(imperialThreadedDescription?.diameter || "");
+	const imperialTextPitch = clean(imperialThreadedDescription?.threadPitch || "");
+	const imperialTextLength = clean(imperialThreadedDescription?.length || "");
+
+	const metricDiameter = clean(metricThreadedSize?.diameter || "");
+	const metricPitch = clean(metricThreadedSize?.threadPitch || "");
+	const metricLength = clean(metricThreadedSize?.length || "");
+
+	const genericDiameter = clean(dims.diameter || "");
+	const genericPitch = clean(dims.threadPitch || "");
+	const genericLength = clean(dims.length || "");
+
+	const diameter =
+		clean(parsed.diameter || "") ||
+		clean(compactMetric?.diameter || "") ||
+		clean(stainlessOneInch?.diameter || "") ||
+		clean(roundStock?.diameter || "") ||
+		structuralDiameter ||
+		decodedDiameter ||
+		shorthandDiameter ||
+		(forceMetric ? metricDiameter : "") ||
+		imperialTextDiameter ||
+		metricDiameter ||
+		clean(threadedSize?.diameter || "") ||
+		genericDiameter ||
+		"";
+
+	let threadPitch =
+		clean(parsed.threadPitch || "") ||
+		clean(compactMetric?.threadPitch || "") ||
+		clean(stainlessOneInch?.threadPitch || "") ||
+		clean(roundStock?.threadPitch || "") ||
+		structuralPitch ||
+		decodedPitch ||
+		shorthandPitch ||
+		(forceMetric ? metricPitch : "") ||
+		((/\bDOM\b|\bDOMESTIC\b/i.test(text) && decodedPitch) ? "" : imperialTextPitch) ||
+		metricPitch ||
+		clean(threadedSize?.threadPitch || "") ||
+		genericPitch ||
+		"";
+
+	const length =
+		clean(parsed.length || "") ||
+		clean(compactMetric?.length || "") ||
+		clean(stainlessOneInch?.length || "") ||
+		clean(roundStock?.length || "") ||
+		structuralLength ||
+		decodedLength ||
+		shorthandLength ||
+		(forceMetric ? metricLength : "") ||
+		imperialTextLength ||
+		metricLength ||
+		clean(threadedSize?.length || "") ||
+		genericLength ||
+		"";
+
+	if (
+		!threadPitch &&
+		clean(measurementSystem).toLowerCase() !== "metric" &&
+		diameter &&
+		(
+			normalize(text).includes("c/s") ||
+			normalize(text).includes("hex bolt") ||
+			normalize(text).includes("heavy hex bolt") ||
+			normalize(text).includes("structural bolt")
+		)
+	) {
+		threadPitch = inferImperialCoarsePitchFromDiameter(diameter);
+	}
 
 	const threadSeries =
 		clean(parsed.threadSeries || parsed.thread_series || "") ||
-		clean(decoded?.threadSeries || "");
+		clean(structural?.threadSeries || "") ||
+		clean(decoded?.threadSeries || "") ||
+		clean(shorthand?.threadSeries || "") ||
+		(
+			clean(measurementSystem).toLowerCase() === "imperial"
+				? inferImperialSeriesFromPitch(diameter, threadPitch)
+				: ""
+		);
 
-	const boltMaterial = detectBoltMaterial(text, product, parsed, decoded);
-	const boltFinish = detectBoltFinish(
-		text,
-		product,
-		parsed,
-		boltMaterial,
-		decoded,
-	);
+	const boltMaterial =
+		clean(parsed.material || "") ||
+		clean(compactMetric?.material || "") ||
+		clean(stainlessOneInch?.material || "") ||
+		clean(roundStock?.material || "") ||
+		clean(structural?.material || "") ||
+		clean(shorthand?.material || "") ||
+		detectBoltMaterial(text, product, parsed, decoded);
 
-	const grade = detectBoltGrade(
-		text,
-		measurementSystem,
-		boltMaterial,
-		parsed,
-		decoded,
-	);
+	const boltFinish =
+		clean(parsed.finish || "") ||
+		clean(compactMetric?.finish || "") ||
+		clean(stainlessOneInch?.finish || "") ||
+		clean(roundStock?.finish || "") ||
+		clean(structural?.finish || "") ||
+		clean(shorthand?.finish || "") ||
+		detectBoltFinish(text, product, parsed, boltMaterial, decoded);
+
+	const grade =
+		clean(parsed.grade || "") ||
+		clean(compactMetric?.grade || "") ||
+		clean(stainlessOneInch?.grade || "") ||
+		clean(roundStock?.grade || "") ||
+		clean(structural?.grade || "") ||
+		clean(shorthand?.grade || "") ||
+		detectBoltGrade(text, measurementSystem, boltMaterial, parsed, decoded);
 
 	const normalizedMF = normalizeMaterialAndFinish({
 		material: boltMaterial,
@@ -1039,18 +1713,30 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		familyType,
 		category: "bolts",
 		subcategory,
-		fastenerType: familyType,
+		fastenerType:
+			familyType === "structural bolt" || familyType === "heavy hex bolt"
+				? "hex cap screw"
+				: familyType,
 		headType,
 		driveType,
-		size: parsed.size || "",
+		size:
+			clean(parsed.size || "") ||
+			clean(imperialThreadedDescription?.size || "") ||
+			clean(metricThreadedSize?.size || "") ||
+			clean(threadedSize?.size || "") ||
+			"",
 		diameter,
 		length,
 		threadPitch,
 		threadSeries,
 		threadCoverage:
 			clean(parsed.threadCoverage || parsed.thread_coverage || "") ||
+			clean(stainlessOneInch?.threadCoverage || "") ||
 			clean(decoded?.threadCoverage || ""),
-		measurementSystem,
+		measurementSystem:
+			partNum.startsWith("MM") || /^M\d/i.test(clean(diameter || ""))
+				? "metric"
+				: measurementSystem,
 		material: normalizedMF.material,
 		finish: normalizedMF.finish,
 		displayMaterial: normalizedMF.displayMaterial,
@@ -1062,130 +1748,97 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 
 function detectAbrasiveFamily(text = "", parsed = {}) {
 	const value = normalize(text);
-
-	const isAbrasive =
-		value.includes("abrasive") ||
-		value.includes("cut off wheel") ||
-		value.includes("cutoff wheel") ||
-		value.includes("flap disc") ||
-		value.includes("grinding wheel") ||
-		value.includes("sanding disc") ||
-		value.includes("belt ");
-
-	if (!isAbrasive) return null;
-
-	let subtype = "abrasives";
-	if (value.includes("flap disc")) subtype = "flap disc";
-	else if (value.includes("cut off wheel") || value.includes("cutoff wheel"))
-		subtype = "cut off wheel";
-	else if (value.includes("grinding wheel")) subtype = "grinding wheel";
-	else if (value.includes("sanding disc")) subtype = "sanding disc";
-	else if (value.includes("belt")) subtype = "abrasive belt";
-
-	const grit = firstMatch(text, [/\b(\d+\s*grit)\b/i, /\b(grit\s*\d+)\b/i]);
-	const diameter = firstMatch(text, [/\b(\d+(?:\/\d+)?)["”]?\s*(?:x|\b)/i]);
+	if (
+		!value.includes("abrasive") &&
+		!value.includes("cutoff wheel") &&
+		!value.includes("grinding wheel") &&
+		!value.includes("flap disc")
+	) {
+		return null;
+	}
 
 	return {
-		familyType: subtype,
+		familyType: "abrasive accessory",
 		category: "abrasives",
-		subcategory: subtype.endsWith("s") ? subtype : `${subtype}s`,
+		subcategory: "abrasive accessories",
 		fastenerType: "",
 		size: parsed.size || "",
-		diameter: parsed.diameter || diameter || "",
+		diameter: parsed.diameter || "",
 		length: parsed.length || "",
 		threadPitch: "",
-		measurementSystem:
-			parsed.measurementSystem || detectMeasurementSystem(text),
-		material: parsed.material || "",
-		finish: parsed.finish || "",
-		grade: grit || "",
+		measurementSystem: parsed.measurementSystem || detectMeasurementSystem(text),
+		material: parsed.material || detectMaterial(text),
+		finish: parsed.finish || detectFinish(text),
+		grade: parsed.grade || "",
 	};
 }
 
 function detectAuvecoFamily(text = "", parsed = {}, product = null) {
 	const value = normalize(text);
-	const vendor = normalize(product?.vendor || "");
-	const brand = normalize(product?.brand || "");
+	const vendor = clean(product?.vendor || parsed.vendor || "");
+	const brand = clean(product?.brand || parsed.brand || "");
 
-	const looksAuveco =
-		vendor.includes("auveco") ||
-		brand.includes("auveco") ||
-		value.includes("auveco");
-
-	if (!looksAuveco) return null;
-
-	let subtype = "auveco hardware";
-	if (value.includes("clip")) subtype = "auveco clips";
-	else if (value.includes("retainer")) subtype = "auveco retainers";
-	else if (value.includes("panel fastener")) subtype = "auveco panel fasteners";
+	if (
+		!value.includes("auveco") &&
+		normalize(vendor) !== "auveco" &&
+		normalize(brand) !== "auveco"
+	) {
+		return null;
+	}
 
 	return {
-		familyType: subtype,
+		familyType: "auveco hardware",
 		category: "specialty hardware",
-		subcategory: subtype,
-		fastenerType: subtype,
+		subcategory: "auveco hardware",
+		fastenerType: "",
 		size: parsed.size || "",
 		diameter: parsed.diameter || "",
 		length: parsed.length || "",
-		threadPitch: "",
-		measurementSystem:
-			parsed.measurementSystem || detectMeasurementSystem(text),
+		threadPitch: parsed.threadPitch || "",
+		measurementSystem: parsed.measurementSystem || detectMeasurementSystem(text),
 		material: parsed.material || detectMaterial(text),
 		finish: parsed.finish || detectFinish(text),
-		grade: "",
-	};
-}
-
-function detectFallbackFamily(text = "", parsed = {}, product = null) {
-	const vendor = clean(product?.vendor || "");
-	const brand = clean(product?.brand || "");
-	const measurementSystem =
-		parsed.measurementSystem || detectMeasurementSystem(text);
-	const dims = detectGenericDimensions(text);
-
-	const normalizedMF = normalizeMaterialAndFinish({
-		material: parsed.material || detectMaterial(text),
-		finish: parsed.finish || detectFinish(text),
-	});
-
-	return {
-		familyType: "general hardware",
-		category: "uncategorized",
-		subcategory: "needs classification",
-		fastenerType: "",
-		size: parsed.size || dims.size || "",
-		diameter: parsed.diameter || dims.diameter || "",
-		insideDiameter: parsed.insideDiameter || parsed.id || "",
-		outsideDiameter: parsed.outsideDiameter || parsed.od || "",
-		thickness: parsed.thickness || "",
-		length: parsed.length || dims.length || "",
-		threadPitch: parsed.threadPitch || dims.threadPitch || "",
-		measurementSystem,
-		material: normalizedMF.material,
-		finish: normalizedMF.finish,
-		displayMaterial: normalizedMF.displayMaterial,
-		displayFinish: normalizedMF.displayFinish,
-		materialFinish: normalizedMF.materialFinish,
-		grade: parsed.grade || detectGrade(text),
+		grade: parsed.grade || "",
 		vendor,
 		brand,
 	};
 }
 
+function detectFallbackFamily(text = "", parsed = {}, product = null) {
+	return {
+		familyType: "general hardware",
+		category: parsed.category || "uncategorized",
+		subcategory: parsed.subcategory || "needs classification",
+		fastenerType: parsed.fastenerType || "",
+		size: parsed.size || detectGenericDimensions(text).size || "",
+		diameter: parsed.diameter || detectGenericDimensions(text).diameter || "",
+		length: parsed.length || detectGenericDimensions(text).length || "",
+		threadPitch:
+			parsed.threadPitch || detectGenericDimensions(text).threadPitch || "",
+		measurementSystem:
+			parsed.measurementSystem || detectMeasurementSystem(text),
+		material: parsed.material || detectMaterial(text),
+		finish: parsed.finish || detectFinish(text),
+		grade: parsed.grade || detectGrade(text) || "",
+		vendor: product?.vendor || parsed.vendor || "",
+		brand: product?.brand || parsed.brand || "",
+	};
+}
+
 function buildFamilyIdentity(detected = {}) {
-	const familyType = clean(detected.familyType || "general hardware");
-	const category = clean(detected.category || "uncategorized");
-	const subcategory = clean(detected.subcategory || "needs classification");
+	const category = clean(detected.category || "");
+	const subcategory = clean(detected.subcategory || "");
+	const familyType = clean(detected.familyType || detected.fastenerType || "");
 	const finish = clean(detected.finish || "");
 	const grade = clean(detected.grade || "");
 	const material = clean(detected.material || "");
 	const measurementSystem = clean(detected.measurementSystem || "");
-	const vendor = clean(detected.vendor || "");
-	const brand = clean(detected.brand || "");
 	const washerStandard = clean(detected.washerStandard || "");
 	const washerType = clean(detected.washerType || "");
 	const diameter = clean(detected.diameter || "");
 	const width = clean(detected.width || "");
+	const vendor = clean(detected.vendor || "");
+	const brand = clean(detected.brand || "");
 
 	const familyKeyParts = [category, subcategory, familyType];
 
@@ -1201,6 +1854,8 @@ function buildFamilyIdentity(detected = {}) {
 		familyKeyParts.push(finish, material, measurementSystem);
 	} else if (
 		familyType.includes("hex cap screw") ||
+		familyType.includes("heavy hex bolt") ||
+		familyType.includes("structural bolt") ||
 		familyType.includes("carriage bolt") ||
 		familyType.includes("lag screw") ||
 		familyType.includes("socket head cap screw")
