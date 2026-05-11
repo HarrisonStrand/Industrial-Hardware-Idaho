@@ -1,7 +1,9 @@
 import { useContext } from "react";
 import { BrandContext } from "../../context/BrandContext";
-import "./About.css";
 import ContactBanner from "../../components/ContactBanner/ContactBanner";
+import FAQAccordion from "../../components/FAQ/FAQAccordion.jsx";
+import "../../components/FAQ/FAQAccordion.css";
+import "./About.css";
 
 export default function About() {
 	const brand = useContext(BrandContext);
@@ -63,6 +65,13 @@ export default function About() {
 			</div>
 
 			<ContactBanner />
+			<FAQAccordion />
+			<div className='container pb-5 text-center'>
+				<p className='mb-3'>Still have questions?</p>
+				<a href='/contact' className='btn btn-dark rounded-pill px-4'>
+					Contact Us
+				</a>
+			</div>
 		</>
 	);
 }

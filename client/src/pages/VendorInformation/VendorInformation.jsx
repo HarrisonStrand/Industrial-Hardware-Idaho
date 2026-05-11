@@ -1,7 +1,9 @@
 import ContactBanner from "../../components/ContactBanner/ContactBanner";
 import vendorLogos from "../../data/vendorLogos";
-import "./VendorInformation.css";
 import { Link } from "react-router-dom";
+import FAQAccordion from "../../components/FAQ/FAQAccordion.jsx";
+import "../../components/FAQ/FAQAccordion.css";
+import "./VendorInformation.css";
 
 function normalizeUrl(url = "") {
 	if (!url) return "#";
@@ -67,7 +69,7 @@ export default function VendorInformation() {
 								{vendorLogos.length} Vendors
 							</div> */}
 						</div>
-						<hr className="mb-3"/>
+						<hr className='mb-3' />
 
 						<div className='vendor-logo-grid'>
 							{vendorLogos.map((vendor) => {
@@ -111,6 +113,14 @@ export default function VendorInformation() {
 			</div>
 
 			<ContactBanner />
+			<FAQAccordion
+				categories={["vendor"]}
+				title='Vendor FAQs'
+				subtitle='Quick answers for companies interested in working with us.'
+				itemColumnClassName='col-6'
+				listColumnClassName='faq-list d-flex flex-row'
+				groupColumnClassName='faq-group col-12 py-2 pt-2 pt-md-4'
+			/>
 		</>
 	);
 }
