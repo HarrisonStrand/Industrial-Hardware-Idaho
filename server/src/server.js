@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes.js";
 import billingRoutes from "./routes/billingRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import contactRoutes from "./routes/contact.js";
+import specialRequestsRoute from "./routes/specialRequestsRoute.js";
 
 import checkoutRoutes from "./routes/checkoutRoutes.js";
 import adminUsersRoutes from "./routes/adminUsersRoutes.js";
@@ -53,6 +54,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/special-requests", specialRequestsRoute);
 
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/orders", orderRoutes);

@@ -16,7 +16,7 @@ export default function SpecialRequests() {
           <div className='theme-detail-container py-4 fade-in rounded-4 px-3 px-sm-5'>
             <div className='row m-0'>
               <div className='text-main mb-2'>
-                Looking for something you can’t find on the website? Send us what you need and we’ll
+                Looking for something you can't find on the website? Send us what you need and we'll
                 track it down.
               </div>
 

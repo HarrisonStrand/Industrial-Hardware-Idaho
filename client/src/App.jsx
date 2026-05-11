@@ -184,13 +184,13 @@ export default function App() {
 							<Route path='/privacy-policy' element={<PrivacyPolicy />} />
 							<Route path='/terms-conditions' element={<TermsConditions />} />
 							<Route path='/customer-service' element={<CustomerService />} />
-							<Route path='/returns-exchanges' element={<ReturnsExchanges />} />
+							<Route path='/returns' element={<ReturnsExchanges />} />
 							<Route
-								path='/shipping-information'
+								path='/shipping'
 								element={<ShippingInformation />}
 							/>
 
-							<Route path='/special-requests' element={<SpecialRequests />} />
+							<Route path='/requests' element={<SpecialRequests />} />
 							<Route path='/customer-forms' element={<CustomerForms />} />
 							<Route
 								path='/vendor-information'
