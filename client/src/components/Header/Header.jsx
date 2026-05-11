@@ -28,6 +28,7 @@ export default function Header({ onCartOpen }) {
 
 	const tabs = Object.keys(ShopNowItems);
 	const featuredItems = ShopNowFeatured.featured || [];
+	const featuredFallbackImage = "/images/featured/shop-now-placeholder.png";
 
 	const [screenWidth, setScreenWidth] = useState(window.innerWidth);
 	const isMobileCart = screenWidth < 800;

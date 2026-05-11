@@ -578,3 +578,22 @@
   background: rgba(0, 0, 0, 0.12);
   border-radius: 1px;
 }
+
+
+.shop-feature-card {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.shop-feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 1px 4px 8px rgba(0, 0, 0, 0.18);
+}
+
+.shop-feature-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  background: var(--main-light);
+}

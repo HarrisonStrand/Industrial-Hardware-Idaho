@@ -3,13 +3,45 @@ import { ThemeContext } from "../../context/ThemeContext.jsx";
 import { Link } from "react-router-dom";
 import { BrandContext } from "../../context/BrandContext";
 import { footerData } from "../../data/footerData.js";
+import { apiFetch } from "../../utils/apiFetch.js";
 import "./Footer.css";
 
 export default function Footer() {
 	const brand = useContext(BrandContext);
 	const sections = footerData(brand);
 	const currentYear = new Date().getFullYear();
+	const [newsletterEmail, setNewsletterEmail] = useState("");
+	const [newsletterStatus, setNewsletterStatus] = useState({ type: "", message: "" });
+	const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
 
+	async function handleNewsletterSubmit(event) {
+		event.preventDefault();
+		const email = newsletterEmail.trim();
+
+		if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+			setNewsletterStatus({ type: "error", message: "Enter a valid email address." });
+			return;
+		}
+
+		try {
+			setNewsletterSubmitting(true);
+			setNewsletterStatus({ type: "", message: "" });
+			await apiFetch("/api/newsletter", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email, source: "footer" }),
+			});
+			setNewsletterEmail("");
+			setNewsletterStatus({ type: "success", message: "Thanks — you’re on the list." });
+		} catch (error) {
+			setNewsletterStatus({
+				type: "error",
+				message: error.message || "Newsletter signup failed. Please try again.",
+			});
+		} finally {
+			setNewsletterSubmitting(false);
+		}
+	}
 
 	/* ---------------------------------------------
 	 * THEME HANDLING
@@ -92,19 +124,29 @@ export default function Footer() {
 						<label htmlFor='newsletter-bar' className='text-main-light ps-2'>
 							Join Our Newsletter
 						</label>
-						<form className='d-flex position-relative w-100'>
+						<form className='d-flex position-relative w-100' onSubmit={handleNewsletterSubmit}>
 							<input
 								id='newsletter-bar'
-								type='text'
+								type='email'
 								className='newsletter-bar d-flex w-100 fw-lighter ps-3 pe-5 align-items-center'
 								placeholder='Email Address'
+								value={newsletterEmail}
+								onChange={(event) => setNewsletterEmail(event.target.value)}
+								disabled={newsletterSubmitting}
 							/>
 							<button
 								type='submit'
+								disabled={newsletterSubmitting}
+								aria-label='Join newsletter'
 								className='newsletter-arrow btn position-absolute end-0 top-0 pt-0 pe-1 me-1 border-0 bg-transparent'>
-								<i className='bi bi-arrow-right fs-5'></i>
+								<i className={`bi ${newsletterSubmitting ? "bi-hourglass-split" : "bi-arrow-right"} fs-5`}></i>
 							</button>
 						</form>
+						{newsletterStatus.message ? (
+							<div className={`newsletter-status small ps-2 pt-1 ${newsletterStatus.type === "error" ? "newsletter-status-error" : "newsletter-status-success"}`}>
+								{newsletterStatus.message}
+							</div>
+						) : null}
 					</div>
 					<div className="col-12 col-sm-2 col-md col-md-3 mt-0 mb-3 text-center align-self-end">
 						<div className="small copyright-text">

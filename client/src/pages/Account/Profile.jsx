@@ -45,6 +45,7 @@ export default function Profile() {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarPreview, setAvatarPreview] = useState("");
+  const [avatarError, setAvatarError] = useState(false);
   const fileInputRef = useRef(null);
 
   // Card modal state
@@ -54,10 +55,39 @@ export default function Profile() {
   const [loadingCard, setLoadingCard] = useState(false);
 
   const avatarSrc = useMemo(() => {
-    return user?.avatarUrl
-      ? `${user.avatarUrl}?v=${encodeURIComponent(user.avatarUpdatedAt || "0")}`
-      : "/img/avatar-placeholder.png";
+    if (!user?.avatarUrl) return null;
+
+    return `${user.avatarUrl}?v=${encodeURIComponent(user.avatarUpdatedAt || "0")}`;
   }, [user?.avatarUrl, user?.avatarUpdatedAt]);
+
+  const initials = useMemo(() => {
+    if (!user) return "";
+
+    const company = user.company?.name || user.company?.companyName;
+    if (company) {
+      return company
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word[0].toUpperCase())
+        .join("");
+    }
+
+    if (user.firstName || user.lastName) {
+      return [user.firstName, user.lastName]
+        .filter(Boolean)
+        .map((name) => name[0].toUpperCase())
+        .join("");
+    }
+
+    if (user.email) return user.email[0].toUpperCase();
+
+    return "";
+  }, [user]);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [avatarSrc]);
 
   // Populate form from user
   useEffect(() => {
@@ -430,18 +460,27 @@ export default function Profile() {
                   if (e.key === "Enter" || e.key === " ") openAvatarModal();
                 }}
                 style={{ width: 72, height: 72 }}>
-                <img
-                  key={avatarSrc}
-                  src={avatarSrc}
-                  alt='Avatar'
-                  className='rounded-circle avatar-image border border-main border-3'
-                  style={{
-                    width: 72,
-                    height: 72,
-                    objectFit: "cover",
-                    display: "block"
-                  }}
-                />
+                {avatarSrc && !avatarError ? (
+                  <img
+                    key={avatarSrc}
+                    src={avatarSrc}
+                    alt='Account avatar'
+                    className='rounded-circle avatar-image border border-main border-3'
+                    onError={() => setAvatarError(true)}
+                    style={{
+                      width: 72,
+                      height: 72,
+                      objectFit: "cover",
+                      display: "block"
+                    }}
+                  />
+                ) : (
+                  <div
+                    className='profile-avatar-initials rounded-circle border border-main border-3'
+                    aria-label='Account avatar initials'>
+                    {initials || "?"}
+                  </div>
+                )}
                 <div className='avatar-overlay'>
                   <i className='bi bi-camera-fill avatar-overlay-icon' />
                 </div>
@@ -912,12 +951,21 @@ export default function Profile() {
             </div>
 
             <div className='d-flex flex-column align-items-center'>
-              <img
-                src={avatarPreview || avatarSrc}
-                alt='Avatar preview'
-                className='rounded-circle border border-main border-3'
-                style={{ width: 160, height: 160, objectFit: "cover" }}
-              />
+              {avatarPreview || (avatarSrc && !avatarError) ? (
+                <img
+                  src={avatarPreview || avatarSrc}
+                  alt='Avatar preview'
+                  className='rounded-circle border border-main border-3'
+                  onError={() => setAvatarError(true)}
+                  style={{ width: 160, height: 160, objectFit: "cover" }}
+                />
+              ) : (
+                <div
+                  className='profile-avatar-initials profile-avatar-initials-lg rounded-circle border border-main border-3'
+                  aria-label='Avatar preview initials'>
+                  {initials || "?"}
+                </div>
+              )}
 
               <input
                 ref={fileInputRef}

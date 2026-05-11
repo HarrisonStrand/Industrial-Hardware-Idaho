@@ -182,6 +182,38 @@ export async function sendSpecialRequestEmail({ partName, partDescription, quant
   });
 }
 
+
+export async function sendNewsletterSignupEmail({ email, source = "website" }) {
+  const recipient = process.env.NEWSLETTER_TO || process.env.EMAIL_TO;
+  const submittedAt = new Date().toLocaleString("en-US", {
+    timeZone: "America/Boise",
+  });
+
+  const contentHtml = `
+    ${sectionTitle("Newsletter signup")}
+    ${infoTable([
+      ["Email", `<a href="mailto:${escapeHtml(email)}" style="color:${BRAND.accentDark}; text-decoration:none;">${escapeHtml(email)}</a>`],
+      ["Source", escapeHtml(source || "website")],
+      ["Submitted", escapeHtml(submittedAt)],
+    ])}
+  `;
+
+  return transporter.sendMail({
+    from: `"IHI Website" <${process.env.EMAIL_USER}>`,
+    to: recipient,
+    replyTo: email,
+    subject: `Newsletter Signup: ${email}`,
+    html: emailShell({
+      preheader: `New newsletter signup from ${email}`,
+      eyebrow: "Industrial Hardware Idaho",
+      title: "Newsletter Signup",
+      subtitle: email,
+      contentHtml,
+      footerNote: "Sent from the newsletter form on the IHI website.",
+    }),
+  });
+}
+
 export async function sendOrderConfirmationEmail({
   to,
   orderNumber,
