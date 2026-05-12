@@ -11,27 +11,22 @@ export function AuthProvider({ children }) {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const handleUnauthorized = useCallback(() => {
-    const path = window.location?.pathname || "";
-
-    // If we're already headed out, don't fight it.
+    // A 401 can happen during the initial auth check on public pages.
+    // Do not force a browser redirect here; let ProtectedRoute decide what
+    // requires login, and let logout intentionally route to /signed-out.
     setUser(null);
-
-    // avoid redirect loops
-    if (!path.startsWith("/signed-out")) {
-      window.location.replace("/signed-out");
-    }
   }, []);
 
   const fetchMe = useCallback(async () => {
     try {
-      const data = await apiFetch("/api/auth/me", {}, { onUnauthorized: handleUnauthorized });
+      const data = await apiFetch("/api/auth/me");
       setUser(data.user || null);
     } catch {
       setUser(null);
     } finally {
       setLoadingAuth(false);
     }
-  }, [handleUnauthorized]);
+  }, []);
 
   useEffect(() => {
     fetchMe();

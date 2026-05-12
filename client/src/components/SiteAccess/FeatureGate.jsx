@@ -1,63 +1,36 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import siteAccess from "../../config/siteAccess";
+import { useAuth } from "../../context/AuthContext.jsx";
+import ComingSoonPage from "./ComingSoonPage.jsx";
 
 export default function FeatureGate({
-	feature,
+	feature = "",
+	enabled = null,
+	title = "Coming Soon",
+	description = "",
+	backTo = "/",
+	backLabel = "Back Home",
 	children,
 	fallback = null,
 }) {
 	const location = useLocation();
-	const [authReady, setAuthReady] = useState(false);
-	const [isAdmin, setIsAdmin] = useState(false);
+	const { isAdmin, loadingAuth } = useAuth();
 
-	useEffect(() => {
-		let cancelled = false;
+	const featureConfig = feature ? siteAccess?.[feature] || {} : {};
+	const isEnabled =
+		typeof enabled === "boolean"
+			? enabled
+			: Boolean(featureConfig?.enabled);
 
-		async function checkAuth() {
-			try {
-				const res = await fetch("/api/auth/me", {
-					credentials: "include",
-				});
-
-				if (!res.ok) {
-					if (!cancelled) {
-						setIsAdmin(false);
-						setAuthReady(true);
-					}
-					return;
-				}
-
-				const data = await res.json();
-				const role = String(data?.user?.role || "").toLowerCase();
-
-				if (!cancelled) {
-					setIsAdmin(role === "admin");
-					setAuthReady(true);
-				}
-			} catch {
-				if (!cancelled) {
-					setIsAdmin(false);
-					setAuthReady(true);
-				}
-			}
-		}
-
-		checkAuth();
-		return () => {
-			cancelled = true;
-		};
-	}, []);
-
-	if (!authReady) return null;
-
-	if (isAdmin) {
+	if (isEnabled) {
 		return children;
 	}
 
-	const enabled = Boolean(siteAccess?.[feature]);
+	if (loadingAuth) {
+		return null;
+	}
 
-	if (enabled) {
+	if (isAdmin) {
 		return children;
 	}
 
@@ -66,10 +39,11 @@ export default function FeatureGate({
 	}
 
 	return (
-		<Navigate
-			to="/coming-soon"
-			replace
-			state={{ from: location.pathname }}
+		<ComingSoonPage
+			title={title || featureConfig?.title || "Coming Soon"}
+			description={description || featureConfig?.description || ""}
+			backTo={backTo || location.state?.from || "/"}
+			backLabel={backLabel || "Back Home"}
 		/>
 	);
 }

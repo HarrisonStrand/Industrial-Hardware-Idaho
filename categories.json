@@ -23,22 +23,17 @@
         {
           "id": "hanger-bolts",
           "name": "Hanger Bolts",
-          "image": "/images/subcategories/hanger-bolts.png"
+          "image": "/images/subcategories/subcategory-placeholder.png"
         },
         {
           "id": "elevator-bolts",
           "name": "Elevator Bolts",
-          "image": "/images/subcategories/elevator-bolts.png"
+          "image": "/images/subcategories/subcategory-placeholder.png"
         },
         {
           "id": "flange-bolts",
           "name": "Flange Bolts",
-          "image": "/images/subcategories/flange-bolts.png"
-        },
-        {
-          "id": "carriage-bolts",
-          "name": "Carriage Bolts",
-          "image": "/images/subcategories/carriage-bolts.png"
+          "image": "/images/product-family-images/bolts/flange-bolt-zinc-grade-5.png"
         }
       ]
     },
@@ -216,14 +211,14 @@
     {
       "id": "rivets",
       "name": "Rivets",
-      "image": "/images/categories/RIVETS.png",
+      "image": "/images/subcategories/subcategory-placeholder.png",
       "subcategories": [],
       "directPath": "/products/rivets/rivets"
     },
     {
       "id": "abrasives",
       "name": "Abrasives",
-      "image": "/images/categories/ABRASIVES.png",
+      "image": "/images/subcategories/subcategory-placeholder.png",
       "subcategories": [
         {
           "id": "cut-off-wheels",
@@ -270,14 +265,14 @@
     {
       "id": "threaded-rod",
       "name": "Threaded Rod",
-      "image": "/images/categories/THREADED-ROD.png",
+      "image": "/images/subcategories/subcategory-placeholder.png",
       "subcategories": [],
       "directPath": "/products/threaded-rod/threaded-rod"
     },
     {
       "id": "wire-hardware",
       "name": "Wire Hardware",
-      "image": "/images/categories/WIRE-HARDWARE.png",
+      "image": "/images/subcategories/subcategory-placeholder.png",
       "subcategories": [
         {
           "id": "u-bolts",
@@ -319,7 +314,7 @@
     {
       "id": "drill-bits",
       "name": "Drill Bits",
-      "image": "/images/categories/DRILL-BITS.png",
+      "image": "/images/subcategories/subcategory-placeholder.png",
       "subcategories": [],
       "directPath": "/products/drill-bits/drill-bits"
     },
@@ -365,7 +360,7 @@
     {
       "id": "hose-tubing",
       "name": "Hose & Tubing",
-      "image": "/images/categories/HOSE-TUBING.png",
+      "image": "/images/subcategories/subcategory-placeholder.png",
       "subcategories": [
         {
           "id": "hose-clamps",

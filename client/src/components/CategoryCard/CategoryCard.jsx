@@ -9,13 +9,13 @@ export default function CategoryCard({
   isSubcategory = false,
   isGroup = false
 }) {
-  let linkTo = "";
+  let linkTo = category.directPath || category.path || category.href || "";
 
-  if (isSubcategory && parentCategoryId) {
+  if (!linkTo && isSubcategory && parentCategoryId) {
     linkTo = `/products/${parentCategoryId}/${category.id}`;
-  } else if (isGroup && parentCategoryId) {
+  } else if (!linkTo && isGroup && parentCategoryId) {
     linkTo = `/products?category=${parentCategoryId}&group=${category.id}`;
-  } else {
+  } else if (!linkTo) {
     linkTo = `/products?category=${category.id}`;
   }
 

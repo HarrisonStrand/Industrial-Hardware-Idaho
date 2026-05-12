@@ -16,8 +16,9 @@
    ============================================================ */
 
 .top-bar {
-	filter: drop-shadow(0 7px 16px rgba(0, 0, 0, 0.25));
-	border-bottom: 1px rgba(0, 0, 0, 0.5);
+	/* Avoid filter-based shadow artifacts when top-bar links are hovered. */
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+	border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 	position: relative;
 	z-index: 2000; /* sits above mobile overlay */
 }
@@ -39,14 +40,27 @@
 	}
 }
 
-.top-bar a {
+/* .top-bar a {
+	text-decoration: none !important;
+	transition:
+		color 0.25s ease,
+		opacity 0.25s ease;
+}
+
+.top-bar a:hover {
+	color: var(--alt-color) !important;
+	text-decoration: none !important;
+	opacity: 0.9;
+} */
+
+.top-bar-text + .bi {
 	transition:
 		color 0.25s ease,
 		transform 0.25s ease,
 		opacity 0.25s ease;
 }
 
-.top-bar a:hover {
+.top-bar-text:hover + .bi {
 	color: var(--alt-color) !important;
 	transform: translateY(-1px);
 	opacity: 0.9;
@@ -577,23 +591,4 @@
   height: 1px;
   background: rgba(0, 0, 0, 0.12);
   border-radius: 1px;
-}
-
-
-.shop-feature-card {
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.shop-feature-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 1px 4px 8px rgba(0, 0, 0, 0.18);
-}
-
-.shop-feature-image {
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  background: var(--main-light);
 }

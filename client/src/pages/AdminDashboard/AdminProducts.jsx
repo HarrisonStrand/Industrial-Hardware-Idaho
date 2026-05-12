@@ -762,7 +762,7 @@ export default function AdminProducts() {
 											No products match the current filters.
 										</div>
 									) : (
-										<div className='list-group'>
+										<div className='list-group gap-2'>
 											{rows.map((item) => {
 												const rowId = String(item.productId);
 												const isActive = String(selectedId) === rowId;
