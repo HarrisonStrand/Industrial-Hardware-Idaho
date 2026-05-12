@@ -28,6 +28,7 @@ function serializeUser(user) {
 		lastName: user.lastName,
 		phone: user.phone || "",
 		role: user.role,
+		authProvider: user.authProvider || "local",
 
 		company: user.company || { name: "" },
 
@@ -65,6 +66,62 @@ function serializeUser(user) {
 		payment: {
 			hasCardOnFile: Boolean(user?.payment?.defaultPaymentMethodId),
 		},
+	};
+}
+
+
+async function verifyGoogleCredential(credential = "") {
+	if (!credential) {
+		throw new Error("Missing Google credential");
+	}
+
+	const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
+	if (!clientId) {
+		throw new Error("Google sign-in is not configured on the server");
+	}
+
+	const params = new URLSearchParams({ id_token: credential });
+	const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?${params.toString()}`);
+	const payload = await response.json().catch(() => ({}));
+
+	if (!response.ok) {
+		throw new Error(payload?.error_description || "Invalid Google credential");
+	}
+
+	if (payload.aud !== clientId) {
+		throw new Error("Google credential is for a different client ID");
+	}
+
+	if (payload.email_verified !== "true" && payload.email_verified !== true) {
+		throw new Error("Google email is not verified");
+	}
+
+	if (!payload.email || !payload.sub) {
+		throw new Error("Google credential is missing account details");
+	}
+
+	return payload;
+}
+
+function splitGoogleName(payload = {}) {
+	const givenName = String(payload.given_name || "").trim();
+	const familyName = String(payload.family_name || "").trim();
+
+	if (givenName || familyName) {
+		return {
+			firstName: givenName || "Google",
+			lastName: familyName || "User",
+		};
+	}
+
+	const nameParts = String(payload.name || "")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
+
+	return {
+		firstName: nameParts[0] || "Google",
+		lastName: nameParts.slice(1).join(" ") || "User",
 	};
 }
 
@@ -117,6 +174,72 @@ router.post("/register", async (req, res) => {
 	} catch (err) {
 		console.error("REGISTER ERROR:", err);
 		res.status(500).json({ error: "Registration failed" });
+	}
+});
+
+
+router.post("/google", async (req, res) => {
+	try {
+		const { credential } = req.body || {};
+		const googleProfile = await verifyGoogleCredential(credential);
+		const email = String(googleProfile.email || "").toLowerCase().trim();
+
+		let user = await User.findOne({
+			$or: [{ email }, { googleId: googleProfile.sub }],
+		});
+
+		if (!user) {
+			const { firstName, lastName } = splitGoogleName(googleProfile);
+			const passwordHash = await bcrypt.hash(
+				crypto.randomBytes(32).toString("hex"),
+				12,
+			);
+
+			user = await User.create({
+				email,
+				passwordHash,
+				firstName,
+				lastName,
+				authProvider: "google",
+				googleId: googleProfile.sub,
+				googlePicture: googleProfile.picture || "",
+				avatarUrl: googleProfile.picture || "",
+				avatarUpdatedAt: googleProfile.picture ? new Date() : null,
+			});
+		} else {
+			let changed = false;
+
+			if (!user.googleId) {
+				user.googleId = googleProfile.sub;
+				changed = true;
+			}
+
+			if (user.authProvider !== "google") {
+				user.authProvider = "google";
+				changed = true;
+			}
+
+			if (googleProfile.picture && !user.googlePicture) {
+				user.googlePicture = googleProfile.picture;
+				changed = true;
+			}
+
+			if (googleProfile.picture && !user.avatarUrl) {
+				user.avatarUrl = googleProfile.picture;
+				user.avatarUpdatedAt = new Date();
+				changed = true;
+			}
+
+			if (changed) await user.save();
+		}
+
+		const token = signToken({ id: user._id.toString(), role: user.role });
+		setAuthCookie(res, token);
+
+		return res.status(200).json({ user: serializeUser(user) });
+	} catch (err) {
+		console.error("GOOGLE LOGIN ERROR:", err);
+		return res.status(401).json({ error: err.message || "Google sign-in failed" });
 	}
 });
 

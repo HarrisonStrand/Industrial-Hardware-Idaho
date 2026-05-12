@@ -69,6 +69,15 @@ const UserSchema = new mongoose.Schema(
   {
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     passwordHash: { type: String, required: true },
+
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    googleId: { type: String, default: "", index: true },
+    googlePicture: { type: String, default: "" },
+
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
     phone: { type: String, trim: true, default: "" },
@@ -97,5 +106,7 @@ const UserSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+UserSchema.index({ googleId: 1 });
 
 export default mongoose.model("User", UserSchema);

@@ -3,16 +3,34 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* CTA Button */
-.btn-main-cta {
-	line-height: 20px !important;
-	width: 100%;
-	max-width: 250px;
+.register-form {
+  width: 100%;
 }
+
+.register-form .form-input {
+  min-height: 46px;
+}
+
+.register-form .alert {
+  font-size: 0.95rem;
+}
+
+.btn-main-cta {
+  line-height: 20px !important;
+  width: 100%;
+  max-width: 250px;
+}
+
 
 .auth-divider {
   display: flex;
