@@ -60,32 +60,32 @@
         {
           "id": "wood-screws",
           "name": "Wood Screws",
-          "image": "/images/subcategories/subcategory-placeholder.png"
+          "image": "/images/subcategories/wood-screws.png"
         },
         {
           "id": "drywall-screws",
           "name": "Drywall Screws",
-          "image": "/images/subcategories/subcategory-placeholder.png"
+          "image": "/images/subcategories/drywall-screws.png"
         },
         {
           "id": "outdoor-screws",
           "name": "Outdoor Screws",
-          "image": "/images/subcategories/subcategory-placeholder.png"
+          "image": "/images/subcategories/outdoor-screws.png"
         },
         {
           "id": "lag-screws",
           "name": "Lag Screws",
-          "image": "/images/subcategories/subcategory-placeholder.png"
+          "image": "/images/subcategories/lag-screws.png"
         },
         {
           "id": "self-drilling-screws",
           "name": "Self Drilling Screws",
-          "image": "/images/subcategories/subcategory-placeholder.png"
+          "image": "/images/subcategories/self-drilling-screws.png"
         },
         {
           "id": "thread-cutting-screws",
           "name": "Thread Cutting Screws",
-          "image": "/images/subcategories/subcategory-placeholder.png"
+          "image": "/images/subcategories/thread-cutting-screws.png"
         }
       ]
     },
@@ -348,7 +348,7 @@
     {
       "id": "paints-silicone",
       "name": "Paints & Silicone",
-      "image": "/images/subcategories/subcategory-placeholder.png",
+      "image": "/images/categories/PAINT-SILICONE.png",
       "subcategories": [
         {
           "id": "spray-paint",

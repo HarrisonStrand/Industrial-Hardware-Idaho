@@ -282,56 +282,99 @@ router.get("/me", requireAuth, async (req, res) => {
    Forgot / Reset password
    =========================== */
 
+function getResetClientOrigin(req) {
+	const configuredOrigin =
+		process.env.CLIENT_ORIGIN ||
+		process.env.FRONTEND_URL ||
+		process.env.SITE_URL ||
+		"";
+
+	if (configuredOrigin) {
+		return configuredOrigin.replace(/\/$/, "");
+	}
+
+	if (process.env.NODE_ENV !== "production") {
+		return "http://localhost:5173";
+	}
+
+	return `${req.protocol}://${req.get("host")}`.replace(/\/$/, "");
+}
+
+function getMailCredentials() {
+	return {
+		user: process.env.GMAIL_USER || process.env.EMAIL_USER || "",
+		pass: process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || "",
+	};
+}
+
+async function sendPasswordResetEmail({ to, resetLink }) {
+	const { user, pass } = getMailCredentials();
+
+	if (!user || !pass) {
+		console.warn(
+			"PASSWORD RESET EMAIL NOT SENT: missing GMAIL_USER/GMAIL_APP_PASSWORD or EMAIL_USER/EMAIL_PASS.",
+		);
+		console.warn("Development reset link:", resetLink);
+		return { skipped: true };
+	}
+
+	const transporter = nodemailer.createTransport({
+		service: "gmail",
+		auth: { user, pass },
+	});
+
+	return transporter.sendMail({
+		from: `"Industrial Hardware Idaho" <${user}>`,
+		to,
+		subject: "Reset your Industrial Hardware Idaho password",
+		html: `
+			<div style="font-family:Arial,sans-serif;line-height:1.5;color:#183018;">
+				<h2 style="margin:0 0 12px;">Reset your password</h2>
+				<p>Click the button below to reset your password.</p>
+				<p>
+					<a href="${resetLink}" style="display:inline-block;padding:10px 14px;background:#495a42;color:#fff;text-decoration:none;border-radius:10px;">
+						Reset Password
+					</a>
+				</p>
+				<p>This link expires in 1 hour.</p>
+				<p>If you didn’t request this, you can ignore this email.</p>
+				<p style="font-size:12px;color:#666;">If the button does not work, copy and paste this link into your browser:<br/>${resetLink}</p>
+			</div>
+		`,
+	});
+}
+
 router.post("/forgot-password", async (req, res) => {
 	try {
 		const { email } = req.body || {};
-		if (!email) return res.status(400).json({ error: "Email is required" });
+		const normalizedEmail = String(email || "").toLowerCase().trim();
 
-		const user = await User.findOne({ email: email.toLowerCase() });
+		if (!normalizedEmail) {
+			return res.status(400).json({ error: "Email is required" });
+		}
 
-		// Always return success to avoid leaking account existence
+		const user = await User.findOne({ email: normalizedEmail });
+
+		// Always return success to avoid leaking whether an account exists.
 		if (!user) return res.json({ success: true });
 
 		const { token, tokenHash } = createResetToken();
 		user.resetPasswordTokenHash = tokenHash;
-		user.resetPasswordExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+		user.resetPasswordExpiresAt = new Date(Date.now() + 60 * 60 * 1000);
 		await user.save();
 
-		const origin = process.env.CLIENT_ORIGIN || "http://localhost:3000";
+		const origin = getResetClientOrigin(req);
 		const resetLink = `${origin}/reset-password?token=${token}&email=${encodeURIComponent(
-			user.email
+			user.email,
 		)}`;
 
-		const transporter = nodemailer.createTransport({
-			service: "gmail",
-			auth: {
-				user: process.env.GMAIL_USER,
-				pass: process.env.GMAIL_APP_PASSWORD,
-			},
-		});
-
-		await transporter.sendMail({
-			from: process.env.GMAIL_USER,
-			to: user.email,
-			subject: "Reset your password",
-			html: `
-        <div style="font-family:Arial,sans-serif;line-height:1.5">
-          <h2>Reset your password</h2>
-          <p>Click the button below to reset your password.</p>
-          <p>
-            <a href="${resetLink}" style="display:inline-block;padding:10px 14px;background:#111;color:#fff;text-decoration:none;border-radius:6px">
-              Reset Password
-            </a>
-          </p>
-          <p>This link expires in 1 hour.</p>
-          <p>If you didn’t request this, you can ignore this email.</p>
-        </div>
-      `,
-		});
+		await sendPasswordResetEmail({ to: user.email, resetLink });
 
 		return res.json({ success: true });
 	} catch (err) {
 		console.error("FORGOT PASSWORD ERROR:", err);
+
+		// Keep response generic so the endpoint does not reveal account existence.
 		return res.json({ success: true });
 	}
 });
