@@ -28,11 +28,12 @@
     "csv-parse": "^6.2.1",
     "dotenv": "^16.4.0",
     "express": "^4.19.2",
+    "framer-motion": "^12.38.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.8.9",
     "multer": "^2.0.2",
-    "stripe": "^20.2.0",
-    "nodemailer": "^6.9.16"
+    "nodemailer": "^6.9.16",
+    "stripe": "^20.2.0"
   },
   "devDependencies": {
     "baseline-browser-mapping": "^2.9.14",
