@@ -9,15 +9,20 @@ import { createResetToken } from "../utils/resetToken.js";
 
 const router = express.Router();
 
-function setAuthCookie(res, token) {
-	const isProd = process.env.NODE_ENV === "production";
+const isProduction = process.env.NODE_ENV === "production";
+const isRender = Boolean(process.env.RENDER);
+const useSecureCookie = isProduction || isRender;
 
-	res.cookie("token", token, {
-		httpOnly: true,
-		secure: isProd,
-		sameSite: isProd ? "none" : "lax",
-		maxAge: 7 * 24 * 60 * 60 * 1000,
-	});
+const authCookieOptions = {
+	httpOnly: true,
+	secure: useSecureCookie,
+	sameSite: useSecureCookie ? "none" : "lax",
+	path: "/",
+	maxAge: 1000 * 60 * 60 * 24 * 7,
+};
+
+function setAuthCookie(res, token) {
+	res.cookie("token", token, authCookieOptions);
 }
 
 function serializeUser(user) {
@@ -81,7 +86,9 @@ async function verifyGoogleCredential(credential = "") {
 	}
 
 	const params = new URLSearchParams({ id_token: credential });
-	const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?${params.toString()}`);
+	const response = await fetch(
+		`https://oauth2.googleapis.com/tokeninfo?${params.toString()}`,
+	);
 	const payload = await response.json().catch(() => ({}));
 
 	if (!response.ok) {
@@ -267,7 +274,13 @@ router.post("/login", async (req, res) => {
 });
 
 router.post("/logout", (_req, res) => {
-	res.clearCookie("token");
+	res.clearCookie("token", {
+		httpOnly: true,
+		secure: useSecureCookie,
+		sameSite: useSecureCookie ? "none" : "lax",
+		path: "/",
+	});
+
 	res.status(200).json({ success: true });
 });
 

@@ -673,6 +673,12 @@ export const listAdminReviewProducts = async (req, res) => {
 			});
 		}
 
+		const requiresEnrichmentMatch =
+			Boolean(category) ||
+			Boolean(subcategory) ||
+			Boolean(familyType) ||
+			Boolean(search);
+
 		const basePipeline = [
 			{ $match: productMatch },
 			{
@@ -686,7 +692,7 @@ export const listAdminReviewProducts = async (req, res) => {
 			{
 				$unwind: {
 					path: "$enrichment",
-					preserveNullAndEmptyArrays: false,
+					preserveNullAndEmptyArrays: !requiresEnrichmentMatch,
 				},
 			},
 		];
@@ -864,7 +870,12 @@ export const listAdminReviewProducts = async (req, res) => {
 							{
 								$ifNull: [
 									"$fishbowl.description",
-									{ $ifNull: ["$fishbowl.partNum", "$sku"] },
+									{
+										$ifNull: [
+											"$fishbowl.partNum",
+											{ $ifNull: ["$sku", "Untitled Product"] },
+										],
+									},
 								],
 							},
 						],
