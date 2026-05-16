@@ -165,7 +165,7 @@ function normalizeMaterialAndFinish({ material = "", finish = "" }) {
 	}
 
 	const displayMaterial = nextMaterial || nextFinish || "";
-	const displayFinish = nextFinish || nextMaterial || "";
+	const displayFinish = nextFinish || "";
 
 	const materialFinish =
 		nextFinish && nextMaterial
@@ -416,6 +416,113 @@ function metricThreadPitchFromDiameter(diameter = "") {
 	};
 
 	return map[normalized] || "";
+}
+
+function isImperialStainlessHexCapPartNumber(partNum = "") {
+	const raw = String(partNum || "").trim().toUpperCase().replace(/\s+/g, "");
+
+	// Imperial stainless hex-cap/head bolts in Fishbowl are not always fully
+	// encoded with the C/F thread-series marker. Examples like SSCS140700 316SS
+	// still need to be treated as stainless hex-cap candidates because the SSCS
+	// prefix is the reliable signal for this family.
+	return /^SSCS/i.test(raw);
+}
+
+function textHasImperialStainlessHexCapPartNumber(text = "") {
+	const raw = String(text || "").toUpperCase();
+	return /(?:^|[^A-Z0-9])SSCS[A-Z0-9-]*/i.test(raw);
+}
+
+function detectStainlessGradeFromText(text = "") {
+	const raw = String(text || "");
+
+	if (/\b316\s*(?:s\/?s|ss|stainless)?\b/i.test(raw)) return "316";
+	if (/\b304\s*(?:s\/?s|ss|stainless)?\b/i.test(raw)) return "304";
+	if (/\ba4[-\s]?70\b/i.test(raw)) return "316";
+	if (/\ba2[-\s]?70\b/i.test(raw)) return "304";
+
+	return "";
+}
+
+function metricHexDescriptionEndsWithStainless(text = "", partNum = "") {
+	const rawText = String(text || "").trim();
+	const rawPart = String(partNum || "").trim().toUpperCase();
+
+	if (!rawText) return false;
+	if (!rawPart.startsWith("MMCS") && !/\bmetric\b|\bmm\b|\bm\d+/i.test(rawText)) {
+		return false;
+	}
+
+	return /(?:^|\s)(?:s\/s|ss)\s*$/i.test(rawText);
+}
+
+function isStainlessHexCapCandidate(text = "", partNum = "") {
+	return (
+		isImperialStainlessHexCapPartNumber(partNum) ||
+		textHasImperialStainlessHexCapPartNumber(text) ||
+		metricHexDescriptionEndsWithStainless(text, partNum)
+	);
+}
+
+function inferImperialThreadPitchBySeries(diameter = "", series = "") {
+	const dia = clean(diameter);
+	const normalizedSeries = String(series || "").trim().toUpperCase();
+	const coarseMap = {
+		"#10": "24",
+		"1/4": "20",
+		"5/16": "18",
+		"3/8": "16",
+		"7/16": "14",
+		"1/2": "13",
+		"9/16": "12",
+		"5/8": "11",
+		"3/4": "10",
+		"7/8": "9",
+		"1": "8",
+		"1-1/8": "7",
+		"1-1/4": "7",
+		"1-3/8": "6",
+		"1-1/2": "6",
+		"2": "4.5",
+	};
+	const fineMap = {
+		"#10": "32",
+		"1/4": "28",
+		"5/16": "24",
+		"3/8": "24",
+		"7/16": "20",
+		"1/2": "20",
+		"9/16": "18",
+		"5/8": "18",
+		"3/4": "16",
+		"7/8": "14",
+		"1": "12",
+		"1-1/8": "8",
+		"1-1/4": "8",
+		"1-3/8": "8",
+		"1-1/2": "8",
+		"2": "6",
+	};
+	return normalizedSeries === "F" ? fineMap[dia] || "" : coarseMap[dia] || "";
+}
+
+function decodeLooseStainlessHexCapThreadFromText(text = "", partNum = "") {
+	const combined = `${partNum || ""} ${text || ""}`.toUpperCase();
+	const match = combined.match(/(?:^|[^A-Z0-9])SSCS(\d{2,3})(\d{4})([CF])(?:[^A-Z0-9]|$)/i);
+	if (!match) return null;
+
+	const [, diaCode = "", lenCode = "", seriesCode = ""] = match;
+	const diameter = imperialDiameterFromCode(diaCode);
+	const threadSeries = seriesCode.toUpperCase() === "F" ? "fine" : "coarse";
+	const threadPitch = inferImperialThreadPitchBySeries(diameter, seriesCode);
+
+	return {
+		measurementSystem: "imperial",
+		diameter,
+		length: fractionFromSixteenthsCode(lenCode),
+		threadPitch,
+		threadSeries,
+	};
 }
 
 function decodeImperialHexCapPartNumber(partNum = "") {
@@ -1324,13 +1431,21 @@ function detectCotterPinFamily(text = "", parsed = {}) {
 
 function detectBoltMaterial(text = "", product = null, parsed = {}, decoded = null) {
 	const rawText = String(text || "");
+	const partNum = getPartNumberText(product, parsed).toUpperCase();
 
-	if (clean(parsed.material)) return clean(parsed.material);
-	if (decoded?.materialHint) return decoded.materialHint;
-
+	// Stainless signals from the Fishbowl part number/description must win over
+	// older parsed attributes, because some imported rows were parsed as steel/zinc
+	// before stainless handling existed.
+	if (isImperialStainlessHexCapPartNumber(partNum)) return "stainless steel";
+	if (textHasImperialStainlessHexCapPartNumber(rawText)) return "stainless steel";
+	if (metricHexDescriptionEndsWithStainless(rawText, partNum)) return "stainless steel";
 	if (/\bs\/s\b/i.test(rawText)) return "stainless steel";
 	if (/\bstainless\b/i.test(rawText)) return "stainless steel";
 	if (/[\s/(-]ss[\s/)-]?/i.test(` ${rawText} `)) return "stainless steel";
+
+	if (clean(parsed.material)) return clean(parsed.material);
+
+	if (decoded?.materialHint) return decoded.materialHint;
 
 	const detected = detectMaterial(text);
 	if (detected) return detected;
@@ -1350,6 +1465,13 @@ function detectBoltFinish(
 	const mat = clean(material).toLowerCase();
 
 	if (clean(parsed.finish)) return clean(parsed.finish);
+
+	if (mat === "stainless steel") return "";
+	if (mat === "aluminum") return "";
+	if (mat === "brass") return "";
+	if (mat === "nylon") return "";
+	if (mat === "silicon bronze") return "";
+
 	if (decoded?.finishHint) return decoded.finishHint;
 
 	if (value.includes("plain")) return "plain";
@@ -1383,17 +1505,17 @@ function detectBoltGrade(
 	decoded = null,
 ) {
 	const explicit = clean(parsed.grade || "");
-	if (explicit) return explicit;
-
 	const rawText = String(text || "");
 	const mat = clean(material).toLowerCase();
 	const system = clean(measurementSystem).toLowerCase();
 	const value = normalize(rawText);
 
 	if (mat === "stainless steel") {
-		if (/\b316\b/i.test(rawText)) return "316";
-		return "304";
+		const stainlessGrade = detectStainlessGradeFromText(rawText);
+		return stainlessGrade || explicit || "304";
 	}
+
+	if (explicit) return explicit;
 
 	if (
 		mat === "nylon" ||
@@ -1465,7 +1587,6 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 	const isExcludedBA =
 		/^BA/i.test(partNum) || /\bBA\d/i.test(partNum);
 	const isExcludedFT = /^SSCSFT/i.test(partNum);
-	const isExcludedSSCSC = /^SSCS\d{3,4}\d{4}C(?:\s*TAP)?$/i.test(partNum);
 
 	const isNonHexHeadLike =
 		socketLike ||
@@ -1474,18 +1595,20 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		value.includes("button hd") ||
 		value.includes("button head");
 
-	if (isAssemblyLike || isToolingLike || isExcludedBA || isExcludedFT || isExcludedSSCSC || isNonHexHeadLike) {
+	if (isAssemblyLike || isToolingLike || isExcludedBA || isExcludedFT || isNonHexHeadLike) {
 		return null;
 	}
 
 	const looksLikeEncodedHexCap =
 		partNum.startsWith("MMCS") ||
-		/^(?:SS|HH|SB|AN|AL|BR)?CS\d/i.test(partNum);
+		/^(?:SS|HH|SB|AN|AL|BR)?CS\d/i.test(partNum) ||
+		isStainlessHexCapCandidate(text, partNum);
 
 	const shorthand = detectImperialShorthandCapScrew(text);
 	const structural = detectStructuralBoltDescription(text);
 	const compactMetric = detectCompactMetricCapScrew(text, product);
 	const stainlessOneInch = detectStainlessOneInchCapScrew(text, product);
+	const looseStainlessHexThread = decodeLooseStainlessHexCapThreadFromText(text, partNum);
 	const roundStock = detectRoundStockA307(text);
 
 	const isHexCap =
@@ -1564,6 +1687,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		parsed.measurementSystem ||
 		compactMetric?.measurementSystem ||
 		stainlessOneInch?.measurementSystem ||
+		looseStainlessHexThread?.measurementSystem ||
 		roundStock?.measurementSystem ||
 		structural?.measurementSystem ||
 		shorthand?.measurementSystem ||
@@ -1595,6 +1719,11 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 	const metricPitch = clean(metricThreadedSize?.threadPitch || "");
 	const metricLength = clean(metricThreadedSize?.length || "");
 
+	const looseStainlessDiameter = clean(looseStainlessHexThread?.diameter || "");
+	const looseStainlessPitch = clean(looseStainlessHexThread?.threadPitch || "");
+	const looseStainlessSeries = clean(looseStainlessHexThread?.threadSeries || "");
+	const looseStainlessLength = clean(looseStainlessHexThread?.length || "");
+
 	const genericDiameter = clean(dims.diameter || "");
 	const genericPitch = clean(dims.threadPitch || "");
 	const genericLength = clean(dims.length || "");
@@ -1603,6 +1732,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		clean(parsed.diameter || "") ||
 		clean(compactMetric?.diameter || "") ||
 		clean(stainlessOneInch?.diameter || "") ||
+		looseStainlessDiameter ||
 		clean(roundStock?.diameter || "") ||
 		structuralDiameter ||
 		decodedDiameter ||
@@ -1618,6 +1748,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		clean(parsed.threadPitch || "") ||
 		clean(compactMetric?.threadPitch || "") ||
 		clean(stainlessOneInch?.threadPitch || "") ||
+		looseStainlessPitch ||
 		clean(roundStock?.threadPitch || "") ||
 		structuralPitch ||
 		decodedPitch ||
@@ -1633,6 +1764,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		clean(parsed.length || "") ||
 		clean(compactMetric?.length || "") ||
 		clean(stainlessOneInch?.length || "") ||
+		looseStainlessLength ||
 		clean(roundStock?.length || "") ||
 		structuralLength ||
 		decodedLength ||
@@ -1661,6 +1793,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 	const threadSeries =
 		clean(parsed.threadSeries || parsed.thread_series || "") ||
 		clean(structural?.threadSeries || "") ||
+		looseStainlessSeries ||
 		clean(decoded?.threadSeries || "") ||
 		clean(shorthand?.threadSeries || "") ||
 		(
@@ -1669,32 +1802,41 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 				: ""
 		);
 
-	const boltMaterial =
-		clean(parsed.material || "") ||
-		clean(compactMetric?.material || "") ||
-		clean(stainlessOneInch?.material || "") ||
-		clean(roundStock?.material || "") ||
-		clean(structural?.material || "") ||
-		clean(shorthand?.material || "") ||
-		detectBoltMaterial(text, product, parsed, decoded);
+	const stainlessMaterialOverride =
+		isImperialStainlessHexCapPartNumber(partNum) ||
+		textHasImperialStainlessHexCapPartNumber(text) ||
+		metricHexDescriptionEndsWithStainless(text, partNum) ||
+		detectMaterial(text) === "stainless steel";
 
-	const boltFinish =
-		clean(parsed.finish || "") ||
-		clean(compactMetric?.finish || "") ||
-		clean(stainlessOneInch?.finish || "") ||
-		clean(roundStock?.finish || "") ||
-		clean(structural?.finish || "") ||
-		clean(shorthand?.finish || "") ||
-		detectBoltFinish(text, product, parsed, boltMaterial, decoded);
+	const boltMaterial = stainlessMaterialOverride
+		? "stainless steel"
+		: clean(parsed.material || "") ||
+			clean(compactMetric?.material || "") ||
+			clean(stainlessOneInch?.material || "") ||
+			clean(roundStock?.material || "") ||
+			clean(structural?.material || "") ||
+			clean(shorthand?.material || "") ||
+			detectBoltMaterial(text, product, parsed, decoded);
 
-	const grade =
-		clean(parsed.grade || "") ||
-		clean(compactMetric?.grade || "") ||
-		clean(stainlessOneInch?.grade || "") ||
-		clean(roundStock?.grade || "") ||
-		clean(structural?.grade || "") ||
-		clean(shorthand?.grade || "") ||
-		detectBoltGrade(text, measurementSystem, boltMaterial, parsed, decoded);
+	const boltFinish = stainlessMaterialOverride
+		? ""
+		: clean(parsed.finish || "") ||
+			clean(compactMetric?.finish || "") ||
+			clean(stainlessOneInch?.finish || "") ||
+			clean(roundStock?.finish || "") ||
+			clean(structural?.finish || "") ||
+			clean(shorthand?.finish || "") ||
+			detectBoltFinish(text, product, parsed, boltMaterial, decoded);
+
+	const grade = stainlessMaterialOverride
+		? detectBoltGrade(text, measurementSystem, boltMaterial, parsed, decoded)
+		: clean(parsed.grade || "") ||
+			clean(compactMetric?.grade || "") ||
+			clean(stainlessOneInch?.grade || "") ||
+			clean(roundStock?.grade || "") ||
+			clean(structural?.grade || "") ||
+			clean(shorthand?.grade || "") ||
+			detectBoltGrade(text, measurementSystem, boltMaterial, parsed, decoded);
 
 	const normalizedMF = normalizeMaterialAndFinish({
 		material: boltMaterial,
