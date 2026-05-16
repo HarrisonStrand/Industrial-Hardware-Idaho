@@ -73,6 +73,15 @@ app.use("/api/products", productRoutes);
 
 app.use("/public", express.static(path.resolve("public")));
 
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    service: "industrial-hardware-idaho-backend",
+    build: "render-route-check",
+    timestamp: new Date().toISOString(),
+  });
+});
+
 const PORT = process.env.PORT || 5001;
 
 (async () => {
@@ -87,3 +96,4 @@ const PORT = process.env.PORT || 5001;
     process.exit(1);
   }
 })();
+
