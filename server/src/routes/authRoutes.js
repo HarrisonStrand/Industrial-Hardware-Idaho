@@ -12,22 +12,15 @@ const router = express.Router();
 const isProduction = process.env.NODE_ENV === "production";
 
 const authCookieOptions = {
-  httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
-  path: "/",
-  maxAge: 1000 * 60 * 60 * 24 * 7,
+	httpOnly: true,
+	secure: isProduction,
+	sameSite: isProduction ? "none" : "lax",
+	path: "/",
+	maxAge: 1000 * 60 * 60 * 24 * 7,
 };
 
 function setAuthCookie(res, token) {
-	const isProd = process.env.NODE_ENV === "production";
-
-	res.cookie("token", token, {
-		httpOnly: true,
-		secure: isProd,
-		sameSite: isProd ? "none" : "lax",
-		maxAge: 7 * 24 * 60 * 60 * 1000,
-	}, authCookieOptions);
+	res.cookie("token", token, authCookieOptions);
 }
 
 function serializeUser(user) {
@@ -79,19 +72,21 @@ function serializeUser(user) {
 	};
 }
 
-
 async function verifyGoogleCredential(credential = "") {
 	if (!credential) {
 		throw new Error("Missing Google credential");
 	}
 
-	const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
+	const clientId =
+		process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || "";
 	if (!clientId) {
 		throw new Error("Google sign-in is not configured on the server");
 	}
 
 	const params = new URLSearchParams({ id_token: credential });
-	const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?${params.toString()}`);
+	const response = await fetch(
+		`https://oauth2.googleapis.com/tokeninfo?${params.toString()}`,
+	);
 	const payload = await response.json().catch(() => ({}));
 
 	if (!response.ok) {
@@ -187,12 +182,13 @@ router.post("/register", async (req, res) => {
 	}
 });
 
-
 router.post("/google", async (req, res) => {
 	try {
 		const { credential } = req.body || {};
 		const googleProfile = await verifyGoogleCredential(credential);
-		const email = String(googleProfile.email || "").toLowerCase().trim();
+		const email = String(googleProfile.email || "")
+			.toLowerCase()
+			.trim();
 
 		let user = await User.findOne({
 			$or: [{ email }, { googleId: googleProfile.sub }],
@@ -249,7 +245,9 @@ router.post("/google", async (req, res) => {
 		return res.status(200).json({ user: serializeUser(user) });
 	} catch (err) {
 		console.error("GOOGLE LOGIN ERROR:", err);
-		return res.status(401).json({ error: err.message || "Google sign-in failed" });
+		return res
+			.status(401)
+			.json({ error: err.message || "Google sign-in failed" });
 	}
 });
 
@@ -277,7 +275,13 @@ router.post("/login", async (req, res) => {
 });
 
 router.post("/logout", (_req, res) => {
-	res.clearCookie("token");
+	res.clearCookie("token", {
+		httpOnly: true,
+		secure: isProduction,
+		sameSite: isProduction ? "none" : "lax",
+		path: "/",
+	});
+
 	res.status(200).json({ success: true });
 });
 
@@ -357,7 +361,9 @@ async function sendPasswordResetEmail({ to, resetLink }) {
 router.post("/forgot-password", async (req, res) => {
 	try {
 		const { email } = req.body || {};
-		const normalizedEmail = String(email || "").toLowerCase().trim();
+		const normalizedEmail = String(email || "")
+			.toLowerCase()
+			.trim();
 
 		if (!normalizedEmail) {
 			return res.status(400).json({ error: "Email is required" });

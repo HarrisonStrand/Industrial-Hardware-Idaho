@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "./ContactForm.css";
+import { apiFetch } from "../../utils/apiFetch";
 
 export default function ContactForm() {
 	const today = new Date().toISOString().split("T")[0];
@@ -19,7 +20,7 @@ export default function ContactForm() {
 	const [error, setError] = useState("");
 
 	useEffect(() => {
-		const searchParams = new URLSearchParams(location.search);
+		const searchParams = new URLSearchParams(window.location.search);
 		const presetSubject = searchParams.get("subject");
 
 		if (presetSubject) {
@@ -28,10 +29,11 @@ export default function ContactForm() {
 				subject: presetSubject,
 			}));
 		}
-	}, [location.search]);
+	}, []);
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
+
 		setFormData((prev) => ({
 			...prev,
 			[name]: value,
@@ -55,20 +57,13 @@ export default function ContactForm() {
 		};
 
 		try {
-			const res = await fetch("/api/contact", {
+			await apiFetch("/api/contact", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				credentials: "include",
 				body: JSON.stringify(payload),
 			});
-
-			if (!res.ok) {
-				// SAFELY handle non-JSON responses
-				const text = await res.text();
-				throw new Error(text || "Failed to send message");
-			}
 
 			setSuccess(true);
 			setFormData({
