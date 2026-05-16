@@ -26,6 +26,23 @@ function isLikelyAssemblyText(value = "") {
 	);
 }
 
+function isNonCoatedBaseMaterial(material = "") {
+	return [
+		"stainless steel",
+		"aluminum",
+		"brass",
+		"nylon",
+		"plastic",
+		"silicon bronze",
+	].includes(normalize(material));
+}
+
+function isAllowedHexCapFamily(fastenerType = "") {
+	return ["hex cap screw", "heavy hex bolt", "structural bolt"].includes(
+		normalize(fastenerType),
+	);
+}
+
 function pushIssue(
 	issues,
 	{ code, severity = "warning", field = "", message = "" },
@@ -336,15 +353,18 @@ export async function evaluateProductPublishReadiness(productId, options = {}) {
 		if (!length) missingRequiredAttributes.push("length");
 		if (!threadPitch && !size) missingRequiredAttributes.push("threadPitch");
 		if (!fastenerType) missingRequiredAttributes.push("fastenerType");
-		if (!driveType) missingRecommendedAttributes.push("driveType");
 
 		if (!measurementSystem)
 			missingRecommendedAttributes.push("measurementSystem");
-		if (!finish) missingRecommendedAttributes.push("finish");
-		if (!grade) missingRecommendedAttributes.push("grade");
 		if (!material) missingRecommendedAttributes.push("material");
 
-		if (fastenerType && normalize(fastenerType) !== "hex cap screw") {
+		const requiresFinish = !isNonCoatedBaseMaterial(material);
+		const requiresGrade = !isNonCoatedBaseMaterial(material);
+
+		if (requiresFinish && !finish) missingRecommendedAttributes.push("finish");
+		if (requiresGrade && !grade) missingRecommendedAttributes.push("grade");
+
+		if (fastenerType && !isAllowedHexCapFamily(fastenerType)) {
 			pushIssue(issues, {
 				code: "FASTENER_TYPE_MISMATCH",
 				severity: "error",

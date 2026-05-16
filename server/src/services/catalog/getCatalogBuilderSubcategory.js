@@ -21,19 +21,56 @@ function normalizeSlug(value = "") {
 }
 
 
-function normalizeNumberedImperialDiameter(diameter = "", threadPitch = "", measurementSystem = "") {
+function normalizeBuilderDiameter(
+	diameter = "",
+	threadPitch = "",
+	measurementSystem = "",
+) {
 	const system = String(measurementSystem || "").trim().toLowerCase();
-	if (system !== "imperial") return String(diameter || "");
-
 	const rawDiameter = String(diameter || "").trim();
 	const rawPitch = String(threadPitch || "").trim();
-	if (!rawDiameter || !rawPitch) return rawDiameter;
+	if (!rawDiameter) return rawDiameter;
 
-	if (/^#?\d+$/.test(rawDiameter) && /^\d+(?:\.\d+)?$/.test(rawPitch)) {
-		return `${rawDiameter.replace(/^#/, "")}-${rawPitch}`;
+	if (system === "metric") {
+		if (/^m\d+(?:\.\d+)?$/i.test(rawDiameter)) {
+			return rawDiameter.toUpperCase();
+		}
+
+		if (/^\d+(?:\.\d+)?$/.test(rawDiameter)) {
+			return `M${rawDiameter}`;
+		}
+
+		return rawDiameter;
+	}
+
+	if (system === "imperial") {
+		if (!rawPitch) return rawDiameter;
+
+		if (/^#?\d+$/.test(rawDiameter) && /^\d+(?:\.\d+)?$/.test(rawPitch)) {
+			return `${rawDiameter.replace(/^#/, "")}-${rawPitch}`;
+		}
 	}
 
 	return rawDiameter;
+}
+
+function buildThreadOption(threadSeries = "", threadPitch = "") {
+	const series = String(threadSeries || "").trim();
+	const pitch = String(threadPitch || "").trim();
+
+	if (series && pitch) return `${series} - ${pitch}`;
+	return pitch || series || "";
+}
+
+function isValidBuilderMeasurementPair(attrs = {}) {
+	const system = String(attrs.measurementSystem || "").trim().toLowerCase();
+	const diameter = String(attrs.diameter || "").trim();
+
+	if (!system || !diameter) return true;
+	if (system === "metric") return /^M\d+(?:\.\d+)?$/i.test(diameter);
+	if (system === "imperial") return !/^M\d+(?:\.\d+)?$/i.test(diameter);
+
+	return true;
 }
 
 function normalizeVariantAttributesForBuilder(
@@ -101,23 +138,23 @@ function normalizeVariantAttributesForBuilder(
 	if (sub === "hex cap screws") {
 		const measurementSystem = attrs.measurementSystem || "";
 		const threadPitch = attrs.threadPitch || "";
-		const normalizedDiameter = normalizeNumberedImperialDiameter(
+		const threadSeries = attrs.threadSeries || attrs.thread_series || "";
+		const normalizedDiameter = normalizeBuilderDiameter(
 			attrs.diameter || "",
 			threadPitch,
 			measurementSystem,
 		);
+		const threadOption = buildThreadOption(threadSeries, threadPitch);
 
 		return {
 			measurementSystem,
 			diameter: normalizedDiameter,
-			threadSeries: attrs.threadSeries || attrs.thread_series || "",
-			threadPitch: threadPitch,
+			threadOption,
+			threadSeries,
+			threadPitch,
 			length: attrs.length || "",
-			drive_type: attrs.drive_type || attrs.driveType || "",
 			materialFinish: attrs.materialFinish || "",
 			grade: attrs.grade || "",
-			headType: attrs.headType || "",
-			fastenerType: attrs.fastenerTypeCanonical || attrs.fastenerType || "",
 		};
 	}
 
@@ -193,14 +230,10 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 						? [
 								"measurementSystem",
 								"diameter",
-								"threadSeries",
-								"threadPitch",
+								"threadOption",
 								"length",
-								"driveType",
-								"drive_type",
 								"materialFinish",
 								"grade",
-								"fastenerTypeCanonical",
 							]
 						: [
 								"size",
@@ -312,9 +345,9 @@ function isLikelyAssemblyText(value = "") {
 function isBuilderReadyHexCapScrew(variant) {
 	const attrs = variant?.attributes || {};
 
-	const driveType = String(attrs.driveType || attrs.drive_type || "").trim();
 	const diameter = String(attrs.diameter || "").trim();
 	const length = String(attrs.length || "").trim();
+	const threadOption = String(attrs.threadOption || "").trim();
 	const threadPitch = String(attrs.threadPitch || "").trim();
 	const size = String(attrs.size || "").trim();
 	const fastenerType = normalizeText(
@@ -334,16 +367,17 @@ function isBuilderReadyHexCapScrew(variant) {
 		return false;
 	}
 
-if (
-	fastenerType &&
-	!["hex cap screw", "heavy hex bolt", "structural bolt"].includes(fastenerType)
-) {
-	return false;
-}
+	if (
+		fastenerType &&
+		!["hex cap screw", "heavy hex bolt", "structural bolt"].includes(fastenerType)
+	) {
+		return false;
+	}
 
 	if (!diameter) return false;
+	if (!isValidBuilderMeasurementPair(attrs)) return false;
 	if (!length) return false;
-	if (!threadPitch && !size) return false;
+	if (!threadOption && !threadPitch && !size) return false;
 
 	return true;
 }
