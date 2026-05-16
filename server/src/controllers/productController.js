@@ -89,7 +89,12 @@ async function recomputeAndPersist(productId, userId = null) {
 	};
 }
 
-async function patchAdminProductById(productId, productPayload = {}, enrichmentPayload = {}, userId = null) {
+async function patchAdminProductById(
+	productId,
+	productPayload = {},
+	enrichmentPayload = {},
+	userId = null,
+) {
 	const product = await Product.findById(productId);
 	const enrichment = await ProductEnrichment.findOne({ productId });
 
@@ -115,10 +120,16 @@ async function patchAdminProductById(productId, productPayload = {}, enrichmentP
 	if (safeProductPayload.pricing) {
 		const pricing = safeObject(safeProductPayload.pricing);
 		if (Object.prototype.hasOwnProperty.call(pricing, "basePrice")) {
-			product.pricing.basePrice = pricing.basePrice === null || pricing.basePrice === "" ? null : Number(pricing.basePrice);
+			product.pricing.basePrice =
+				pricing.basePrice === null || pricing.basePrice === ""
+					? null
+					: Number(pricing.basePrice);
 		}
 		if (Object.prototype.hasOwnProperty.call(pricing, "salePrice")) {
-			product.pricing.salePrice = pricing.salePrice === null || pricing.salePrice === "" ? null : Number(pricing.salePrice);
+			product.pricing.salePrice =
+				pricing.salePrice === null || pricing.salePrice === ""
+					? null
+					: Number(pricing.salePrice);
 		}
 		product.pricing.priceSource = "manual";
 	}
@@ -140,17 +151,25 @@ async function patchAdminProductById(productId, productPayload = {}, enrichmentP
 	assignString("notes");
 
 	if (Array.isArray(safeEnrichmentPayload.tags)) {
-		enrichment.tags = safeEnrichmentPayload.tags.map((item) => String(item || "").trim()).filter(Boolean);
+		enrichment.tags = safeEnrichmentPayload.tags
+			.map((item) => String(item || "").trim())
+			.filter(Boolean);
 	}
 
-	if (safeEnrichmentPayload.attributes && typeof safeEnrichmentPayload.attributes === "object") {
+	if (
+		safeEnrichmentPayload.attributes &&
+		typeof safeEnrichmentPayload.attributes === "object"
+	) {
 		enrichment.attributes = {
 			...(enrichment.attributes || {}),
 			...safeObject(safeEnrichmentPayload.attributes),
 		};
 	}
 
-	if (safeEnrichmentPayload.seo && typeof safeEnrichmentPayload.seo === "object") {
+	if (
+		safeEnrichmentPayload.seo &&
+		typeof safeEnrichmentPayload.seo === "object"
+	) {
 		enrichment.seo = {
 			...(enrichment.seo?.toObject?.() || enrichment.seo || {}),
 			...safeObject(safeEnrichmentPayload.seo),
@@ -170,35 +189,63 @@ async function patchAdminProductById(productId, productPayload = {}, enrichmentP
 	return recomputeAndPersist(productId, userId);
 }
 
-async function performBulkAction(action, productId, userId, productPayload = {}, enrichmentPayload = {}) {
+async function performBulkAction(
+	action,
+	productId,
+	userId,
+	productPayload = {},
+	enrichmentPayload = {},
+) {
 	switch (action) {
 		case "patch": {
-			const result = await patchAdminProductById(productId, productPayload, enrichmentPayload, userId);
-			return { success: true, action, productId, reviewStatus: result?.product?.review?.status || "needs-review" };
+			const result = await patchAdminProductById(
+				productId,
+				productPayload,
+				enrichmentPayload,
+				userId,
+			);
+			return {
+				success: true,
+				action,
+				productId,
+				reviewStatus: result?.product?.review?.status || "needs-review",
+			};
 		}
 		case "approve": {
 			const result = await recomputeAndPersist(productId, userId);
-			if (!result.readiness.publishReady) throw new Error("Product is not ready for approval");
-			result.product.review = { ...(result.product.review?.toObject?.() || result.product.review || {}), status: "approved", approvedBy: userId || null, approvedAt: new Date() };
+			if (!result.readiness.publishReady)
+				throw new Error("Product is not ready for approval");
+			result.product.review = {
+				...(result.product.review?.toObject?.() || result.product.review || {}),
+				status: "approved",
+				approvedBy: userId || null,
+				approvedAt: new Date(),
+			};
 			result.product.needsReview = false;
 			result.product.catalogStatus = "ready";
-			if (result.enrichment.contentStatus !== "approved") result.enrichment.contentStatus = "approved";
+			if (result.enrichment.contentStatus !== "approved")
+				result.enrichment.contentStatus = "approved";
 			await result.product.save();
 			await result.enrichment.save();
 			return { success: true, action, productId };
 		}
 		case "publish": {
 			const result = await publishProduct(productId, userId);
-			if (result.action === "blocked") throw new Error(result.message || "Publish blocked");
+			if (result.action === "blocked")
+				throw new Error(result.message || "Publish blocked");
 			return { success: true, action, productId };
 		}
 		case "unpublish": {
 			const product = await Product.findById(productId);
 			const enrichment = await ProductEnrichment.findOne({ productId });
-			if (!product || !enrichment) throw new Error("Product or enrichment not found");
+			if (!product || !enrichment)
+				throw new Error("Product or enrichment not found");
 			product.isPublished = false;
 			product.catalogStatus = "ready";
-			product.review = { ...(product.review?.toObject?.() || product.review || {}), status: "approved" };
+			product.review = {
+				...(product.review?.toObject?.() || product.review || {}),
+				status: "approved",
+			};
 			await product.save();
 			await enrichment.save();
 			return { success: true, action, productId };
@@ -212,7 +259,12 @@ async function performBulkAction(action, productId, userId, productPayload = {},
 			if (!product) throw new Error("Not found");
 			await ProductEnrichment.deleteOne({ productId: product._id });
 			await Product.findByIdAndDelete(product._id);
-			return { success: true, action, productId, deletedPartNumber: product?.fishbowl?.partNum || product?.sku || "" };
+			return {
+				success: true,
+				action,
+				productId,
+				deletedPartNumber: product?.fishbowl?.partNum || product?.sku || "",
+			};
 		}
 		default:
 			throw new Error("Unsupported bulk action");
@@ -673,6 +725,9 @@ export const listAdminReviewProducts = async (req, res) => {
 			});
 		}
 
+		const requiresEnrichmentMatch =
+			Boolean(category) || Boolean(subcategory) || Boolean(familyType);
+
 		const basePipeline = [
 			{ $match: productMatch },
 			{
@@ -686,7 +741,7 @@ export const listAdminReviewProducts = async (req, res) => {
 			{
 				$unwind: {
 					path: "$enrichment",
-					preserveNullAndEmptyArrays: false,
+					preserveNullAndEmptyArrays: !requiresEnrichmentMatch,
 				},
 			},
 		];
@@ -864,7 +919,12 @@ export const listAdminReviewProducts = async (req, res) => {
 							{
 								$ifNull: [
 									"$fishbowl.description",
-									{ $ifNull: ["$fishbowl.partNum", "$sku"] },
+									{
+										$ifNull: [
+											"$fishbowl.partNum",
+											{ $ifNull: ["$sku", "Untitled Product"] },
+										],
+									},
 								],
 							},
 						],
@@ -936,7 +996,12 @@ export const patchAdminProduct = async (req, res) => {
 		const productId = req.params.id;
 		const productPayload = safeObject(req.body?.product);
 		const enrichmentPayload = safeObject(req.body?.enrichment);
-		const result = await patchAdminProductById(productId, productPayload, enrichmentPayload, req.user?.id || null);
+		const result = await patchAdminProductById(
+			productId,
+			productPayload,
+			enrichmentPayload,
+			req.user?.id || null,
+		);
 
 		return res.json({
 			success: true,
@@ -946,7 +1011,9 @@ export const patchAdminProduct = async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		res.status(400).json({ message: err.message || "Failed to update product" });
+		res
+			.status(400)
+			.json({ message: err.message || "Failed to update product" });
 	}
 };
 
@@ -1068,12 +1135,17 @@ export const recomputeAdminProduct = async (req, res) => {
 	}
 };
 
-
 export const bulkAdminProducts = async (req, res) => {
 	try {
 		const action = normalizeQueryValue(req.body?.action || "");
 		const productIds = Array.isArray(req.body?.productIds)
-			? [...new Set(req.body.productIds.map((id) => String(id || "").trim()).filter(Boolean))]
+			? [
+					...new Set(
+						req.body.productIds
+							.map((id) => String(id || "").trim())
+							.filter(Boolean),
+					),
+				]
 			: [];
 		const productPayload = safeObject(req.body?.product);
 		const enrichmentPayload = safeObject(req.body?.enrichment);
@@ -1082,16 +1154,28 @@ export const bulkAdminProducts = async (req, res) => {
 			return res.status(400).json({ message: "Bulk action is required" });
 		}
 		if (!productIds.length) {
-			return res.status(400).json({ message: "At least one product must be selected" });
+			return res
+				.status(400)
+				.json({ message: "At least one product must be selected" });
 		}
 
 		const results = [];
 		for (const productId of productIds) {
 			try {
-				const result = await performBulkAction(action, productId, req.user?.id || null, productPayload, enrichmentPayload);
+				const result = await performBulkAction(
+					action,
+					productId,
+					req.user?.id || null,
+					productPayload,
+					enrichmentPayload,
+				);
 				results.push({ productId, status: "ok", ...result });
 			} catch (err) {
-				results.push({ productId, status: "failed", message: err.message || `Failed to ${action} product` });
+				results.push({
+					productId,
+					status: "failed",
+					message: err.message || `Failed to ${action} product`,
+				});
 			}
 		}
 
@@ -1105,6 +1189,8 @@ export const bulkAdminProducts = async (req, res) => {
 		return res.json({ success: true, summary, results });
 	} catch (err) {
 		console.error(err);
-		res.status(400).json({ message: err.message || "Failed to perform bulk action" });
+		res
+			.status(400)
+			.json({ message: err.message || "Failed to perform bulk action" });
 	}
 };
