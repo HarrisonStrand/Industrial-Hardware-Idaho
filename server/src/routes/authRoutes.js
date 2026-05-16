@@ -9,6 +9,16 @@ import { createResetToken } from "../utils/resetToken.js";
 
 const router = express.Router();
 
+const isProduction = process.env.NODE_ENV === "production";
+
+const authCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  path: "/",
+  maxAge: 1000 * 60 * 60 * 24 * 7,
+};
+
 function setAuthCookie(res, token) {
 	const isProd = process.env.NODE_ENV === "production";
 
@@ -17,7 +27,7 @@ function setAuthCookie(res, token) {
 		secure: isProd,
 		sameSite: isProd ? "none" : "lax",
 		maxAge: 7 * 24 * 60 * 60 * 1000,
-	});
+	}, authCookieOptions);
 }
 
 function serializeUser(user) {
