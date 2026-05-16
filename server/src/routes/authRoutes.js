@@ -10,11 +10,14 @@ import { createResetToken } from "../utils/resetToken.js";
 const router = express.Router();
 
 const isProduction = process.env.NODE_ENV === "production";
+const isRender = Boolean(process.env.RENDER);
+
+const useSecureCookie = isProduction || isRender;
 
 const authCookieOptions = {
 	httpOnly: true,
-	secure: isProduction,
-	sameSite: isProduction ? "none" : "lax",
+	secure: useSecureCookie,
+	sameSite: useSecureCookie ? "none" : "lax",
 	path: "/",
 	maxAge: 1000 * 60 * 60 * 24 * 7,
 };
@@ -277,8 +280,8 @@ router.post("/login", async (req, res) => {
 router.post("/logout", (_req, res) => {
 	res.clearCookie("token", {
 		httpOnly: true,
-		secure: isProduction,
-		sameSite: isProduction ? "none" : "lax",
+		secure: useSecureCookie,
+		sameSite: useSecureCookie ? "none" : "lax",
 		path: "/",
 	});
 
