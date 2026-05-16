@@ -41,9 +41,27 @@ app.use((req, _res, next) => {
   next();
 });
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  ...(process.env.CLIENT_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+];
+
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin(origin, callback) {
+      // Allow server-to-server tools, curl, health checks, etc.
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
     credentials: true,
   })
 );
@@ -73,15 +91,6 @@ app.use("/api/products", productRoutes);
 
 app.use("/public", express.static(path.resolve("public")));
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    ok: true,
-    service: "industrial-hardware-idaho-backend",
-    build: "render-route-check",
-    timestamp: new Date().toISOString(),
-  });
-});
-
 const PORT = process.env.PORT || 5001;
 
 (async () => {
@@ -96,4 +105,3 @@ const PORT = process.env.PORT || 5001;
     process.exit(1);
   }
 })();
-
