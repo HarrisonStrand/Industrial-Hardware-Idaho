@@ -22,15 +22,20 @@ const HIDDEN_ATTRIBUTE_KEYS = new Set([
 	"size",
 	"material",
 	"finish",
+	"threadPitch",
+	"threadSeries",
+	"thread_series",
+	"driveType",
+	"drive_type",
+	"headType",
+	"fastenerType",
 ]);
 
 const ATTRIBUTE_ORDER = [
 	"measurementSystem",
 	"diameter",
-	"threadSeries",
-	"threadPitch",
+	"threadOption",
 	"length",
-	"drive_type",
 	"materialFinish",
 	"grade",
 	"washerStandard",
@@ -44,10 +49,8 @@ const ATTRIBUTE_ORDER = [
 const INITIAL_SELECTED_STATE = {
 	measurementSystem: "",
 	diameter: "",
-	threadSeries: "",
-	threadPitch: "",
+	threadOption: "",
 	length: "",
-	drive_type: "",
 	materialFinish: "",
 	grade: "",
 	washerStandard: "",
@@ -66,7 +69,12 @@ function getDisplayQuantityValue(value) {
 }
 
 function parseFraction(value = "") {
-	const str = String(value).trim();
+	const str = String(value)
+		.trim()
+		.toLowerCase()
+		.replace(/"/g, "")
+		.replace(/\s*mm$/, "")
+		.replace(/^(\d+)-(\d+\/\d+)$/, "$1 $2");
 	if (!str) return null;
 
 	if (/^\d+\/\d+$/.test(str)) {
@@ -87,6 +95,13 @@ function parseFraction(value = "") {
 	return null;
 }
 
+
+function normalizeSubcategoryId(value = "") {
+	return String(value || "")
+		.trim()
+		.toLowerCase()
+		.replace(/-/g, " ");
+}
 
 function parseDiameterSortValue(value = "") {
 	const str = String(value || "").trim();
@@ -114,8 +129,56 @@ function parseDiameterSortValue(value = "") {
 	return { group: 3, primary: Number.POSITIVE_INFINITY, secondary: 0 };
 }
 
+
+function buildThreadOptionLabel(attributes = {}) {
+	const existing = String(attributes.threadOption || "").trim();
+	if (existing) return existing;
+
+	const series = String(attributes.threadSeries || attributes.thread_series || "").trim();
+	const pitch = String(attributes.threadPitch || "").trim();
+	const diameter = String(attributes.diameter || "").trim();
+	const measurementSystem = String(attributes.measurementSystem || "").trim().toLowerCase();
+
+	if (series && pitch) return `${series} - ${pitch}`;
+	if (measurementSystem === "metric" && diameter && pitch) return `${diameter} - ${pitch}`;
+	return pitch || series || "";
+}
+
 function sortOptionValues(values = [], key = "") {
 	const lower = String(key || "").toLowerCase();
+
+	if (lower === "measurementsystem") {
+		const order = ["imperial", "metric"];
+		return [...values].sort((a, b) => {
+			const aIndex = order.indexOf(String(a).toLowerCase());
+			const bIndex = order.indexOf(String(b).toLowerCase());
+			if (aIndex !== -1 || bIndex !== -1) {
+				return (aIndex === -1 ? 99 : aIndex) - (bIndex === -1 ? 99 : bIndex);
+			}
+			return String(a).localeCompare(String(b), undefined, {
+				numeric: true,
+				sensitivity: "base",
+			});
+		});
+	}
+
+	if (lower === "threadoption") {
+		const seriesOrder = { coarse: 0, fine: 1 };
+		return [...values].sort((a, b) => {
+			const [aSeries = "", aPitch = ""] = String(a).split(" - ");
+			const [bSeries = "", bPitch = ""] = String(b).split(" - ");
+			const aSeriesIndex = seriesOrder[aSeries.toLowerCase()] ?? 9;
+			const bSeriesIndex = seriesOrder[bSeries.toLowerCase()] ?? 9;
+			if (aSeriesIndex !== bSeriesIndex) return aSeriesIndex - bSeriesIndex;
+			const aNum = Number(aPitch || aSeries);
+			const bNum = Number(bPitch || bSeries);
+			if (Number.isFinite(aNum) && Number.isFinite(bNum)) return aNum - bNum;
+			return String(a).localeCompare(String(b), undefined, {
+				numeric: true,
+				sensitivity: "base",
+			});
+		});
+	}
 
 	if (lower === "diameter") {
 		return [...values].sort((a, b) => {
@@ -156,7 +219,7 @@ function sortOptionValues(values = [], key = "") {
 }
 
 function inferProductFamilyLabelContext(builderData = {}, variants = []) {
-	const subcategory = String(builderData?.subcategoryId || "").toLowerCase();
+	const subcategory = normalizeSubcategoryId(builderData?.subcategoryId);
 	const category = String(builderData?.categoryId || "").toLowerCase();
 
 	const familyType =
@@ -181,7 +244,7 @@ function shouldHideAttributeForContext(
 	subcategoryId = "",
 	selected = {},
 ) {
-	const sub = String(subcategoryId || "").toLowerCase();
+	const sub = normalizeSubcategoryId(subcategoryId);
 	const measurementSystem = String(
 		selected?.measurementSystem || "",
 	).toLowerCase();
@@ -200,6 +263,10 @@ function shouldHideAttributeForContext(
 
 	if (sub === "hex cap screws" && key === "headType") return true;
 	if (sub === "hex cap screws" && key === "fastenerType") return true;
+	if (sub === "hex cap screws" && key === "drive_type") return true;
+	if (sub === "hex cap screws" && key === "driveType") return true;
+	if (sub === "hex cap screws" && key === "threadSeries") return true;
+	if (sub === "hex cap screws" && key === "threadPitch") return true;
 
 	return false;
 }
@@ -207,9 +274,7 @@ function shouldHideAttributeForContext(
 function formatAttributeLabel(key = "") {
 	const baseMap = {
 		measurementSystem: "Measurement System",
-		threadPitch: "Thread Pitch",
-		threadSeries: "Thread Series",
-		drive_type: "Drive Type",
+		threadOption: "Thread Series / Pitch",
 		diameter: "Diameter",
 		width: "Width",
 		length: "Length",
@@ -251,6 +316,17 @@ function collectAttributesFromVariants(
 
 	for (const variant of variants) {
 		const attrs = variant?.attributes || {};
+		const sub = normalizeSubcategoryId(subcategoryId);
+
+		if (sub === "hex cap screws") {
+			const threadOption = buildThreadOptionLabel(attrs);
+			if (threadOption) {
+				if (!map.has("threadOption")) {
+					map.set("threadOption", new Set());
+				}
+				map.get("threadOption").add(threadOption);
+			}
+		}
 
 		for (const [key, value] of Object.entries(attrs)) {
 			if (
@@ -297,16 +373,14 @@ function reorderAttributeEntriesForSubcategory(
 	entries = [],
 	subcategoryId = "",
 ) {
-	const sub = String(subcategoryId || "").toLowerCase();
+	const sub = normalizeSubcategoryId(subcategoryId);
 	if (sub !== "hex cap screws") return entries;
 
 const boltOrder = [
 	"measurementSystem",
 	"diameter",
-	"threadSeries",
-	"threadPitch",
+	"threadOption",
 	"length",
-	"drive_type",
 	"materialFinish",
 	"grade",
 ];
@@ -510,6 +584,20 @@ export default function ProductDetailFacetPanel() {
 
 			if (Array.isArray(values) && values.length > 0) {
 				cleaned[key] = sortOptionValues(values, key);
+			}
+		}
+
+		const sub = normalizeSubcategoryId(builderData?.subcategoryId);
+		if (sub === "hex cap screws" && !cleaned.threadOption) {
+			const threadOptions = variants
+				.map((variant) => buildThreadOptionLabel(variant?.attributes || {}))
+				.filter(Boolean);
+
+			if (threadOptions.length > 0) {
+				cleaned.threadOption = sortOptionValues(
+					[...new Set(threadOptions)],
+					"threadOption",
+				);
 			}
 		}
 
