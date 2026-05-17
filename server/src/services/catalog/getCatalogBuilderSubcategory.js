@@ -216,6 +216,16 @@ function isValidBuilderMeasurementPair(attrs = {}) {
 	return true;
 }
 
+function isBoltCapScrewSubcategory(subcategoryId = "") {
+	const sub = String(subcategoryId || "").toLowerCase();
+	return [
+		"hex cap screws",
+		"button head cap screws",
+		"socket head cap screws",
+		"flat head cap screws",
+	].includes(sub);
+}
+
 function normalizeVariantAttributesForBuilder(
 	attributes = {},
 	subcategoryId = "",
@@ -278,7 +288,7 @@ function normalizeVariantAttributesForBuilder(
 		};
 	}
 
-	if (sub === "hex cap screws") {
+	if (isBoltCapScrewSubcategory(sub)) {
 		const measurementSystem = attrs.measurementSystem || "";
 		const rawThreadPitch = attrs.threadPitch || "";
 		const rawThreadSeries = attrs.threadSeries || attrs.thread_series || "";
@@ -302,12 +312,14 @@ function normalizeVariantAttributesForBuilder(
 			normalizedDiameter,
 			measurementSystem,
 		);
+		const headProfile = attrs.headProfile || attrs.head_profile || attrs.headStyle || "";
 
 		return {
 			measurementSystem,
 			diameter: normalizedDiameter,
 			threadOption,
 			length: attrs.length || "",
+			...(headProfile ? { headProfile } : {}),
 			materialFinish: attrs.materialFinish || "",
 			grade: attrs.grade || "",
 		};
@@ -381,12 +393,13 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 							"diameter",
 							"grade",
 						]
-					: sub === "hex cap screws"
+					: isBoltCapScrewSubcategory(sub)
 						? [
 								"measurementSystem",
 								"diameter",
 								"threadOption",
 								"length",
+								"headProfile",
 								"materialFinish",
 								"grade",
 							]
@@ -497,7 +510,7 @@ function isLikelyAssemblyText(value = "") {
 	);
 }
 
-function isBuilderReadyHexCapScrew(variant) {
+function isBuilderReadyBoltCapScrew(variant, subcategoryId = "") {
 	const attrs = variant?.attributes || {};
 
 	const diameter = String(attrs.diameter || "").trim();
@@ -522,9 +535,19 @@ function isBuilderReadyHexCapScrew(variant) {
 		return false;
 	}
 
+	const sub = normalizeText(subcategoryId);
+	const allowedBySubcategory = {
+		"hex cap screws": ["hex cap screw", "heavy hex bolt", "structural bolt"],
+		"button head cap screws": ["button head cap screw"],
+		"socket head cap screws": ["socket head cap screw"],
+		"flat head cap screws": ["flat head cap screw"],
+	};
+	const allowedFastenerTypes = allowedBySubcategory[sub] || [];
+
 	if (
 		fastenerType &&
-		!["hex cap screw", "heavy hex bolt", "structural bolt"].includes(fastenerType)
+		allowedFastenerTypes.length &&
+		!allowedFastenerTypes.includes(fastenerType)
 	) {
 		return false;
 	}
@@ -540,7 +563,7 @@ function isBuilderReadyHexCapScrew(variant) {
 function shouldApplyBuilderReadyFilter(categoryId, subcategoryId) {
 	return (
 		normalizeText(categoryId) === "bolts" &&
-		normalizeText(subcategoryId) === "hex cap screws"
+		isBoltCapScrewSubcategory(subcategoryId)
 	);
 }
 
@@ -674,7 +697,9 @@ export async function getCatalogBuilderSubcategory(
 		normalizedCategoryId,
 		normalizedSubcategoryId,
 	)
-		? rawVariants.filter(isBuilderReadyHexCapScrew)
+		? rawVariants.filter((variant) =>
+			isBuilderReadyBoltCapScrew(variant, normalizedSubcategoryId),
+		)
 		: rawVariants;
 
 	const workingVariants = shouldApplyBuilderReadyFilter(

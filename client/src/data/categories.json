@@ -16,6 +16,11 @@
           "image": "/images/subcategories/socket-head-cap-screws.png"
         },
         {
+          "id": "button-head-cap-screws",
+          "name": "Button Head Cap Screws",
+          "image": "/images/subcategories/button-head-cap-screws.png"
+        },
+        {
           "id": "flat-head-cap-screws",
           "name": "Flat Head Cap Screws",
           "image": "/images/subcategories/flat-head-cap-screws.png"

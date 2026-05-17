@@ -36,6 +36,7 @@ const ATTRIBUTE_ORDER = [
 	"diameter",
 	"threadOption",
 	"length",
+	"headProfile",
 	"materialFinish",
 	"grade",
 	"washerStandard",
@@ -51,6 +52,7 @@ const INITIAL_SELECTED_STATE = {
 	diameter: "",
 	threadOption: "",
 	length: "",
+	headProfile: "",
 	materialFinish: "",
 	grade: "",
 	washerStandard: "",
@@ -101,6 +103,16 @@ function normalizeSubcategoryId(value = "") {
 		.trim()
 		.toLowerCase()
 		.replace(/-/g, " ");
+}
+
+function isBoltCapScrewSubcategory(subcategoryId = "") {
+	const sub = normalizeSubcategoryId(subcategoryId);
+	return [
+		"hex cap screws",
+		"button head cap screws",
+		"socket head cap screws",
+		"flat head cap screws",
+	].includes(sub);
 }
 
 function parseDiameterSortValue(value = "") {
@@ -350,12 +362,12 @@ function shouldHideAttributeForContext(
 	if (sub === "lock washers" && key === "washerStandard") return true;
 	if (sub === "lock washers" && key === "width") return true;
 
-	if (sub === "hex cap screws" && key === "headType") return true;
-	if (sub === "hex cap screws" && key === "fastenerType") return true;
-	if (sub === "hex cap screws" && key === "drive_type") return true;
-	if (sub === "hex cap screws" && key === "driveType") return true;
-	if (sub === "hex cap screws" && key === "threadSeries") return true;
-	if (sub === "hex cap screws" && key === "threadPitch") return true;
+	if (isBoltCapScrewSubcategory(sub) && key === "headType") return true;
+	if (isBoltCapScrewSubcategory(sub) && key === "fastenerType") return true;
+	if (isBoltCapScrewSubcategory(sub) && key === "drive_type") return true;
+	if (isBoltCapScrewSubcategory(sub) && key === "driveType") return true;
+	if (isBoltCapScrewSubcategory(sub) && key === "threadSeries") return true;
+	if (isBoltCapScrewSubcategory(sub) && key === "threadPitch") return true;
 
 	return false;
 }
@@ -371,6 +383,7 @@ function formatAttributeLabel(key = "") {
 		grade: "Grade",
 		washerStandard: "Standard",
 		washerType: "Type",
+		headProfile: "Head Profile",
 		materialFinish: "Material / Finish",
 		headType: "Head Type",
 		fastenerType: "Fastener Type",
@@ -407,7 +420,7 @@ function collectAttributesFromVariants(
 		const attrs = variant?.attributes || {};
 		const sub = normalizeSubcategoryId(subcategoryId);
 
-		if (sub === "hex cap screws") {
+		if (isBoltCapScrewSubcategory(sub)) {
 			const threadOption = buildThreadOptionLabel(attrs);
 			if (threadOption) {
 				if (!map.has("threadOption")) {
@@ -463,13 +476,14 @@ function reorderAttributeEntriesForSubcategory(
 	subcategoryId = "",
 ) {
 	const sub = normalizeSubcategoryId(subcategoryId);
-	if (sub !== "hex cap screws") return entries;
+	if (!isBoltCapScrewSubcategory(sub)) return entries;
 
 const boltOrder = [
 	"measurementSystem",
 	"diameter",
 	"threadOption",
 	"length",
+	"headProfile",
 	"materialFinish",
 	"grade",
 ];
@@ -678,7 +692,7 @@ export default function ProductDetailFacetPanel() {
 		}
 
 		const sub = normalizeSubcategoryId(builderData?.subcategoryId);
-		if (sub === "hex cap screws" && !cleaned.threadOption) {
+		if (isBoltCapScrewSubcategory(sub) && !cleaned.threadOption) {
 			const threadOptions = variants
 				.map((variant) => buildThreadOptionLabel(variant?.attributes || {}))
 				.filter(Boolean);
