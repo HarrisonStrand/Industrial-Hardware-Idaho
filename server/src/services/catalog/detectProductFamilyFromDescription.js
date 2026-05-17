@@ -897,79 +897,90 @@ function detectMetricThreadedSize(text = "") {
 	return null;
 }
 
+function normalizeImperialDiameterForThreadMap(diameter = "") {
+	const raw = clean(diameter).replace(/\s+/g, "");
+	if (!raw) return "";
+
+	if (/^#?\d+$/.test(raw)) {
+		const number = raw.replace(/^#/, "");
+		if (["0", "1", "2", "3", "4", "5", "6", "8", "10", "12"].includes(number)) {
+			return `#${number}`;
+		}
+	}
+
+	return raw;
+}
+
+const IMPERIAL_COARSE_THREAD_PITCH_BY_DIAMETER = {
+	"#0": "80",
+	"#1": "64",
+	"#2": "56",
+	"#3": "48",
+	"#4": "40",
+	"#5": "40",
+	"#6": "32",
+	"#8": "32",
+	"#10": "24",
+	"#12": "24",
+	"1/4": "20",
+	"5/16": "18",
+	"3/8": "16",
+	"7/16": "14",
+	"1/2": "13",
+	"9/16": "12",
+	"5/8": "11",
+	"3/4": "10",
+	"7/8": "9",
+	"1": "8",
+	"1-1/8": "7",
+	"1-1/4": "7",
+	"1-3/8": "6",
+	"1-1/2": "6",
+	"2": "4.5",
+};
+
+const IMPERIAL_FINE_THREAD_PITCH_BY_DIAMETER = {
+	"#1": "72",
+	"#2": "64",
+	"#3": "56",
+	"#4": "48",
+	"#5": "44",
+	"#6": "40",
+	"#8": "36",
+	"#10": "32",
+	"#12": "28",
+	"1/4": "28",
+	"5/16": "24",
+	"3/8": "24",
+	"7/16": "20",
+	"1/2": "20",
+	"9/16": "18",
+	"5/8": "18",
+	"3/4": "16",
+	"7/8": "14",
+	"1": "12",
+	"1-1/8": "8",
+	"1-1/4": "8",
+	"1-3/8": "8",
+	"1-1/2": "8",
+	"2": "6",
+};
+
 function inferImperialThreadSeries(diameter = "", threadPitch = "") {
-	const dia = clean(diameter);
+	const dia = normalizeImperialDiameterForThreadMap(diameter);
 	const pitch = clean(threadPitch);
 
 	if (!dia || !pitch) return "";
 
-	const coarseMap = {
-		"#10": "24",
-		"1/4": "20",
-		"5/16": "18",
-		"3/8": "16",
-		"7/16": "14",
-		"1/2": "13",
-		"9/16": "12",
-		"5/8": "11",
-		"3/4": "10",
-		"7/8": "9",
-		"1": "8",
-		"1-1/8": "7",
-		"1-1/4": "7",
-		"1-3/8": "6",
-		"1-1/2": "6",
-		"2": "4.5",
-	};
-
-	const fineMap = {
-		"#10": "32",
-		"1/4": "28",
-		"5/16": "24",
-		"3/8": "24",
-		"7/16": "20",
-		"1/2": "20",
-		"9/16": "18",
-		"5/8": "18",
-		"3/4": "16",
-		"7/8": "14",
-		"1": "12",
-		"1-1/8": "8",
-		"1-1/4": "8",
-		"1-3/8": "8",
-		"1-1/2": "8",
-		"2": "6",
-	};
-
-	if (coarseMap[dia] === pitch) return "coarse";
-	if (fineMap[dia] === pitch) return "fine";
+	if (IMPERIAL_COARSE_THREAD_PITCH_BY_DIAMETER[dia] === pitch) return "coarse";
+	if (IMPERIAL_FINE_THREAD_PITCH_BY_DIAMETER[dia] === pitch) return "fine";
 
 	return "";
 }
 
 function inferImperialCoarsePitchFromDiameter(diameter = "") {
-	const dia = clean(diameter);
-
-	const coarseMap = {
-		"#10": "24",
-		"1/4": "20",
-		"5/16": "18",
-		"3/8": "16",
-		"7/16": "14",
-		"1/2": "13",
-		"9/16": "12",
-		"5/8": "11",
-		"3/4": "10",
-		"7/8": "9",
-		"1": "8",
-		"1-1/8": "7",
-		"1-1/4": "7",
-		"1-3/8": "6",
-		"1-1/2": "6",
-		"2": "4.5",
-	};
-
-	return coarseMap[dia] || "";
+	const dia = normalizeImperialDiameterForThreadMap(diameter);
+	return IMPERIAL_COARSE_THREAD_PITCH_BY_DIAMETER[dia] || "";
 }
 
 function inferImperialSeriesFromPitch(diameter = "", threadPitch = "") {

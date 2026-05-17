@@ -21,13 +21,141 @@ function normalizeSlug(value = "") {
 }
 
 
+const NUMBERED_IMPERIAL_THREAD_SIZES = new Set([
+	"0-80",
+	"1-64",
+	"1-72",
+	"2-56",
+	"2-64",
+	"3-48",
+	"3-56",
+	"4-40",
+	"4-48",
+	"5-40",
+	"5-44",
+	"6-32",
+	"6-40",
+	"8-32",
+	"8-36",
+	"10-24",
+	"10-32",
+	"12-24",
+	"12-28",
+]);
+
+function normalizeMixedFraction(value = "") {
+	return String(value || "")
+		.trim()
+		.replace(/"/g, "")
+		.replace(/\s+/g, " ")
+		.replace(/\s*-\s*/g, "-")
+		.replace(/^(\d+)\s+(\d+\/\d+)$/, "$1-$2");
+}
+
+function isNumberedImperialThreadSize(value = "") {
+	const normalized = String(value || "")
+		.trim()
+		.replace(/^#/, "")
+		.toLowerCase();
+
+	return NUMBERED_IMPERIAL_THREAD_SIZES.has(normalized);
+}
+
+function parseEmbeddedImperialThreadedDiameter(value = "") {
+	const cleaned = normalizeMixedFraction(value);
+	if (!cleaned || isNumberedImperialThreadSize(cleaned)) return null;
+
+	const match = cleaned.match(
+		/^(\d+(?:-\d+\/\d+|\/\d+)?)-(\d+(?:\.\d+)?)$/,
+	);
+
+	if (!match) return null;
+
+	const [, diameter = "", threadPitch = ""] = match;
+	return {
+		diameter: normalizeMixedFraction(diameter),
+		threadPitch: String(threadPitch || "").trim(),
+	};
+}
+
+function inferImperialThreadSeries(diameter = "", threadPitch = "") {
+	const dia = normalizeMixedFraction(diameter);
+	const pitch = String(threadPitch || "").trim();
+	if (!dia || !pitch) return "";
+
+	const coarseMap = {
+		"#2": "56",
+		"#4": "40",
+		"#6": "32",
+		"#8": "32",
+		"#10": "24",
+		"#12": "24",
+		"2": "56",
+		"4": "40",
+		"6": "32",
+		"8": "32",
+		"10": "24",
+		"12": "24",
+		"1/4": "20",
+		"5/16": "18",
+		"3/8": "16",
+		"7/16": "14",
+		"1/2": "13",
+		"9/16": "12",
+		"5/8": "11",
+		"3/4": "10",
+		"7/8": "9",
+		"1": "8",
+		"1-1/8": "7",
+		"1-1/4": "7",
+		"1-3/8": "6",
+		"1-1/2": "6",
+		"2": "4.5",
+	};
+
+	const fineMap = {
+		"#2": "64",
+		"#4": "48",
+		"#6": "40",
+		"#8": "36",
+		"#10": "32",
+		"#12": "28",
+		"2": "64",
+		"4": "48",
+		"6": "40",
+		"8": "36",
+		"10": "32",
+		"12": "28",
+		"1/4": "28",
+		"5/16": "24",
+		"3/8": "24",
+		"7/16": "20",
+		"1/2": "20",
+		"9/16": "18",
+		"5/8": "18",
+		"3/4": "16",
+		"7/8": "14",
+		"1": "12",
+		"1-1/8": "8",
+		"1-1/4": "8",
+		"1-3/8": "8",
+		"1-1/2": "8",
+		"2": "6",
+	};
+
+	if (coarseMap[dia] === pitch) return "coarse";
+	if (fineMap[dia] === pitch) return "fine";
+	return "";
+}
+
+
 function normalizeBuilderDiameter(
 	diameter = "",
 	threadPitch = "",
 	measurementSystem = "",
 ) {
 	const system = String(measurementSystem || "").trim().toLowerCase();
-	const rawDiameter = String(diameter || "").trim();
+	const rawDiameter = normalizeMixedFraction(diameter);
 	const rawPitch = String(threadPitch || "").trim();
 	if (!rawDiameter) return rawDiameter;
 
@@ -44,11 +172,23 @@ function normalizeBuilderDiameter(
 	}
 
 	if (system === "imperial") {
-		if (!rawPitch) return rawDiameter;
+		if (isNumberedImperialThreadSize(rawDiameter)) {
+			return rawDiameter.replace(/^#/, "");
+		}
 
 		if (/^#?\d+$/.test(rawDiameter) && /^\d+(?:\.\d+)?$/.test(rawPitch)) {
-			return `${rawDiameter.replace(/^#/, "")}-${rawPitch}`;
+			const numberedCandidate = `${rawDiameter.replace(/^#/, "")}-${rawPitch}`;
+			if (isNumberedImperialThreadSize(numberedCandidate)) {
+				return numberedCandidate;
+			}
 		}
+
+		const embeddedThread = parseEmbeddedImperialThreadedDiameter(rawDiameter);
+		if (embeddedThread && (!rawPitch || rawPitch === embeddedThread.threadPitch)) {
+			return embeddedThread.diameter;
+		}
+
+		return rawDiameter;
 	}
 
 	return rawDiameter;
@@ -140,13 +280,22 @@ function normalizeVariantAttributesForBuilder(
 
 	if (sub === "hex cap screws") {
 		const measurementSystem = attrs.measurementSystem || "";
-		const threadPitch = attrs.threadPitch || "";
-		const threadSeries = attrs.threadSeries || attrs.thread_series || "";
+		const rawThreadPitch = attrs.threadPitch || "";
+		const rawThreadSeries = attrs.threadSeries || attrs.thread_series || "";
+		const embeddedThread =
+			String(measurementSystem || "").trim().toLowerCase() === "imperial"
+				? parseEmbeddedImperialThreadedDiameter(attrs.diameter || "")
+				: null;
+		const threadPitch = rawThreadPitch || embeddedThread?.threadPitch || "";
 		const normalizedDiameter = normalizeBuilderDiameter(
 			attrs.diameter || "",
 			threadPitch,
 			measurementSystem,
 		);
+		const threadSeries =
+			rawThreadSeries ||
+			inferImperialThreadSeries(normalizedDiameter, threadPitch) ||
+			"";
 		const threadOption = buildThreadOption(
 			threadSeries,
 			threadPitch,

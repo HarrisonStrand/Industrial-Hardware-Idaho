@@ -144,6 +144,95 @@ function buildThreadOptionLabel(attributes = {}) {
 	return pitch || series || "";
 }
 
+const NUMBERED_IMPERIAL_THREAD_SIZE_LABELS = new Set([
+	"0-80",
+	"1-64",
+	"1-72",
+	"2-56",
+	"2-64",
+	"3-48",
+	"3-56",
+	"4-40",
+	"4-48",
+	"5-40",
+	"5-44",
+	"6-32",
+	"6-40",
+	"8-32",
+	"8-36",
+	"10-24",
+	"10-32",
+	"12-24",
+	"12-28",
+]);
+
+function normalizeImperialDisplayFraction(value = "") {
+	return String(value || "")
+		.trim()
+		.replace(/"/g, "")
+		.replace(/\s+/g, " ")
+		.replace(/^(\d+)\s+(\d+\/\d+)$/, "$1-$2");
+}
+
+function isNumberedImperialThreadSizeLabel(value = "") {
+	return NUMBERED_IMPERIAL_THREAD_SIZE_LABELS.has(
+		String(value || "").trim().replace(/^#/, ""),
+	);
+}
+
+function stripThreadPitchFromImperialDiameter(value = "") {
+	const normalized = normalizeImperialDisplayFraction(value);
+	if (!normalized || isNumberedImperialThreadSizeLabel(normalized)) {
+		return normalized;
+	}
+
+	const match = normalized.match(/^(\d+(?:-\d+\/\d+|\/\d+)?)-(\d+(?:\.\d+)?)$/);
+	if (!match) return normalized;
+
+	return normalizeImperialDisplayFraction(match[1]);
+}
+
+function formatImperialMeasurementForDisplay(value = "") {
+	const normalized = normalizeImperialDisplayFraction(value);
+	if (!normalized) return "";
+	return `${normalized}"`;
+}
+
+function inferMeasurementSystemForDisplay(key = "", value = "", selected = {}) {
+	const selectedSystem = String(selected?.measurementSystem || "")
+		.trim()
+		.toLowerCase();
+	const raw = String(value || "").trim();
+
+	if (selectedSystem) return selectedSystem;
+	if (/^M\d/i.test(raw) || /mm$/i.test(raw)) return "metric";
+	if (["diameter", "length"].includes(key)) return "imperial";
+	return "";
+}
+
+function formatAttributeValueForDisplay(key = "", value = "", selected = {}) {
+	const raw = String(value || "").trim();
+	if (!raw) return "";
+
+	const lowerKey = String(key || "").toLowerCase();
+	const system = inferMeasurementSystemForDisplay(lowerKey, raw, selected);
+
+	if (lowerKey === "diameter") {
+		if (system === "metric" || /^M\d/i.test(raw)) return raw.toUpperCase();
+
+		const diameterOnly = stripThreadPitchFromImperialDiameter(raw);
+		if (isNumberedImperialThreadSizeLabel(diameterOnly)) return diameterOnly;
+		return formatImperialMeasurementForDisplay(diameterOnly);
+	}
+
+	if (lowerKey === "length") {
+		if (system === "metric" || /mm$/i.test(raw)) return raw;
+		return formatImperialMeasurementForDisplay(raw);
+	}
+
+	return raw;
+}
+
 function sortOptionValues(values = [], key = "") {
 	const lower = String(key || "").toLowerCase();
 
@@ -470,6 +559,7 @@ function SelectedPathSummary({ selected = {}, attributeEntries = [] }) {
 			key,
 			label: formatAttributeLabel(key),
 			value: selected[key] || "",
+			displayValue: formatAttributeValueForDisplay(key, selected[key] || "", selected),
 		}))
 		.filter((item) => item.value);
 
@@ -483,7 +573,7 @@ function SelectedPathSummary({ selected = {}, attributeEntries = [] }) {
 				<span
 					key={chip.key}
 					className='badge rounded-pill text-bg-light border px-3 py-2'>
-					{chip.label}: {chip.value}
+					{chip.label}: {chip.displayValue || chip.value}
 				</span>
 			))}
 		</div>
@@ -925,7 +1015,7 @@ const handleAddToCart = () => {
 														{formatAttributeLabel(key)}
 													</div>
 													<div className='small text-muted text-capitalize'>
-														{selected[key] || "Choose an option"}
+														{formatAttributeValueForDisplay(key, selected[key], selected) || "Choose an option"}
 													</div>
 												</div>
 
@@ -948,7 +1038,7 @@ const handleAddToCart = () => {
 																	key={`${key}-${value}`}
 																	className='col-12 col-sm-6'>
 																	<FacetOptionCard
-																		label={value}
+																		label={formatAttributeValueForDisplay(key, value, selected)}
 																		count={count}
 																		selected={selected[key] === value}
 																		onClick={() => handleSelect(key, value)}
