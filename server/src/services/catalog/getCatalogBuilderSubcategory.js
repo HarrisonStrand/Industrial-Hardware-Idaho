@@ -205,6 +205,33 @@ function buildThreadOption(threadSeries = "", threadPitch = "", diameter = "", m
 	return pitch || series || "";
 }
 
+function normalizeThreadCoverage(value = "") {
+	const raw = String(value || "").trim().toLowerCase();
+	if (!raw) return "";
+
+	if (
+		raw === "full" ||
+		raw === "fully threaded" ||
+		raw === "full thread" ||
+		raw === "tap" ||
+		raw === "tap bolt"
+	) {
+		return "full";
+	}
+
+	if (
+		raw === "partial" ||
+		raw === "partially threaded" ||
+		raw === "partial thread" ||
+		raw === "regular" ||
+		raw === "standard"
+	) {
+		return "partial";
+	}
+
+	return raw;
+}
+
 function isValidBuilderMeasurementPair(attrs = {}) {
 	const system = String(attrs.measurementSystem || "").trim().toLowerCase();
 	const diameter = String(attrs.diameter || "").trim();
@@ -313,12 +340,16 @@ function normalizeVariantAttributesForBuilder(
 			measurementSystem,
 		);
 		const headProfile = attrs.headProfile || attrs.head_profile || attrs.headStyle || "";
+		const threadCoverage = normalizeThreadCoverage(
+			attrs.threadCoverage || attrs.thread_coverage || "",
+		);
 
 		return {
 			measurementSystem,
 			diameter: normalizedDiameter,
 			threadOption,
 			length: attrs.length || "",
+			...(threadCoverage ? { threadCoverage } : {}),
 			...(headProfile ? { headProfile } : {}),
 			materialFinish: attrs.materialFinish || "",
 			grade: attrs.grade || "",
@@ -399,6 +430,7 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 								"diameter",
 								"threadOption",
 								"length",
+								"threadCoverage",
 								"headProfile",
 								"materialFinish",
 								"grade",

@@ -36,6 +36,7 @@ const ATTRIBUTE_ORDER = [
 	"diameter",
 	"threadOption",
 	"length",
+	"threadCoverage",
 	"headProfile",
 	"materialFinish",
 	"grade",
@@ -52,6 +53,7 @@ const INITIAL_SELECTED_STATE = {
 	diameter: "",
 	threadOption: "",
 	length: "",
+	threadCoverage: "",
 	headProfile: "",
 	materialFinish: "",
 	grade: "",
@@ -242,6 +244,11 @@ function formatAttributeValueForDisplay(key = "", value = "", selected = {}) {
 		return formatImperialMeasurementForDisplay(raw);
 	}
 
+	if (lowerKey === "threadcoverage") {
+		if (raw.toLowerCase() === "full") return "Fully Threaded";
+		if (raw.toLowerCase() === "partial") return "Partially Threaded";
+	}
+
 	return raw;
 }
 
@@ -383,6 +390,7 @@ function formatAttributeLabel(key = "") {
 		grade: "Grade",
 		washerStandard: "Standard",
 		washerType: "Type",
+		threadCoverage: "Thread Coverage",
 		headProfile: "Head Profile",
 		materialFinish: "Material / Finish",
 		headType: "Head Type",
@@ -483,6 +491,7 @@ const boltOrder = [
 	"diameter",
 	"threadOption",
 	"length",
+	"threadCoverage",
 	"headProfile",
 	"materialFinish",
 	"grade",
@@ -539,6 +548,16 @@ function getAllowedValuesForKey(variants = [], selection = {}, key = "") {
 	}
 
 	return Array.from(values);
+}
+
+function shouldShowAttributeEntry(key = "", values = [], selected = {}, subcategoryId = "") {
+	const sub = normalizeSubcategoryId(subcategoryId);
+
+	if (isBoltCapScrewSubcategory(sub) && key === "threadCoverage") {
+		return values.length > 1 || Boolean(selected?.threadCoverage);
+	}
+
+	return values.length > 0;
 }
 
 function hasAnyRealSelection(selected = {}) {
@@ -731,8 +750,15 @@ const attributeEntries = useMemo(() => {
 				);
 				return [key, allowedValues.length ? allowedValues : values];
 			})
-			.filter(([_, values]) => values.length > 0);
-	}, [attributeEntries, variants, selected]);
+			.filter(([key, values]) =>
+				shouldShowAttributeEntry(
+					key,
+					values,
+					selected,
+					builderData?.subcategoryId,
+				),
+			);
+	}, [attributeEntries, variants, selected, builderData?.subcategoryId]);
 
 	useEffect(() => {
 		const progressive = getSectionOpenState(filteredAttributeEntries, selected);
