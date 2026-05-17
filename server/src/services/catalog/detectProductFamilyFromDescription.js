@@ -50,8 +50,8 @@ function detectFinish(text = "") {
 	if (value.includes("zinc yellow")) return "yellow zinc";
 	if (value.includes("yellow / zinc")) return "yellow zinc";
 	if (value.includes("yellow-zinc")) return "yellow zinc";
-	if (value.includes("hdg")) return "hot dip galvanized";
-	if (value.includes("hot dip galvanized")) return "hot dip galvanized";
+	if (value.includes("hdg")) return "galvanized";
+	if (value.includes("hot dip galvanized")) return "galvanized";
 	if (value.includes("galvanized")) return "galvanized";
 	if (value.includes("black oxide")) return "black oxide";
 	if (value.includes("phosphate")) return "phosphate";
@@ -137,8 +137,8 @@ function normalizeMaterialAndFinish({ material = "", finish = "" }) {
 		"black-oxide": "black oxide",
 		chrome: "chrome",
 		galvanized: "galvanized",
-		"hot dip galvanized": "hot dip galvanized",
-		hdg: "hot dip galvanized",
+		"hot dip galvanized": "galvanized",
+		hdg: "galvanized",
 		"yellow zinc": "yellow zinc",
 		"zinc yellow": "yellow zinc",
 		"cad plated": "cad plated",
@@ -566,7 +566,7 @@ function decodeImperialHexCapPartNumber(partNum = "") {
 	const isTapBolt = suffixCode === "T" || suffixCode === "TAP";
 
 	if (isPlain) finishHint = "plain";
-	else if (prefix === "HH") finishHint = "hot dip galvanized";
+	else if (prefix === "HH") finishHint = "galvanized";
 	else if (prefix === "SB") finishHint = "black oxide";
 	else if (prefix === "AN") finishHint = "plain";
 	else if (materialHint === "steel") finishHint = "zinc";
@@ -1143,6 +1143,131 @@ function detectRoundStockA307(text = '') {
 	return {measurementSystem:'imperial', diameter, length, threadPitch:pitch, threadSeries: pitch ? 'coarse':'', grade:'A307', material:'steel', finish:'zinc'};
 }
 
+const A307_CSA_DIAMETER_CODES = [
+	"010", "011", "040", "050", "060", "070", "080", "090", "100", "120", "140", "160", "180", "200", "220", "240", "260",
+	"04", "05", "06", "07", "08", "09", "10", "12", "14", "16", "18", "20", "22", "24", "26",
+];
+
+const A307_CSA_SUFFIX_PATTERN = "PLAIN|PL|GALVANIZED|GALV|HDG|ZINC|ZN|P|G";
+const A307_CSA_SEARCH_REGEX = new RegExp(
+	`(?:^|[^A-Z0-9])CSA[0-9]{5,7}(?:\\s*[-_/]?\\s*(?:${A307_CSA_SUFFIX_PATTERN}))?(?=[^A-Z0-9]|$)`,
+	"i",
+);
+const A307_CSA_DECODE_REGEX = new RegExp(
+	`(?:^|[^A-Z0-9])CSA([0-9]{5,7})(?:\\s*[-_/]?\\s*(${A307_CSA_SUFFIX_PATTERN}))?(?=[^A-Z0-9]|$)`,
+	"i",
+);
+
+function normalizeA307CsaSuffix(value = "") {
+	const suffix = clean(value).toUpperCase();
+	if (["P", "PL", "PLAIN"].includes(suffix)) return "P";
+	if (["G", "GALV", "GALVANIZED", "HDG"].includes(suffix)) return "G";
+	if (["Z", "ZN", "ZINC"].includes(suffix)) return "Z";
+	return "";
+}
+
+function finishFromA307CsaSuffix(value = "") {
+	const normalized = normalizeA307CsaSuffix(value);
+	if (normalized === "P") return "plain";
+	if (normalized === "G") return "galvanized";
+	return "zinc";
+}
+
+function getA307CsaCandidateText(text = "", product = null, parsed = {}) {
+	return [
+		getPartNumberText(product, parsed),
+		product?.sku || "",
+		product?.internalPartNumber || "",
+		product?.fishbowl?.description || "",
+		text || "",
+	]
+		.filter(Boolean)
+		.join(" ");
+}
+
+function decodeA307CsaPartNumber(value = "") {
+	const raw = String(value || "").trim().toUpperCase();
+	const match = raw.match(A307_CSA_DECODE_REGEX);
+	if (!match) return null;
+
+	const digits = match[1] || "";
+	const suffix = normalizeA307CsaSuffix(match[2] || "");
+
+	const candidates = [];
+	for (const diaCode of A307_CSA_DIAMETER_CODES) {
+		if (!digits.startsWith(diaCode)) continue;
+
+		const rawLenCode = digits.slice(diaCode.length);
+		if (![3, 4].includes(rawLenCode.length)) continue;
+
+		const diameter = imperialDiameterFromCode(diaCode);
+		if (!diameter) continue;
+
+		const lenCode = rawLenCode.length === 3 ? `0${rawLenCode}` : rawLenCode;
+		const length = fractionFromSixteenthsCode(lenCode);
+		if (!length) continue;
+
+		candidates.push({
+			diaCode,
+			rawLenCode,
+			lenCode,
+			diameter,
+			length,
+			wasMissingLengthLeadingZero: rawLenCode.length === 3,
+		});
+	}
+
+	if (!candidates.length) {
+		return {
+			familyType: "hex cap screw",
+			measurementSystem: "imperial",
+			grade: "A307",
+			material: "steel",
+			finish: finishFromA307CsaSuffix(suffix),
+			unrecognizedCsaFormat: true,
+			rawCsaDigits: digits,
+		};
+	}
+
+	// Prefer the parse that leaves a full 4-digit length. If the only valid parse
+	// leaves 3 length digits, we still decode it and flag it for audit because it
+	// likely needs a leading zero in Fishbowl (example: CSA10112P -> CSA100112P).
+	const best = candidates.sort((a, b) => {
+		if (a.rawLenCode.length !== b.rawLenCode.length) return b.rawLenCode.length - a.rawLenCode.length;
+		return b.diaCode.length - a.diaCode.length;
+	})[0];
+
+	const threadPitch = inferImperialCoarsePitchFromDiameter(best.diameter);
+	const finish = finishFromA307CsaSuffix(suffix);
+
+	return {
+		familyType: "hex cap screw",
+		measurementSystem: "imperial",
+		diameter: best.diameter,
+		length: best.length,
+		threadPitch,
+		threadSeries: threadPitch ? "coarse" : "",
+		threadCoverage: "partial",
+		grade: "A307",
+		material: "steel",
+		finish,
+		displayMaterial: "steel",
+		displayFinish: finish,
+		materialFinish: finish ? `steel / ${finish}` : "steel",
+		wasMissingLengthLeadingZero: best.wasMissingLengthLeadingZero,
+		rawCsaDigits: digits,
+		diaCode: best.diaCode,
+		lenCode: best.lenCode,
+		suffix,
+	};
+}
+
+function detectA307CsaHexCapScrew(text = "", product = null, parsed = {}) {
+	const candidateText = getA307CsaCandidateText(text, product, parsed);
+	return decodeA307CsaPartNumber(candidateText);
+}
+
+
 function detectWasherStandard(text = "", parsed = {}) {
 	const explicit = clean(
 		parsed.washerStandard || parsed.standard || parsed.pattern || "",
@@ -1486,8 +1611,8 @@ function detectBoltFinish(
 	if (decoded?.finishHint) return decoded.finishHint;
 
 	if (value.includes("plain")) return "plain";
-	if (value.includes("hot dip galvanized")) return "hot dip galvanized";
-	if (value.includes("hdg")) return "hot dip galvanized";
+	if (value.includes("hot dip galvanized")) return "galvanized";
+	if (value.includes("hdg")) return "galvanized";
 	if (value.includes("yellow zinc")) return "yellow zinc";
 	if (value.includes("zinc yellow")) return "yellow zinc";
 	if (value.includes("black oxide")) return "black oxide";
@@ -1612,6 +1737,8 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 
 	const looksLikeEncodedHexCap =
 		partNum.startsWith("MMCS") ||
+		partNum.startsWith("CSA") ||
+		A307_CSA_SEARCH_REGEX.test(text) ||
 		/^(?:SS|HH|SB|AN|AL|BR)?CS\d/i.test(partNum) ||
 		isStainlessHexCapCandidate(text, partNum);
 
@@ -1621,6 +1748,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 	const stainlessOneInch = detectStainlessOneInchCapScrew(text, product);
 	const looseStainlessHexThread = decodeLooseStainlessHexCapThreadFromText(text, partNum);
 	const roundStock = detectRoundStockA307(text);
+	const a307Csa = detectA307CsaHexCapScrew(text, product, parsed);
 
 	const isHexCap =
 		!isNonHexHeadLike &&
@@ -1630,6 +1758,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 			value.includes("hex bolt") ||
 			looksLikeHexCapShorthand(text) ||
 			shorthand?.familyType === "hex cap screw" ||
+			a307Csa?.familyType === "hex cap screw" ||
 			decoded?.familyType === "hex cap screw" ||
 			looksLikeEncodedHexCap
 		);
@@ -1699,6 +1828,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		compactMetric?.measurementSystem ||
 		stainlessOneInch?.measurementSystem ||
 		looseStainlessHexThread?.measurementSystem ||
+		a307Csa?.measurementSystem ||
 		roundStock?.measurementSystem ||
 		structural?.measurementSystem ||
 		shorthand?.measurementSystem ||
@@ -1735,6 +1865,11 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 	const looseStainlessSeries = clean(looseStainlessHexThread?.threadSeries || "");
 	const looseStainlessLength = clean(looseStainlessHexThread?.length || "");
 
+	const a307CsaDiameter = clean(a307Csa?.diameter || "");
+	const a307CsaPitch = clean(a307Csa?.threadPitch || "");
+	const a307CsaSeries = clean(a307Csa?.threadSeries || "");
+	const a307CsaLength = clean(a307Csa?.length || "");
+
 	const genericDiameter = clean(dims.diameter || "");
 	const genericPitch = clean(dims.threadPitch || "");
 	const genericLength = clean(dims.length || "");
@@ -1744,6 +1879,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		clean(compactMetric?.diameter || "") ||
 		clean(stainlessOneInch?.diameter || "") ||
 		looseStainlessDiameter ||
+		a307CsaDiameter ||
 		clean(roundStock?.diameter || "") ||
 		structuralDiameter ||
 		decodedDiameter ||
@@ -1760,6 +1896,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		clean(compactMetric?.threadPitch || "") ||
 		clean(stainlessOneInch?.threadPitch || "") ||
 		looseStainlessPitch ||
+		a307CsaPitch ||
 		clean(roundStock?.threadPitch || "") ||
 		structuralPitch ||
 		decodedPitch ||
@@ -1776,6 +1913,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		clean(compactMetric?.length || "") ||
 		clean(stainlessOneInch?.length || "") ||
 		looseStainlessLength ||
+		a307CsaLength ||
 		clean(roundStock?.length || "") ||
 		structuralLength ||
 		decodedLength ||
@@ -1805,6 +1943,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		clean(parsed.threadSeries || parsed.thread_series || "") ||
 		clean(structural?.threadSeries || "") ||
 		looseStainlessSeries ||
+		a307CsaSeries ||
 		clean(decoded?.threadSeries || "") ||
 		clean(shorthand?.threadSeries || "") ||
 		(
@@ -1824,6 +1963,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		: clean(parsed.material || "") ||
 			clean(compactMetric?.material || "") ||
 			clean(stainlessOneInch?.material || "") ||
+			clean(a307Csa?.material || "") ||
 			clean(roundStock?.material || "") ||
 			clean(structural?.material || "") ||
 			clean(shorthand?.material || "") ||
@@ -1834,6 +1974,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		: clean(parsed.finish || "") ||
 			clean(compactMetric?.finish || "") ||
 			clean(stainlessOneInch?.finish || "") ||
+			clean(a307Csa?.finish || "") ||
 			clean(roundStock?.finish || "") ||
 			clean(structural?.finish || "") ||
 			clean(shorthand?.finish || "") ||
@@ -1844,6 +1985,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		: clean(parsed.grade || "") ||
 			clean(compactMetric?.grade || "") ||
 			clean(stainlessOneInch?.grade || "") ||
+			clean(a307Csa?.grade || "") ||
 			clean(roundStock?.grade || "") ||
 			clean(structural?.grade || "") ||
 			clean(shorthand?.grade || "") ||
@@ -1885,6 +2027,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		threadCoverage:
 			clean(parsed.threadCoverage || parsed.thread_coverage || "") ||
 			clean(stainlessOneInch?.threadCoverage || "") ||
+			clean(a307Csa?.threadCoverage || "") ||
 			clean(decoded?.threadCoverage || ""),
 		measurementSystem:
 			partNum.startsWith("MM") || /^M\d/i.test(clean(diameter || ""))
