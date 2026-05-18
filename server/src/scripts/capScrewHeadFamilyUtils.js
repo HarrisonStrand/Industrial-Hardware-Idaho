@@ -192,7 +192,14 @@ function detectStainlessGrade(text = "") {
 
 function detectFinishOverride(text = "") {
 	const raw = String(text || "");
+
+	// Zinc should only win when it is clearly present in the real Fishbowl
+	// part number/description. Do not let stale enrichment titles like
+	// "zinc steel hex cap screw" keep polluting SHCS records.
 	if (/\b(?:zinc|zp|z\.p\.)\b/i.test(raw)) return "zinc";
+	if (/\bZ\b/.test(raw)) return "zinc";
+	if (/\b(?:SHCS|MMSH)\d{5,8}Z\b/i.test(raw)) return "zinc";
+
 	if (/\b(?:plain|pln)\b/i.test(raw)) return "plain";
 	if (/\b(?:galv|galvanized|hdg|hot dip)\b/i.test(raw)) return "galvanized";
 	if (/\bblack oxide\b|\bblk ox\b|\bbox\b/i.test(raw)) return "black oxide";
@@ -236,11 +243,23 @@ function sourceTextFor(product = {}, enrichment = null) {
 		.join(" ");
 }
 
+function rawProductSourceTextFor(product = {}) {
+	return [
+		product?.fishbowl?.partNum,
+		product?.sku,
+		product?.internalPartNumber,
+		product?.fishbowl?.description,
+		product?.fishbowl?.raw?.original?.description,
+	]
+		.filter(Boolean)
+		.join(" ");
+}
+
 function findCapScrewPartToken(text = "") {
 	const raw = String(text || "").toUpperCase();
 	const patterns = [
-		/\b(?:BHCS|SHCS)\d{6,8}(?:FLH|F|LH)?\b/i,
-		/\b(?:SSSB|SSSH)\d{6,8}(?:FLH|F|LH)?\b/i,
+		/\b(?:BHCS|SHCS)\d{5,8}(?:FLH|F|LH|Z)?\b/i,
+		/\b(?:SSSB|SSSH)\d{5,8}(?:FLH|F|LH)?\b/i,
 		/\bMMS[BFH]\d{8}(?:SS)?\b/i,
 	];
 
@@ -302,34 +321,60 @@ function familyFromMetricType(type = "") {
 	return null;
 }
 
+function splitImperialCapScrewNumericBody(numericBody = "") {
+	const digits = String(numericBody || "").replace(/\D/g, "");
+	if (!/^\d{5,8}$/.test(digits)) return null;
+
+	// Prefer the current three-digit diameter convention: 080200 = 1/2 x 2.
+	// But many real Fishbowl SHCS rows are compact: 08400 = 1/2 x 4.
+	const candidates = [
+		{ diaCode: digits.slice(0, 3), lengthCode: digits.slice(3) },
+		{ diaCode: digits.slice(0, 2), lengthCode: digits.slice(2) },
+	];
+
+	for (const candidate of candidates) {
+		const diameter = imperialDiameterFromCode(candidate.diaCode);
+		const length = lengthFromImperialCapScrewCode(candidate.lengthCode);
+
+		if (diameter && length) {
+			return {
+				...candidate,
+				diameter,
+				length,
+			};
+		}
+	}
+
+	return null;
+}
+
 function decodeImperialCapScrewToken(token = "", sourceText = "") {
 	const raw = String(token || "").trim().toUpperCase();
-	const match = raw.match(/^(BHCS|SHCS|SSSB|SSSH)(\d{3})(\d{3,5})(FLH|F|LH)?$/i);
+	const match = raw.match(/^(BHCS|SHCS|SSSB|SSSH)(\d{5,8})(FLH|F|LH|Z)?$/i);
 	if (!match) return null;
 
-	const [, prefix = "", diaCode = "", lengthCode = "", suffix = ""] = match;
+	const [, prefix = "", numericBody = "", suffix = ""] = match;
 	const family = familyFromImperialPrefix(prefix);
 	if (!family) return null;
+
+	const parsed = splitImperialCapScrewNumericBody(numericBody);
+	if (!parsed) return null;
 
 	const isFine = suffix.includes("F");
 	const isLowHead = suffix.includes("LH");
 	const stainless = prefix.startsWith("SS");
-	const diameter = imperialDiameterFromCode(diaCode);
-	const length = lengthFromImperialCapScrewCode(lengthCode);
-	const thread = threadDataForImperialDiameter(diameter, isFine);
+	const thread = threadDataForImperialDiameter(parsed.diameter, isFine);
 	const materialFinish = materialFinishFor({ stainless, sourceText });
-	const grade = stainless ? detectStainlessGrade(sourceText) : "";
-
-	if (!diameter || !length) return null;
+	const grade = stainless ? detectStainlessGrade(sourceText) : "grade 8";
 
 	return {
 		partToken: raw,
-		partNumberAnomaly: getImperialCapScrewLengthAnomaly(lengthCode),
+		partNumberAnomaly: getImperialCapScrewLengthAnomaly(parsed.lengthCode),
 		category: "bolts",
 		...family,
 		measurementSystem: "imperial",
-		diameter,
-		length,
+		diameter: parsed.diameter,
+		length: parsed.length,
 		...thread,
 		threadCoverage: "full",
 		headProfile: family.familyType === "socket head cap screw" ? (isLowHead ? "low head" : "standard") : "",
@@ -354,7 +399,7 @@ function decodeMetricCapScrewToken(token = "", sourceText = "") {
 	const threadPitch = pitchFromMetricCode(pitchCode);
 	const stainless = Boolean(ssSuffix) || /(?:\bss\b|s\/s|stainless)/i.test(sourceText);
 	const materialFinish = materialFinishFor({ stainless, sourceText });
-	const grade = stainless ? detectStainlessGrade(sourceText) : "";
+	const grade = stainless ? detectStainlessGrade(sourceText) : "grade 8";
 
 	if (!diameter || !length || !threadPitch) return null;
 
@@ -375,13 +420,17 @@ function decodeMetricCapScrewToken(token = "", sourceText = "") {
 }
 
 function decodeCapScrewHeadFamilyFromProduct(product = {}, enrichment = null) {
-	const sourceText = sourceTextFor(product, enrichment);
-	const token = findCapScrewPartToken(sourceText);
+	const fullSourceText = sourceTextFor(product, enrichment);
+	const rawSourceText = rawProductSourceTextFor(product);
+	const token = findCapScrewPartToken(fullSourceText);
 	if (!token) return null;
 
+	// Use the raw Fishbowl product text for material/finish overrides. This
+	// prevents stale enrichment fields like "steel / zinc" from surviving when
+	// a SHCS item should default back to steel / black oxide.
 	return (
-		decodeImperialCapScrewToken(token, sourceText) ||
-		decodeMetricCapScrewToken(token, sourceText)
+		decodeImperialCapScrewToken(token, rawSourceText) ||
+		decodeMetricCapScrewToken(token, rawSourceText)
 	);
 }
 
@@ -496,6 +545,7 @@ function diffDecodedAgainstEnrichment(decoded = {}, enrichment = null) {
 		material: attrs.material || "",
 		finish: attrs.finish || "",
 		materialFinish: attrs.materialFinish || "",
+		grade: attrs.grade || "",
 		headProfile: attrs.headProfile || "",
 	};
 	const expected = {
@@ -510,6 +560,7 @@ function diffDecodedAgainstEnrichment(decoded = {}, enrichment = null) {
 		material: decoded.material || "",
 		finish: decoded.finish || "",
 		materialFinish: decoded.materialFinish || "",
+		grade: decoded.grade || "",
 		headProfile: decoded.headProfile || "",
 	};
 
