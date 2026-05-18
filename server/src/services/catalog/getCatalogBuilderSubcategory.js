@@ -232,6 +232,15 @@ function normalizeThreadCoverage(value = "") {
 	return raw;
 }
 
+
+function normalizeOrigin(value = "") {
+	const raw = String(value || "").trim().toLowerCase();
+	if (!raw) return "";
+	if (["dom", "domestic", "usa", "us", "u.s.", "made in usa"].includes(raw)) return "domestic";
+	if (["std", "standard", "import", "imported", "regular"].includes(raw)) return "standard";
+	return raw;
+}
+
 function isValidBuilderMeasurementPair(attrs = {}) {
 	const system = String(attrs.measurementSystem || "").trim().toLowerCase();
 	const diameter = String(attrs.diameter || "").trim();
@@ -343,6 +352,9 @@ function normalizeVariantAttributesForBuilder(
 		const threadCoverage = normalizeThreadCoverage(
 			attrs.threadCoverage || attrs.thread_coverage || "",
 		);
+		const origin = normalizeOrigin(
+			attrs.origin || attrs.domestic || attrs.countryOfOrigin || "",
+		);
 
 		return {
 			measurementSystem,
@@ -350,6 +362,7 @@ function normalizeVariantAttributesForBuilder(
 			threadOption,
 			length: attrs.length || "",
 			...(threadCoverage ? { threadCoverage } : {}),
+			...(origin ? { origin } : {}),
 			...(headProfile ? { headProfile } : {}),
 			materialFinish: attrs.materialFinish || "",
 			grade: attrs.grade || "",
@@ -431,6 +444,7 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 								"threadOption",
 								"length",
 								"threadCoverage",
+								"origin",
 								"headProfile",
 								"materialFinish",
 								"grade",
