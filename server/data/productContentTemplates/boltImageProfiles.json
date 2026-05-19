@@ -1,0 +1,114 @@
+{
+  "imageProfiles": {
+    "hex cap screw": {
+      "default": "/images/products/bolts/hex-head-bolt-zinc.png",
+      "byMaterialFinishAndGrade": {
+        "steel / yellow zinc|grade 8": "/images/products/bolts/hex-head-bolt-yellow-zinc-grade-8.png",
+        "steel / yellow zinc|8": "/images/products/bolts/hex-head-bolt-yellow-zinc-grade-8.png",
+        "stainless steel|304": "/images/products/bolts/hex-head-bolt-stainless-grade-304.png",
+        "stainless steel|316": "/images/products/bolts/hex-head-bolt-stainless-grade-316.png",
+        "steel / plain|A307": "/images/products/bolts/hex-head-bolt-plain-a307.png",
+        "steel / plain|a307": "/images/products/bolts/hex-head-bolt-plain-a307.png"
+      },
+      "byGrade": {
+        "304": "/images/products/bolts/hex-head-bolt-stainless-grade-304.png",
+        "316": "/images/products/bolts/hex-head-bolt-stainless-grade-316.png",
+        "A307": "/images/products/bolts/hex-head-bolt-plain-a307.png",
+        "a307": "/images/products/bolts/hex-head-bolt-plain-a307.png",
+        "grade 8": "/images/products/bolts/hex-head-bolt-yellow-zinc-grade-8.png",
+        "8": "/images/products/bolts/hex-head-bolt-yellow-zinc-grade-8.png",
+        "grade 5": "/images/products/bolts/hex-head-bolt-zinc.png",
+        "5": "/images/products/bolts/hex-head-bolt-zinc.png"
+      },
+      "byMaterialFinish": {
+        "steel / zinc": "/images/products/bolts/hex-head-bolt-zinc.png",
+        "steel / yellow zinc": "/images/products/bolts/hex-head-bolt-yellow-zinc-grade-8.png",
+        "steel / galvanized": "/images/products/bolts/hex-head-bolt-galvanized.png",
+        "steel / plain": "/images/products/bolts/hex-head-bolt-plain.png",
+        "steel / black oxide": "/images/products/bolts/hex-head-bolt-plain.png",
+        "stainless steel": "/images/products/bolts/hex-head-bolt-stainless-grade-304.png",
+        "aluminum": "/images/products/bolts/hex-head-bolt-aluminum.png",
+        "nylon": "/images/products/bolts/hex-head-bolt-nylon.png",
+        "brass": "/images/products/bolts/hex-head-bolt-brass.png",
+        "chrome": "/images/products/bolts/hex-head-bolt-chrome.png"
+      }
+    },
+    "structural bolt": {
+      "default": "/images/products/bolts/heavy-hex-head-bolt-plain-a325.png",
+      "byMaterialFinishAndGrade": {
+        "steel / plain|A325": "/images/products/bolts/heavy-hex-head-bolt-plain-a325.png",
+        "steel / galvanized|A325": "/images/products/bolts/heavy-hex-head-bolt-plain-a325.png"
+      },
+      "byGrade": {
+        "A325": "/images/products/bolts/heavy-hex-head-bolt-plain-a325.png",
+        "a325": "/images/products/bolts/heavy-hex-head-bolt-plain-a325.png"
+      },
+      "byMaterialFinish": {
+        "steel / plain": "/images/products/bolts/heavy-hex-head-bolt-plain-a325.png",
+        "steel / galvanized": "/images/products/bolts/heavy-hex-head-bolt-plain-a325.png"
+      }
+    },
+    "heavy hex bolt": {
+      "default": "/images/products/bolts/hex-head-bolt-plain-a307.png",
+      "byMaterialFinishAndGrade": {
+        "steel / plain|A307": "/images/products/bolts/hex-head-bolt-plain-a307.png",
+        "steel / galvanized|A307": "/images/products/bolts/hex-head-bolt-galvanized.png",
+        "steel / zinc|A307": "/images/products/bolts/hex-head-bolt-zinc.png"
+      },
+      "byGrade": {
+        "A307": "/images/products/bolts/hex-head-bolt-plain-a307.png",
+        "a307": "/images/products/bolts/hex-head-bolt-plain-a307.png"
+      },
+      "byMaterialFinish": {
+        "steel / plain": "/images/products/bolts/hex-head-bolt-plain.png",
+        "steel / galvanized": "/images/products/bolts/hex-head-bolt-galvanized.png",
+        "steel / zinc": "/images/products/bolts/hex-head-bolt-zinc.png"
+      }
+    },
+    "button head cap screw": {
+      "default": "/images/products/bolts/buttonhead-black-oxide.png",
+      "byMaterialFinish": {
+        "steel / black oxide": "/images/products/bolts/buttonhead-black-oxide.png",
+        "stainless steel": "/images/products/bolts/buttonhead-stainless.png",
+        "steel / zinc": "/images/products/bolts/buttonhead-zinc.png"
+      }
+    },
+    "socket head cap screw": {
+      "default": "/images/products/bolts/sockethead-stainless.png",
+      "byMaterialFinish": {
+        "stainless steel": "/images/products/bolts/sockethead-stainless.png",
+        "steel / black oxide": "/images/products/bolts/sockethead-stainless.png",
+        "steel / zinc": "/images/products/bolts/sockethead-stainless.png"
+      },
+      "notes": "Only sockethead-stainless.png is available right now. Add sockethead-black-oxide.png and sockethead-zinc.png later and update these mappings."
+    },
+    "flat head cap screw": {
+      "default": "/images/products/bolts/flathead-stainless.png",
+      "byMaterialFinish": {
+        "stainless steel": "/images/products/bolts/flathead-stainless.png",
+        "steel / black oxide": "/images/products/bolts/flathead-stainless.png",
+        "steel / zinc": "/images/products/bolts/flathead-stainless.png"
+      },
+      "notes": "Only flathead-stainless.png is available right now. Add flathead-black-oxide.png and flathead-zinc.png later and update these mappings."
+    },
+    "flange bolt": {
+      "default": "/images/products/bolts/flange-bolt-zinc-grade-5.png",
+      "byMaterialFinishAndGrade": {
+        "steel / zinc|grade 5": "/images/products/bolts/flange-bolt-zinc-grade-5.png",
+        "steel / black oxide|grade 8": "/images/products/bolts/flange-bolt-black-grade-8.png"
+      },
+      "byMaterialFinish": {
+        "stainless steel": "/images/products/bolts/flange-bolt-stainless.png",
+        "steel / zinc": "/images/products/bolts/flange-bolt-zinc-grade-5.png",
+        "steel / black oxide": "/images/products/bolts/flange-bolt-black-grade-8.png"
+      }
+    },
+    "carriage bolt": {
+      "default": "/images/products/bolts/carriage-bolt-plain.png",
+      "byMaterialFinish": {
+        "steel / plain": "/images/products/bolts/carriage-bolt-plain.png",
+        "steel / galvanized": "/images/products/bolts/carriage-bolt-galvanized.png"
+      }
+    }
+  }
+}

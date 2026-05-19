@@ -1154,7 +1154,7 @@ const handleAddToCart = () => {
 													Description
 												</div>
 												<hr className='mt-0 bg-main text-main' />
-												<div className='description-copy fs-5 text-main'>
+												<div className='description-copy text-main'>
 													{displayDescription}
 												</div>
 											</div>

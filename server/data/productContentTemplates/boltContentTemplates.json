@@ -1,0 +1,60 @@
+{
+  "families": {
+    "hex cap screw": {
+      "titlePattern": "{gradePrefix}{materialFinishLabel} Hex Cap Screw - {diameterThread} x {length}{coverageSuffix}",
+      "shortTitlePattern": "{diameterThread} x {length} Hex Cap Screw",
+      "descriptionTemplate": "{productName} is a {measurementSystemLabel} hex head fastener used for general fastening, repair, machinery, and construction applications. The external hex head is designed for installation with a wrench or socket, making it a practical choice where strong clamping force and easy serviceability are needed. {materialSentence} {threadSentence} {applicationSentence}",
+      "applicationProfile": "general_hex_cap_screw",
+      "imageProfile": "hex cap screw"
+    },
+    "structural bolt": {
+      "titlePattern": "A325 Structural Bolt - {diameterThread} x {length}{finishSuffix}{originSuffix}",
+      "shortTitlePattern": "{diameterThread} x {length} A325 Structural Bolt",
+      "descriptionTemplate": "{productName} is an A325 structural bolt intended for steel-to-steel structural connections. A325 is stored as the grade, while structural bolt is stored as the fastener type for builder filtering. {materialSentence} {originSentence} {applicationSentence}",
+      "applicationProfile": "a325_structural_bolt",
+      "imageProfile": "structural bolt"
+    },
+    "socket head cap screw": {
+      "titlePattern": "{gradePrefix}{materialFinishLabel} Socket Head Cap Screw - {diameterThread} x {length}{headProfileSuffix}",
+      "shortTitlePattern": "{diameterThread} x {length} Socket Head Cap Screw",
+      "descriptionTemplate": "{productName} is a socket head cap screw with an internal hex drive for installations where a clean cylindrical head and high wrenching strength are useful. {materialSentence} {threadSentence} {applicationSentence}",
+      "applicationProfile": "socket_head_cap_screw",
+      "imageProfile": "socket head cap screw"
+    },
+    "button head cap screw": {
+      "titlePattern": "{gradePrefix}{materialFinishLabel} Button Head Cap Screw - {diameterThread} x {length}",
+      "shortTitlePattern": "{diameterThread} x {length} Button Head Cap Screw",
+      "descriptionTemplate": "{productName} is a button head cap screw with a low-profile rounded head and internal drive. It is commonly used where a finished appearance, lower head height, or reduced snag points are helpful. {materialSentence} {threadSentence} {applicationSentence}",
+      "applicationProfile": "button_head_cap_screw",
+      "imageProfile": "button head cap screw"
+    },
+    "flat head cap screw": {
+      "titlePattern": "{gradePrefix}{materialFinishLabel} Flat Head Cap Screw - {diameterThread} x {length}",
+      "shortTitlePattern": "{diameterThread} x {length} Flat Head Cap Screw",
+      "descriptionTemplate": "{productName} is a flat head cap screw designed to sit flush in a countersunk hole. It is commonly used where a smooth surface, flush fit, or clean finished assembly is needed. {materialSentence} {threadSentence} {applicationSentence}",
+      "applicationProfile": "flat_head_cap_screw",
+      "imageProfile": "flat head cap screw"
+    },
+    "heavy hex bolt": {
+      "titlePattern": "{gradePrefix}{materialFinishLabel} Heavy Hex Bolt - {diameterThread} x {length}{finishSuffix}",
+      "shortTitlePattern": "{diameterThread} x {length} Heavy Hex Bolt",
+      "descriptionTemplate": "{productName} is a standard heavy hex bolt used for general bolted assemblies where a larger bearing surface and heavy hex pattern are preferred. {materialSentence} {threadSentence} {applicationSentence}",
+      "applicationProfile": "general_hex_cap_screw",
+      "imageProfile": "heavy_hex_bolt"
+    },
+    "flange bolt": {
+      "titlePattern": "{gradePrefix}{materialFinishLabel} Flange Bolt - {diameterThread} x {length}",
+      "shortTitlePattern": "{diameterThread} x {length} Flange Bolt",
+      "descriptionTemplate": "{productName} is a flange bolt with an integrated washer-style flange under the head to help distribute clamping load. {materialSentence} {threadSentence} {applicationSentence}",
+      "applicationProfile": "flange_bolt",
+      "imageProfile": "flange_bolt"
+    },
+    "carriage bolt": {
+      "titlePattern": "{materialFinishLabel} Carriage Bolt - {diameterThread} x {length}",
+      "shortTitlePattern": "{diameterThread} x {length} Carriage Bolt",
+      "descriptionTemplate": "{productName} is a carriage bolt with a rounded head and square neck designed to resist turning once seated. {materialSentence} {threadSentence} {applicationSentence}",
+      "applicationProfile": "carriage_bolt",
+      "imageProfile": "carriage_bolt"
+    }
+  }
+}

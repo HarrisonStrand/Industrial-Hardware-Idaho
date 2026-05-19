@@ -1,0 +1,41 @@
+{
+  "applicationProfiles": {
+    "general_hex_cap_screw": {
+      "sentence": "Typical uses include machinery repair, brackets, frames, equipment mounting, maintenance work, and general bolted assemblies."
+    },
+    "a325_structural_bolt": {
+      "sentence": "Typical uses include structural steel connections, steel framing, heavy construction, and bolted steel assemblies where A325 structural fasteners are specified."
+    },
+    "socket_head_cap_screw": {
+      "sentence": "Typical uses include machinery, dies, fixtures, equipment panels, precision assemblies, and tight-clearance areas where socket-drive installation is preferred."
+    },
+    "button_head_cap_screw": {
+      "sentence": "Typical uses include guards, panels, brackets, equipment covers, and assemblies where a smooth, low-profile head is preferred."
+    },
+    "flat_head_cap_screw": {
+      "sentence": "Typical uses include countersunk plates, flush mounting, machine assemblies, and applications where the screw head should sit even with the surface."
+    },
+    "flange_bolt": {
+      "sentence": "Typical uses include equipment frames, brackets, automotive-style assemblies, and applications where a built-in flange helps spread load without a separate washer."
+    },
+    "carriage_bolt": {
+      "sentence": "Typical uses include wood-to-wood, wood-to-metal, decks, gates, brackets, and assemblies where the rounded head provides a cleaner finished appearance."
+    }
+  },
+  "materialSentences": {
+    "steel / black oxide": "The black oxide finish gives the fastener a dark appearance commonly used for shop, machinery, and indoor applications.",
+    "steel / zinc": "The zinc finish provides general corrosion resistance for indoor and light-duty environments.",
+    "steel / galvanized": "The galvanized finish provides heavier corrosion protection for outdoor or exposed applications.",
+    "steel / plain": "The plain steel finish is commonly used where coating is not required or where the fastener will be finished after installation.",
+    "stainless steel": "Stainless steel provides improved corrosion resistance for wet, exterior, food-service, or washdown-prone environments.",
+    "aluminum": "Aluminum provides a lightweight, corrosion-resistant option for non-ferrous assemblies and weight-sensitive applications.",
+    "brass": "Brass provides a corrosion-resistant, non-sparking option often used where appearance or non-ferrous material is preferred."
+  },
+  "threadCoverageSentences": {
+    "full": "The fully threaded shank is useful when maximum thread engagement is needed along the bolt length.",
+    "partial": "The partially threaded shank provides an unthreaded grip section for standard through-bolt assemblies."
+  },
+  "originSentences": {
+    "domestic": "This item is marked as domestic for applications or purchasing requirements that call for domestic-origin fasteners."
+  }
+}
