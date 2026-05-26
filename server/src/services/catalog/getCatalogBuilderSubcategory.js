@@ -20,248 +20,6 @@ function normalizeSlug(value = "") {
 		.replace(/-/g, " ");
 }
 
-
-const NUMBERED_IMPERIAL_THREAD_SIZES = new Set([
-	"0-80",
-	"1-64",
-	"1-72",
-	"2-56",
-	"2-64",
-	"3-48",
-	"3-56",
-	"4-40",
-	"4-48",
-	"5-40",
-	"5-44",
-	"6-32",
-	"6-40",
-	"8-32",
-	"8-36",
-	"10-24",
-	"10-32",
-	"12-24",
-	"12-28",
-]);
-
-function normalizeMixedFraction(value = "") {
-	return String(value || "")
-		.trim()
-		.replace(/"/g, "")
-		.replace(/\s+/g, " ")
-		.replace(/\s*-\s*/g, "-")
-		.replace(/^(\d+)\s+(\d+\/\d+)$/, "$1-$2");
-}
-
-function isNumberedImperialThreadSize(value = "") {
-	const normalized = String(value || "")
-		.trim()
-		.replace(/^#/, "")
-		.toLowerCase();
-
-	return NUMBERED_IMPERIAL_THREAD_SIZES.has(normalized);
-}
-
-function parseEmbeddedImperialThreadedDiameter(value = "") {
-	const cleaned = normalizeMixedFraction(value);
-	if (!cleaned || isNumberedImperialThreadSize(cleaned)) return null;
-
-	const match = cleaned.match(
-		/^(\d+(?:-\d+\/\d+|\/\d+)?)-(\d+(?:\.\d+)?)$/,
-	);
-
-	if (!match) return null;
-
-	const [, diameter = "", threadPitch = ""] = match;
-	return {
-		diameter: normalizeMixedFraction(diameter),
-		threadPitch: String(threadPitch || "").trim(),
-	};
-}
-
-function inferImperialThreadSeries(diameter = "", threadPitch = "") {
-	const dia = normalizeMixedFraction(diameter);
-	const pitch = String(threadPitch || "").trim();
-	if (!dia || !pitch) return "";
-
-	const coarseMap = {
-		"#2": "56",
-		"#4": "40",
-		"#6": "32",
-		"#8": "32",
-		"#10": "24",
-		"#12": "24",
-		"2": "56",
-		"4": "40",
-		"6": "32",
-		"8": "32",
-		"10": "24",
-		"12": "24",
-		"1/4": "20",
-		"5/16": "18",
-		"3/8": "16",
-		"7/16": "14",
-		"1/2": "13",
-		"9/16": "12",
-		"5/8": "11",
-		"3/4": "10",
-		"7/8": "9",
-		"1": "8",
-		"1-1/8": "7",
-		"1-1/4": "7",
-		"1-3/8": "6",
-		"1-1/2": "6",
-		"2": "4.5",
-	};
-
-	const fineMap = {
-		"#2": "64",
-		"#4": "48",
-		"#6": "40",
-		"#8": "36",
-		"#10": "32",
-		"#12": "28",
-		"2": "64",
-		"4": "48",
-		"6": "40",
-		"8": "36",
-		"10": "32",
-		"12": "28",
-		"1/4": "28",
-		"5/16": "24",
-		"3/8": "24",
-		"7/16": "20",
-		"1/2": "20",
-		"9/16": "18",
-		"5/8": "18",
-		"3/4": "16",
-		"7/8": "14",
-		"1": "12",
-		"1-1/8": "8",
-		"1-1/4": "8",
-		"1-3/8": "8",
-		"1-1/2": "8",
-		"2": "6",
-	};
-
-	if (coarseMap[dia] === pitch) return "coarse";
-	if (fineMap[dia] === pitch) return "fine";
-	return "";
-}
-
-
-function normalizeBuilderDiameter(
-	diameter = "",
-	threadPitch = "",
-	measurementSystem = "",
-) {
-	const system = String(measurementSystem || "").trim().toLowerCase();
-	const rawDiameter = normalizeMixedFraction(diameter);
-	const rawPitch = String(threadPitch || "").trim();
-	if (!rawDiameter) return rawDiameter;
-
-	if (system === "metric") {
-		if (/^m\d+(?:\.\d+)?$/i.test(rawDiameter)) {
-			return rawDiameter.toUpperCase();
-		}
-
-		if (/^\d+(?:\.\d+)?$/.test(rawDiameter)) {
-			return `M${rawDiameter}`;
-		}
-
-		return rawDiameter;
-	}
-
-	if (system === "imperial") {
-		if (isNumberedImperialThreadSize(rawDiameter)) {
-			return rawDiameter.replace(/^#/, "");
-		}
-
-		if (/^#?\d+$/.test(rawDiameter) && /^\d+(?:\.\d+)?$/.test(rawPitch)) {
-			const numberedCandidate = `${rawDiameter.replace(/^#/, "")}-${rawPitch}`;
-			if (isNumberedImperialThreadSize(numberedCandidate)) {
-				return numberedCandidate;
-			}
-		}
-
-		const embeddedThread = parseEmbeddedImperialThreadedDiameter(rawDiameter);
-		if (embeddedThread && (!rawPitch || rawPitch === embeddedThread.threadPitch)) {
-			return embeddedThread.diameter;
-		}
-
-		return rawDiameter;
-	}
-
-	return rawDiameter;
-}
-
-function buildThreadOption(threadSeries = "", threadPitch = "", diameter = "", measurementSystem = "") {
-	const series = String(threadSeries || "").trim();
-	const pitch = String(threadPitch || "").trim();
-	const dia = String(diameter || "").trim();
-	const system = String(measurementSystem || "").trim().toLowerCase();
-
-	if (series && pitch) return `${series} - ${pitch}`;
-	if (system === "metric" && dia && pitch) return `${dia} - ${pitch}`;
-	return pitch || series || "";
-}
-
-function normalizeThreadCoverage(value = "") {
-	const raw = String(value || "").trim().toLowerCase();
-	if (!raw) return "";
-
-	if (
-		raw === "full" ||
-		raw === "fully threaded" ||
-		raw === "full thread" ||
-		raw === "tap" ||
-		raw === "tap bolt"
-	) {
-		return "full";
-	}
-
-	if (
-		raw === "partial" ||
-		raw === "partially threaded" ||
-		raw === "partial thread" ||
-		raw === "regular" ||
-		raw === "standard"
-	) {
-		return "partial";
-	}
-
-	return raw;
-}
-
-
-function normalizeOrigin(value = "") {
-	const raw = String(value || "").trim().toLowerCase();
-	if (!raw) return "";
-	if (["dom", "domestic", "usa", "us", "u.s.", "made in usa"].includes(raw)) return "domestic";
-	if (["std", "standard", "import", "imported", "regular"].includes(raw)) return "standard";
-	return raw;
-}
-
-function isValidBuilderMeasurementPair(attrs = {}) {
-	const system = String(attrs.measurementSystem || "").trim().toLowerCase();
-	const diameter = String(attrs.diameter || "").trim();
-
-	if (!system || !diameter) return true;
-	if (system === "metric") return /^M\d+(?:\.\d+)?$/i.test(diameter);
-	if (system === "imperial") return !/^M\d+(?:\.\d+)?$/i.test(diameter);
-
-	return true;
-}
-
-function isBoltCapScrewSubcategory(subcategoryId = "") {
-	const sub = String(subcategoryId || "").toLowerCase();
-	return [
-		"hex cap screws",
-		"button head cap screws",
-		"socket head cap screws",
-		"flat head cap screws",
-	].includes(sub);
-}
-
 function normalizeVariantAttributesForBuilder(
 	attributes = {},
 	subcategoryId = "",
@@ -324,48 +82,20 @@ function normalizeVariantAttributesForBuilder(
 		};
 	}
 
-	if (isBoltCapScrewSubcategory(sub)) {
-		const measurementSystem = attrs.measurementSystem || "";
-		const rawThreadPitch = attrs.threadPitch || "";
-		const rawThreadSeries = attrs.threadSeries || attrs.thread_series || "";
-		const embeddedThread =
-			String(measurementSystem || "").trim().toLowerCase() === "imperial"
-				? parseEmbeddedImperialThreadedDiameter(attrs.diameter || "")
-				: null;
-		const threadPitch = rawThreadPitch || embeddedThread?.threadPitch || "";
-		const normalizedDiameter = normalizeBuilderDiameter(
-			attrs.diameter || "",
-			threadPitch,
-			measurementSystem,
-		);
-		const threadSeries =
-			rawThreadSeries ||
-			inferImperialThreadSeries(normalizedDiameter, threadPitch) ||
-			"";
-		const threadOption = buildThreadOption(
-			threadSeries,
-			threadPitch,
-			normalizedDiameter,
-			measurementSystem,
-		);
-		const headProfile = attrs.headProfile || attrs.head_profile || attrs.headStyle || "";
-		const threadCoverage = normalizeThreadCoverage(
-			attrs.threadCoverage || attrs.thread_coverage || "",
-		);
-		const origin = normalizeOrigin(
-			attrs.origin || attrs.domestic || attrs.countryOfOrigin || "",
-		);
-
+	if (sub === "hex cap screws") {
 		return {
-			measurementSystem,
-			diameter: normalizedDiameter,
-			threadOption,
+			measurementSystem: attrs.measurementSystem || "",
+			diameter: attrs.diameter || "",
+			threadSeries: attrs.threadSeries || attrs.thread_series || "",
+			threadPitch: attrs.threadPitch || "",
 			length: attrs.length || "",
-			...(threadCoverage ? { threadCoverage } : {}),
-			...(origin ? { origin } : {}),
-			...(headProfile ? { headProfile } : {}),
+				threadCoverage: attrs.threadCoverage || attrs.thread_coverage || "",
+				origin: attrs.origin || "",
+			drive_type: attrs.drive_type || attrs.driveType || "",
 			materialFinish: attrs.materialFinish || "",
 			grade: attrs.grade || "",
+			headType: attrs.headType || "",
+			fastenerType: attrs.fastenerTypeCanonical || attrs.fastenerType || "",
 		};
 	}
 
@@ -379,6 +109,84 @@ function escapeRegex(value = "") {
 function asNumber(value, fallback = 0) {
 	const num = Number(value);
 	return Number.isFinite(num) ? num : fallback;
+}
+
+
+function getByPath(source = {}, path = "") {
+	return String(path || "")
+		.split(".")
+		.filter(Boolean)
+		.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), source);
+}
+
+function firstFiniteNumber(...values) {
+	for (const value of values) {
+		if (value === undefined || value === null || value === "") continue;
+		const num = Number(value);
+		if (Number.isFinite(num)) return num;
+	}
+	return 0;
+}
+
+function resolveProductQty(product = {}, key = "qtyAvailable") {
+	const raw = product?.fishbowl?.raw || {};
+	const inventory = product?.inventory || {};
+
+	const pathMap = {
+		qtyAvailable: [
+			"qtyAvailable",
+			"quantityAvailable",
+			"availableQty",
+			"available",
+			"availableToSell",
+			"inventory.qtyAvailable",
+			"inventory.quantityAvailable",
+			"inventory.available",
+			"raw.qtyAvailable",
+			"raw.quantityAvailable",
+		],
+		qtyOnHand: [
+			"qtyOnHand",
+			"quantityOnHand",
+			"onHand",
+			"inventory.qtyOnHand",
+			"inventory.quantityOnHand",
+			"inventory.onHand",
+			"raw.qtyOnHand",
+		],
+		qtyAllocated: [
+			"qtyAllocated",
+			"allocated",
+			"inventory.qtyAllocated",
+			"inventory.allocated",
+		],
+		qtyOnOrder: [
+			"qtyOnOrder",
+			"onOrder",
+			"inventory.qtyOnOrder",
+			"inventory.onOrder",
+		],
+	};
+
+	const rawValues = (pathMap[key] || []).map((path) => getByPath(raw, path));
+	return firstFiniteNumber(inventory[key], ...rawValues);
+}
+
+function resolveVariantPrice({ product = {}, resolvedPricing = {} }) {
+	const raw = product?.fishbowl?.raw || {};
+	const pricing = product?.pricing || {};
+
+	return firstFiniteNumber(
+		resolvedPricing.resolvedPrice,
+		pricing.salePrice,
+		pricing.basePrice,
+		getByPath(raw, "pricing.salePrice"),
+		getByPath(raw, "pricing.basePrice"),
+		getByPath(raw, "price"),
+		getByPath(raw, "unitPrice"),
+		getByPath(raw, "basePrice"),
+		getByPath(raw, "salePrice"),
+	);
 }
 
 function collectAttributeOptions(variants = [], subcategoryId = "") {
@@ -437,17 +245,21 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 							"diameter",
 							"grade",
 						]
-					: isBoltCapScrewSubcategory(sub)
+					: sub === "hex cap screws"
 						? [
 								"measurementSystem",
 								"diameter",
-								"threadOption",
+								"threadSeries",
+								"threadPitch",
 								"length",
-								"threadCoverage",
-								"origin",
-								"headProfile",
+									"threadCoverage",
+									"origin",
+								"driveType",
+								"drive_type",
 								"materialFinish",
 								"grade",
+									"fastenerType",
+								"fastenerTypeCanonical",
 							]
 						: [
 								"size",
@@ -556,12 +368,12 @@ function isLikelyAssemblyText(value = "") {
 	);
 }
 
-function isBuilderReadyBoltCapScrew(variant, subcategoryId = "") {
+function isBuilderReadyHexCapScrew(variant) {
 	const attrs = variant?.attributes || {};
 
+	const driveType = String(attrs.driveType || attrs.drive_type || "").trim();
 	const diameter = String(attrs.diameter || "").trim();
 	const length = String(attrs.length || "").trim();
-	const threadOption = String(attrs.threadOption || "").trim();
 	const threadPitch = String(attrs.threadPitch || "").trim();
 	const size = String(attrs.size || "").trim();
 	const fastenerType = normalizeText(
@@ -581,27 +393,19 @@ function isBuilderReadyBoltCapScrew(variant, subcategoryId = "") {
 		return false;
 	}
 
-	const sub = normalizeText(subcategoryId);
-	const allowedBySubcategory = {
-		"hex cap screws": ["hex cap screw", "heavy hex bolt", "structural bolt"],
-		"button head cap screws": ["button head cap screw"],
-		"socket head cap screws": ["socket head cap screw"],
-		"flat head cap screws": ["flat head cap screw"],
-	};
-	const allowedFastenerTypes = allowedBySubcategory[sub] || [];
+	const allowedFastenerTypes = new Set([
+		"hex cap screw",
+		"heavy hex bolt",
+		"structural bolt",
+	]);
 
-	if (
-		fastenerType &&
-		allowedFastenerTypes.length &&
-		!allowedFastenerTypes.includes(fastenerType)
-	) {
+	if (fastenerType && !allowedFastenerTypes.has(fastenerType)) {
 		return false;
 	}
 
 	if (!diameter) return false;
-	if (!isValidBuilderMeasurementPair(attrs)) return false;
 	if (!length) return false;
-	if (!threadOption && !threadPitch && !size) return false;
+	if (!threadPitch && !size) return false;
 
 	return true;
 }
@@ -609,7 +413,7 @@ function isBuilderReadyBoltCapScrew(variant, subcategoryId = "") {
 function shouldApplyBuilderReadyFilter(categoryId, subcategoryId) {
 	return (
 		normalizeText(categoryId) === "bolts" &&
-		isBoltCapScrewSubcategory(subcategoryId)
+		normalizeText(subcategoryId) === "hex cap screws"
 	);
 }
 
@@ -664,9 +468,6 @@ export async function getCatalogBuilderSubcategory(
 
 	const products = await Product.find({
 		_id: { $in: productIds },
-		isPublished: true,
-		isActive: true,
-		catalogStatus: "published",
 	}).lean();
 
 	const productMap = new Map(products.map((p) => [String(p._id), p]));
@@ -682,7 +483,11 @@ export async function getCatalogBuilderSubcategory(
 					pricingContext,
 					pricingSettings,
 				);
-				const qtyAvailable = asNumber(product?.inventory?.qtyAvailable, 0);
+				const qtyAvailable = resolveProductQty(product, "qtyAvailable");
+					const qtyOnHand = resolveProductQty(product, "qtyOnHand");
+					const qtyAllocated = resolveProductQty(product, "qtyAllocated");
+					const qtyOnOrder = resolveProductQty(product, "qtyOnOrder");
+					const resolvedVariantPrice = resolveVariantPrice({ product, resolvedPricing });
 
 				return {
 					productId: product._id,
@@ -711,18 +516,20 @@ export async function getCatalogBuilderSubcategory(
 						enrichment.attributes || {},
 						normalizedSubcategoryId,
 					),
-
-					price: resolvedPricing.resolvedPrice,
-					baseCatalogPrice: resolvedPricing.baseCatalogPrice,
+						price: resolvedVariantPrice,
+						baseCatalogPrice: firstFiniteNumber(
+							resolvedPricing.baseCatalogPrice,
+							product?.pricing?.basePrice,
+							resolvedVariantPrice,
+						),
 					currency: resolvedPricing.currency || "USD",
 					priceSource: resolvedPricing.source || "fishbowl",
 					accountType: resolvedPricing.approvedType,
 					priceLabel: resolvedPricing.label,
-
-					qtyAvailable,
-					qtyOnHand: asNumber(product?.inventory?.qtyOnHand, 0),
-					qtyAllocated: asNumber(product?.inventory?.qtyAllocated, 0),
-					qtyOnOrder: asNumber(product?.inventory?.qtyOnOrder, 0),
+						qtyAvailable,
+						qtyOnHand,
+						qtyAllocated,
+						qtyOnOrder,
 					inStock: qtyAvailable > 0,
 
 					familyKey: enrichment?.attributes?.familyKey || "ungrouped",
@@ -743,9 +550,7 @@ export async function getCatalogBuilderSubcategory(
 		normalizedCategoryId,
 		normalizedSubcategoryId,
 	)
-		? rawVariants.filter((variant) =>
-			isBuilderReadyBoltCapScrew(variant, normalizedSubcategoryId),
-		)
+		? rawVariants.filter(isBuilderReadyHexCapScrew)
 		: rawVariants;
 
 	const workingVariants = shouldApplyBuilderReadyFilter(
