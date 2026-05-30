@@ -417,7 +417,10 @@ function extractSuffix(raw = "", validDrive = true) {
     suffix = suffix.slice(0, -1);
   }
 
-  if (validDrive && suffix.endsWith("P")) {
+  if (validDrive && suffix.endsWith("C")) {
+    flags.driveType = flags.driveType || "combo";
+    suffix = suffix.slice(0, -1);
+  } else if (validDrive && suffix.endsWith("P")) {
     flags.driveType = flags.driveType || "phillips";
     suffix = suffix.slice(0, -1);
   } else if (validDrive && suffix.endsWith("S")) {
@@ -433,6 +436,7 @@ function inferDriveFromDescription(description = "") {
 
   if (/\b(?:square|sq)\b/i.test(text)) return "square";
   if (/\b(?:torx|star[-\s]?drive|6[-\s]?lobe|six[-\s]?lobe)\b/i.test(text)) return "torx";
+  if (/\b(?:combo|combination|ph\s*\/\s*sl|sl\s*\/\s*ph|phillips\s*\/\s*slotted|slotted\s*\/\s*phillips)\b/i.test(text)) return "combo";
   if (/\b(?:un[-\s]?slotted|unslotted|un[-\s]?slot|unslot)\b/i.test(text)) return "unslotted";
   if (/\b(?:ph|phil|phillips|philips)\b/i.test(text)) return "phillips";
   if (/\b(?:sl|slot|slotted)\b/i.test(text)) return "slotted";
@@ -509,6 +513,397 @@ function inferGradeFromDescription(text = "", material = "", finish = "") {
   if (mat === "steel") return "grade 2";
 
   return "";
+}
+
+
+const METRIC_MACHINE_HEAD_SUFFIXES = {
+  PP: { headType: "pan", familyLabel: "Machine Screw Pan", driveType: "phillips" },
+  FP: { headType: "flat", familyLabel: "Machine Screw Flat", driveType: "phillips" },
+  F: { headType: "flat", familyLabel: "Machine Screw Flat", driveType: "phillips" },
+  OV: { headType: "oval", familyLabel: "Machine Screw Oval", driveType: "phillips" },
+};
+
+function formatMetricDiameter(code = "") {
+  const digits = String(code || "").replace(/\D/g, "");
+  if (!/^\d{3}$/.test(digits)) return "";
+  const value = Number(digits) / 10;
+  if (!Number.isFinite(value) || value <= 0) return "";
+  return `M${Number.isInteger(value) ? String(value) : String(value).replace(/\.0$/, "")}`;
+}
+
+function formatMetricPitch(code = "") {
+  const digits = String(code || "").replace(/\D/g, "");
+  if (!/^\d{3}$/.test(digits)) return "";
+  const value = Number(digits) / 100;
+  if (!Number.isFinite(value) || value <= 0) return "";
+  return value.toFixed(2);
+}
+
+function formatMetricLength(code = "") {
+  const digits = String(code || "").replace(/\D/g, "");
+  if (!/^\d{2,3}$/.test(digits)) return "";
+  const value = Number(digits);
+  if (!Number.isFinite(value) || value <= 0) return "";
+  return `${value}mm`;
+}
+
+function inferMetricMachineHeadFromDescription(description = "") {
+  const text = String(description || "");
+  if (/\b(?:flat|fl|fh)\b/i.test(text)) return { headType: "flat", familyLabel: "Machine Screw Flat", driveType: "phillips" };
+  if (/\b(?:oval|ov)\b/i.test(text)) return { headType: "oval", familyLabel: "Machine Screw Oval", driveType: "phillips" };
+  if (/\b(?:truss|tr)\b/i.test(text)) return { headType: "truss", familyLabel: "Machine Screw Truss", driveType: "phillips" };
+  if (/\b(?:hex|hx)\b/i.test(text)) return { headType: "hex", familyLabel: "Machine Screw Hex Head", driveType: "hex" };
+  if (/\b(?:pan|pn|phil|phillips|philips|ph)\b/i.test(text)) return { headType: "pan", familyLabel: "Machine Screw Pan", driveType: "phillips" };
+  return { headType: "pan", familyLabel: "Machine Screw Pan", driveType: "phillips" };
+}
+
+function inferMetricMachineGrade(description = "", material = "") {
+  const raw = String(description || "");
+  const mat = normalize(material);
+
+  if (mat === "stainless steel") {
+    if (/\b316\b|\b316ss\b|\bss316\b|\bstainless\s*316\b|\b316\s*stainless\b/i.test(raw)) return "316";
+    return "304";
+  }
+
+  if (/\b(?:grade\s*)?10\.9\b|\b10\.9\s*grade\b/i.test(raw)) return "grade 10.9";
+  if (/\b(?:grade\s*)?12\.9\b|\b12\.9\s*grade\b/i.test(raw)) return "grade 12.9";
+  if (/\b(?:grade\s*)?8\.8\b|\b8\.8\s*grade\b/i.test(raw)) return "grade 8.8";
+  return "grade 8.8";
+}
+
+function parseMetricMachineScrewFromDescription(product = {}) {
+  const part = clean(product?.fishbowl?.partNum || product?.sku || product?.internalPartNumber || "");
+  const description = clean(product?.fishbowl?.description || "");
+  const rawText = `${part} ${description}`;
+
+  if (!/\bmachine\s*screw\b|\bm\/s\b|\bMMMS\b/i.test(rawText)) return null;
+
+  // Metric machine screw descriptions in Fishbowl are inconsistent.
+  // Some read like "M2.5-0.45 x 6mm", while many read like
+  // "M/S PN PH 2.5X6MM-0.45" with no leading M on the diameter.
+  const explicitMetricMatch = rawText.match(/\bM\s*(\d+(?:\.\d+)?)\s*(?:[-xX]\s*(\d+(?:\.\d+)?))?\s*[xX-]\s*(\d+(?:\.\d+)?)\s*mm\b/i);
+  const descriptionSizeMatch = rawText.match(/(?:^|\b)(\d+(?:\.\d+)?)\s*[xX]\s*(\d+(?:\.\d+)?)\s*mm\s*[-–—]?\s*(\d+(?:\.\d+)?)/i);
+
+  let diameterNumber = null;
+  let pitchNumber = null;
+  let lengthNumber = null;
+
+  if (descriptionSizeMatch) {
+    diameterNumber = Number(descriptionSizeMatch[1]);
+    lengthNumber = Number(descriptionSizeMatch[2]);
+    pitchNumber = Number(descriptionSizeMatch[3]);
+  } else if (explicitMetricMatch) {
+    diameterNumber = Number(explicitMetricMatch[1]);
+    pitchNumber = explicitMetricMatch[2] ? Number(explicitMetricMatch[2]) : null;
+    lengthNumber = Number(explicitMetricMatch[3]);
+  }
+
+  if (!Number.isFinite(diameterNumber) || !Number.isFinite(lengthNumber)) return null;
+
+  const head = inferMetricMachineHeadFromDescription(rawText);
+  const driveType = resolveMachineDriveType({
+    familyCode: "MMMS",
+    headType: head.headType,
+    flags: { driveType: head.driveType },
+    description,
+    part,
+  });
+  const material = /\bSS\b|\bS\/S\b|\bstainless\b/i.test(rawText) || rawText.toUpperCase().replace(/\s+/g, "").endsWith("SS")
+    ? "stainless steel"
+    : "steel";
+  const finish = material === "stainless steel" ? "" : inferFinishFromDescription(rawText, material);
+  const diameter = `M${Number.isInteger(diameterNumber) ? diameterNumber : String(diameterNumber).replace(/\.0$/, "")}`;
+  const threadPitch = Number.isFinite(pitchNumber) ? pitchNumber.toFixed(2) : "";
+  const length = `${Number.isInteger(lengthNumber) ? lengthNumber : String(lengthNumber).replace(/\.0$/, "")}mm`;
+  const size = threadPitch ? `${diameter}-${threadPitch}` : diameter;
+  const materialFinishLabel = materialFinish(material, finish);
+  const grade = inferMetricMachineGrade(rawText, material);
+
+  const titleBits = [
+    `${size} x ${length}`,
+    head.familyLabel,
+    driveLabelForTitle({ headType: head.headType, driveType }),
+    material === "stainless steel" ? "Stainless Steel" : toTitle(finish || material),
+  ].filter(Boolean);
+
+  return {
+    productKind: "machine",
+    category: "screws",
+    subcategory: "machine screws",
+    familyType: "machine screw",
+    fastenerType: "machine screw",
+    familyCode: "MMMS",
+    headType: head.headType,
+    headDetail: "",
+    driveType,
+    measurementSystem: "metric",
+    diameter,
+    threadPitch,
+    threadSeries: "metric",
+    length,
+    size,
+    material,
+    finish,
+    materialFinish: materialFinishLabel,
+    grade,
+    title: `${titleBits.join(" - ")}`.replace(" - Machine", " Machine"),
+    shortTitle: `${size} x ${length} ${head.familyLabel}`,
+  };
+}
+
+function parseMetricMachineScrew(product = {}) {
+  const part = clean(product?.fishbowl?.partNum || product?.sku || product?.internalPartNumber || "");
+  const description = clean(product?.fishbowl?.description || "");
+  const raw = part.toUpperCase().replace(/\s+/g, "");
+
+  if (!raw.startsWith("MMMS")) {
+    return parseMetricMachineScrewFromDescription(product);
+  }
+
+  const afterPrefix = raw.slice(4);
+  if (!/^\d{8}/.test(afterPrefix)) return parseMetricMachineScrewFromDescription(product);
+
+  const diameterCode = afterPrefix.slice(0, 3);
+  const lengthCode = afterPrefix.slice(3, 5);
+  const pitchCode = afterPrefix.slice(5, 8);
+  let suffix = afterPrefix.slice(8);
+
+  const stainless = suffix.endsWith("SS") || /\bSS\b|\bS\/S\b|\bstainless\b/i.test(description);
+  if (suffix.endsWith("SS")) suffix = suffix.slice(0, -2);
+
+  let head = METRIC_MACHINE_HEAD_SUFFIXES[suffix] || null;
+  if (!head) head = inferMetricMachineHeadFromDescription(description);
+
+  const diameter = formatMetricDiameter(diameterCode);
+  const threadPitch = formatMetricPitch(pitchCode);
+  const length = formatMetricLength(lengthCode);
+  if (!diameter || !threadPitch || !length) return parseMetricMachineScrewFromDescription(product);
+
+  const material = stainless ? "stainless steel" : "steel";
+  const finish = material === "stainless steel" ? "" : inferFinishFromDescription(`${part} ${description}`, material);
+  const driveType = resolveMachineDriveType({
+    familyCode: "MMMS",
+    headType: head.headType,
+    flags: { driveType: head.driveType || "phillips" },
+    description,
+    part,
+  });
+  const size = `${diameter}-${threadPitch}`;
+  const materialFinishLabel = materialFinish(material, finish);
+  const grade = inferMetricMachineGrade(`${part} ${description}`, material);
+
+  const titleBits = [
+    `${size} x ${length}`,
+    head.familyLabel,
+    driveLabelForTitle({ headType: head.headType, driveType }),
+    material === "stainless steel" ? "Stainless Steel" : toTitle(finish || material),
+  ].filter(Boolean);
+
+  return {
+    productKind: "machine",
+    category: "screws",
+    subcategory: "machine screws",
+    familyType: "machine screw",
+    fastenerType: "machine screw",
+    familyCode: "MMMS",
+    headType: head.headType,
+    headDetail: "",
+    driveType,
+    measurementSystem: "metric",
+    diameter,
+    threadPitch,
+    threadSeries: "metric",
+    length,
+    size,
+    material,
+    finish,
+    materialFinish: materialFinishLabel,
+    grade,
+    title: `${titleBits.join(" - ")}`.replace(" - Machine", " Machine"),
+    shortTitle: `${size} x ${length} ${head.familyLabel}`,
+  };
+}
+
+
+function makeSpecificParsedScrew(partNumber = "", overrides = {}) {
+  const material = overrides.material || "steel";
+  const finish = material === "stainless steel" ? "" : (overrides.finish || "zinc");
+  const head = overrides.familyType === "sheet metal screw"
+    ? (SHEET_METAL_HEADS[overrides.familyCode] || { headType: overrides.headType, familyLabel: "Sheet Metal Screw" })
+    : (MACHINE_HEADS[overrides.familyCode] || { headType: overrides.headType, familyLabel: "Machine Screw" });
+  const headType = overrides.headType || head.headType || "";
+  const rawDriveType = overrides.driveType || "";
+  const driveType = normalizeHexDriveType(headType, rawDriveType);
+  const materialFinishLabel = materialFinish(material, finish);
+  const grade = overrides.grade || inferGradeFromDescription(overrides.description || "", material, finish);
+  const threadSeries = overrides.threadSeries || (overrides.measurementSystem === "metric" ? "metric" : "coarse");
+  const size = overrides.size || (overrides.threadPitch ? `${overrides.diameter}-${overrides.threadPitch}` : overrides.diameter);
+  const familyLabel = overrides.familyLabel || head.familyLabel || (overrides.familyType === "sheet metal screw" ? "Sheet Metal Screw" : "Machine Screw");
+
+  const titleBits = [
+    `${size} x ${overrides.length}`,
+    familyLabel,
+    overrides.headDetail ? toTitle(overrides.headDetail) : "",
+    driveLabelForTitle({ headType, driveType }),
+    overrides.threadType === "type b" ? "Type B" : overrides.threadType === "sharp point" ? "Sharp Point" : "",
+    material === "stainless steel" ? "Stainless Steel" : toTitle(finish || material),
+    overrides.familyType === "machine screw" && threadSeries === "fine" ? "Fine Thread" : "",
+  ].filter(Boolean);
+
+  return {
+    productKind: overrides.familyType === "sheet metal screw" ? "sheet-metal" : "machine",
+    category: "screws",
+    subcategory: overrides.familyType === "sheet metal screw" ? "sheet metal screws" : "machine screws",
+    familyType: overrides.familyType,
+    fastenerType: overrides.familyType,
+    familyCode: overrides.familyCode,
+    headType,
+    headDetail: overrides.headDetail || "",
+    driveType,
+    threadType: overrides.threadType || "",
+    measurementSystem: overrides.measurementSystem || "imperial",
+    diameter: overrides.diameter,
+    threadPitch: overrides.threadPitch || "",
+    threadSeries,
+    length: overrides.length,
+    size,
+    material,
+    finish,
+    materialFinish: materialFinishLabel,
+    grade,
+    title: `${titleBits.join(" - ")}`.replace(" - Machine", " Machine").replace(" - Sheet", " Sheet"),
+    shortTitle: `${size} x ${overrides.length} ${familyLabel}${overrides.headDetail ? ` ${toTitle(overrides.headDetail)}` : ""}`,
+  };
+}
+
+function parseSpecificScrewOverride(product = {}) {
+  const part = clean(product?.fishbowl?.partNum || product?.sku || product?.internalPartNumber || "");
+  const key = part.toUpperCase().replace(/\s+/g, " ").trim();
+
+  // Explicitly ignore malformed/duplicate records that should not enter the builder cleanup.
+  if (key === "MSR001004S" || key === "SSMSB540316") return { ignore: true };
+
+  const base = { material: "steel", finish: "zinc", grade: "grade 2", measurementSystem: "imperial" };
+  const ss = { material: "stainless steel", finish: "", grade: "304", measurementSystem: "imperial" };
+
+  const overrides = {
+    MSH008006H: {
+      ...base,
+      familyType: "machine screw",
+      familyCode: "MSH",
+      familyLabel: "Machine Screw Hex Head",
+      headType: "hex",
+      driveType: "hex",
+      diameter: "8",
+      threadPitch: "32",
+      threadSeries: "coarse",
+      length: "3/8",
+      size: "8-32",
+    },
+    SMSH050108U: {
+      ...base,
+      familyType: "sheet metal screw",
+      familyCode: "SMSH",
+      familyLabel: "Sheet Metal Screw Hex Head",
+      headType: "hex",
+      driveType: "unslotted",
+      threadType: "standard",
+      diameter: "5/16",
+      length: "1-1/2",
+      size: "5/16",
+    },
+    SMSH060012U: {
+      ...base,
+      familyType: "sheet metal screw",
+      familyCode: "SMSH",
+      familyLabel: "Sheet Metal Screw Hex Head",
+      headType: "hex",
+      driveType: "unslotted",
+      threadType: "standard",
+      diameter: "3/8",
+      length: "3/4",
+      size: "3/8",
+    },
+    SMSH060100U: {
+      ...base,
+      familyType: "sheet metal screw",
+      familyCode: "SMSH",
+      familyLabel: "Sheet Metal Screw Hex Head",
+      headType: "hex",
+      driveType: "unslotted",
+      threadType: "standard",
+      diameter: "3/8",
+      length: "1",
+      size: "3/8",
+    },
+    SMSH060104U: {
+      ...base,
+      familyType: "sheet metal screw",
+      familyCode: "SMSH",
+      familyLabel: "Sheet Metal Screw Hex Head",
+      headType: "hex",
+      driveType: "unslotted",
+      threadType: "standard",
+      diameter: "3/8",
+      length: "1-1/4",
+      size: "3/8",
+    },
+    SMSH060108U: {
+      ...base,
+      familyType: "sheet metal screw",
+      familyCode: "SMSH",
+      familyLabel: "Sheet Metal Screw Hex Head",
+      headType: "hex",
+      driveType: "unslotted",
+      threadType: "standard",
+      diameter: "3/8",
+      length: "1-1/2",
+      size: "3/8",
+    },
+    SMSH060200U: {
+      ...base,
+      familyType: "sheet metal screw",
+      familyCode: "SMSH",
+      familyLabel: "Sheet Metal Screw Hex Head",
+      headType: "hex",
+      driveType: "unslotted",
+      threadType: "standard",
+      diameter: "3/8",
+      length: "2",
+      size: "3/8",
+    },
+    SSMSB0540316: {
+      ...ss,
+      familyType: "machine screw",
+      familyCode: "MSB",
+      familyLabel: "Machine Screw Binding",
+      headType: "binding",
+      driveType: "slotted",
+      diameter: "5",
+      threadPitch: "40",
+      threadSeries: "coarse",
+      length: "3/16",
+      size: "5-40",
+    },
+    SSMSF000003P: {
+      ...ss,
+      familyType: "machine screw",
+      familyCode: "MSF",
+      familyLabel: "Machine Screw Flat",
+      headType: "flat",
+      driveType: "phillips",
+      diameter: "0",
+      threadPitch: "80",
+      threadSeries: "coarse",
+      length: "3/16",
+      size: "0-80",
+    },
+  };
+
+  const override = overrides[key];
+  if (!override) return null;
+  return makeSpecificParsedScrew(part, override);
 }
 
 function parseMachineScrew(product = {}) {
@@ -769,7 +1164,11 @@ function parseSheetMetalScrew(product = {}) {
 }
 
 function detectScrewProduct(product = {}) {
-  return parseMachineScrew(product) || parseSheetMetalScrew(product);
+  const specificOverride = parseSpecificScrewOverride(product);
+  if (specificOverride?.ignore) return null;
+  if (specificOverride) return specificOverride;
+
+  return parseMetricMachineScrew(product) || parseMachineScrew(product) || parseSheetMetalScrew(product);
 }
 
 function buildFamilyFields(parsed = {}) {

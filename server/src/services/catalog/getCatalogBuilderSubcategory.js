@@ -20,6 +20,48 @@ function normalizeSlug(value = "") {
 		.replace(/-/g, " ");
 }
 
+
+
+function formatMeasurementSystemForBuilder(value = "") {
+	const raw = String(value || "").trim();
+	if (/^imperial$/i.test(raw)) return "Standard";
+	return raw;
+}
+
+function formatScrewHeadTypeForBuilder(attrs = {}) {
+	const head = String(attrs.headType || attrs.head_type || "").trim();
+	const detail = String(attrs.headDetail || attrs.head_detail || "").trim();
+
+	if (!head) return "";
+
+	const headLabel = /head$/i.test(head) ? head : `${head} head`;
+	return [toTitle(headLabel), detail ? toTitle(detail) : ""]
+		.filter(Boolean)
+		.join(" ");
+}
+
+function formatScrewThreadForBuilder(attrs = {}, subcategoryId = "") {
+	const sub = String(subcategoryId || "").toLowerCase();
+	const existing = String(attrs.thread || attrs.threadLabel || "").trim();
+	if (existing) return existing;
+
+	if (sub === "machine screws") {
+		const threadSeries = String(attrs.threadSeries || attrs.thread_series || "").trim();
+		const threadPitch = String(attrs.threadPitch || attrs.thread_pitch || "").trim();
+
+		if (threadSeries && threadPitch) return `${toTitle(threadSeries)} - ${threadPitch}`;
+		if (threadPitch) return threadPitch;
+		return "";
+	}
+
+	if (sub === "sheet metal screws") {
+		const threadType = String(attrs.threadType || attrs.thread_type || "").trim();
+		return threadType ? toTitle(threadType) : "";
+	}
+
+	return "";
+}
+
 function normalizeVariantAttributesForBuilder(
 	attributes = {},
 	subcategoryId = "",
@@ -89,13 +131,24 @@ function normalizeVariantAttributesForBuilder(
 			threadSeries: attrs.threadSeries || attrs.thread_series || "",
 			threadPitch: attrs.threadPitch || "",
 			length: attrs.length || "",
-				threadCoverage: attrs.threadCoverage || attrs.thread_coverage || "",
-				origin: attrs.origin || "",
 			drive_type: attrs.drive_type || attrs.driveType || "",
 			materialFinish: attrs.materialFinish || "",
 			grade: attrs.grade || "",
 			headType: attrs.headType || "",
 			fastenerType: attrs.fastenerTypeCanonical || attrs.fastenerType || "",
+		};
+	}
+
+	if (sub === "machine screws" || sub === "sheet metal screws") {
+		return {
+			measurementSystem: formatMeasurementSystemForBuilder(attrs.measurementSystem || ""),
+			headType: formatScrewHeadTypeForBuilder(attrs),
+			drive_type: attrs.drive_type || attrs.driveType || "",
+			diameter: attrs.diameter || "",
+			length: attrs.length || "",
+			thread: formatScrewThreadForBuilder(attrs, sub),
+			materialFinish: attrs.materialFinish || "",
+			grade: attrs.grade || "",
 		};
 	}
 
@@ -109,84 +162,6 @@ function escapeRegex(value = "") {
 function asNumber(value, fallback = 0) {
 	const num = Number(value);
 	return Number.isFinite(num) ? num : fallback;
-}
-
-
-function getByPath(source = {}, path = "") {
-	return String(path || "")
-		.split(".")
-		.filter(Boolean)
-		.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : undefined), source);
-}
-
-function firstFiniteNumber(...values) {
-	for (const value of values) {
-		if (value === undefined || value === null || value === "") continue;
-		const num = Number(value);
-		if (Number.isFinite(num)) return num;
-	}
-	return 0;
-}
-
-function resolveProductQty(product = {}, key = "qtyAvailable") {
-	const raw = product?.fishbowl?.raw || {};
-	const inventory = product?.inventory || {};
-
-	const pathMap = {
-		qtyAvailable: [
-			"qtyAvailable",
-			"quantityAvailable",
-			"availableQty",
-			"available",
-			"availableToSell",
-			"inventory.qtyAvailable",
-			"inventory.quantityAvailable",
-			"inventory.available",
-			"raw.qtyAvailable",
-			"raw.quantityAvailable",
-		],
-		qtyOnHand: [
-			"qtyOnHand",
-			"quantityOnHand",
-			"onHand",
-			"inventory.qtyOnHand",
-			"inventory.quantityOnHand",
-			"inventory.onHand",
-			"raw.qtyOnHand",
-		],
-		qtyAllocated: [
-			"qtyAllocated",
-			"allocated",
-			"inventory.qtyAllocated",
-			"inventory.allocated",
-		],
-		qtyOnOrder: [
-			"qtyOnOrder",
-			"onOrder",
-			"inventory.qtyOnOrder",
-			"inventory.onOrder",
-		],
-	};
-
-	const rawValues = (pathMap[key] || []).map((path) => getByPath(raw, path));
-	return firstFiniteNumber(inventory[key], ...rawValues);
-}
-
-function resolveVariantPrice({ product = {}, resolvedPricing = {} }) {
-	const raw = product?.fishbowl?.raw || {};
-	const pricing = product?.pricing || {};
-
-	return firstFiniteNumber(
-		resolvedPricing.resolvedPrice,
-		pricing.salePrice,
-		pricing.basePrice,
-		getByPath(raw, "pricing.salePrice"),
-		getByPath(raw, "pricing.basePrice"),
-		getByPath(raw, "price"),
-		getByPath(raw, "unitPrice"),
-		getByPath(raw, "basePrice"),
-		getByPath(raw, "salePrice"),
-	);
 }
 
 function collectAttributeOptions(variants = [], subcategoryId = "") {
@@ -252,27 +227,35 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 								"threadSeries",
 								"threadPitch",
 								"length",
-									"threadCoverage",
-									"origin",
 								"driveType",
 								"drive_type",
 								"materialFinish",
 								"grade",
-									"fastenerType",
 								"fastenerTypeCanonical",
 							]
-						: [
-								"size",
-								"diameter",
-								"threadPitch",
-								"length",
-								"measurementSystem",
-								"material",
-								"finish",
-								"grade",
-								"fastenerTypeCanonical",
-								"fastenerType",
-							];
+						: sub === "machine screws" || sub === "sheet metal screws"
+							? [
+									"measurementSystem",
+									"headType",
+									"drive_type",
+									"diameter",
+									"length",
+									"thread",
+									"materialFinish",
+									"grade",
+								]
+							: [
+									"size",
+									"diameter",
+									"threadPitch",
+									"length",
+									"measurementSystem",
+									"material",
+									"finish",
+									"grade",
+									"fastenerTypeCanonical",
+									"fastenerType",
+								]
 
 	return keys
 		.map(
@@ -393,13 +376,7 @@ function isBuilderReadyHexCapScrew(variant) {
 		return false;
 	}
 
-	const allowedFastenerTypes = new Set([
-		"hex cap screw",
-		"heavy hex bolt",
-		"structural bolt",
-	]);
-
-	if (fastenerType && !allowedFastenerTypes.has(fastenerType)) {
+	if (fastenerType && fastenerType !== "hex cap screw") {
 		return false;
 	}
 
@@ -483,11 +460,7 @@ export async function getCatalogBuilderSubcategory(
 					pricingContext,
 					pricingSettings,
 				);
-				const qtyAvailable = resolveProductQty(product, "qtyAvailable");
-					const qtyOnHand = resolveProductQty(product, "qtyOnHand");
-					const qtyAllocated = resolveProductQty(product, "qtyAllocated");
-					const qtyOnOrder = resolveProductQty(product, "qtyOnOrder");
-					const resolvedVariantPrice = resolveVariantPrice({ product, resolvedPricing });
+				const qtyAvailable = asNumber(product?.inventory?.qtyAvailable, 0);
 
 				return {
 					productId: product._id,
@@ -516,20 +489,18 @@ export async function getCatalogBuilderSubcategory(
 						enrichment.attributes || {},
 						normalizedSubcategoryId,
 					),
-						price: resolvedVariantPrice,
-						baseCatalogPrice: firstFiniteNumber(
-							resolvedPricing.baseCatalogPrice,
-							product?.pricing?.basePrice,
-							resolvedVariantPrice,
-						),
+
+					price: resolvedPricing.resolvedPrice,
+					baseCatalogPrice: resolvedPricing.baseCatalogPrice,
 					currency: resolvedPricing.currency || "USD",
 					priceSource: resolvedPricing.source || "fishbowl",
 					accountType: resolvedPricing.approvedType,
 					priceLabel: resolvedPricing.label,
-						qtyAvailable,
-						qtyOnHand,
-						qtyAllocated,
-						qtyOnOrder,
+
+					qtyAvailable,
+					qtyOnHand: asNumber(product?.inventory?.qtyOnHand, 0),
+					qtyAllocated: asNumber(product?.inventory?.qtyAllocated, 0),
+					qtyOnOrder: asNumber(product?.inventory?.qtyOnOrder, 0),
 					inStock: qtyAvailable > 0,
 
 					familyKey: enrichment?.attributes?.familyKey || "ungrouped",

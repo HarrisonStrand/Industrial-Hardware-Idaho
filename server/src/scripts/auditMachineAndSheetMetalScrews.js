@@ -18,6 +18,9 @@ const jsonOutPath = jsonOutArg ? jsonOutArg.split("=").slice(1).join("=") : "";
 function buildCandidateQuery() {
   return {
     $or: [
+      { "fishbowl.partNum": /^MMMS\d/i },
+      { sku: /^MMMS\d/i },
+      { internalPartNumber: /^MMMS\d/i },
       { "fishbowl.partNum": /^(?:SS)?MS[PFOTBHR]\d/i },
       { sku: /^(?:SS)?MS[PFOTBHR]\d/i },
       { internalPartNumber: /^(?:SS)?MS[PFOTBHR]\d/i },

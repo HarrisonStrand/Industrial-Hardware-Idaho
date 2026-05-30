@@ -26,34 +26,32 @@ const HIDDEN_ATTRIBUTE_KEYS = new Set([
 
 const ATTRIBUTE_ORDER = [
 	"measurementSystem",
-	"grade",
+	"headType",
+	"drive_type",
 	"diameter",
+	"length",
+	"thread",
 	"threadSeries",
 	"threadPitch",
-	"length",
-	"threadCoverage",
-	"origin",
-	"drive_type",
 	"materialFinish",
+	"grade",
 	"washerStandard",
 	"washerType",
 	"width",
 	"thickness",
 	"fastenerType",
-	"headType",
 ];
 
 const INITIAL_SELECTED_STATE = {
 	measurementSystem: "",
-	grade: "",
 	diameter: "",
 	threadSeries: "",
 	threadPitch: "",
 	length: "",
-	threadCoverage: "",
-	origin: "",
+	thread: "",
 	drive_type: "",
 	materialFinish: "",
+	grade: "",
 	washerStandard: "",
 	washerType: "",
 	width: "",
@@ -162,16 +160,21 @@ function shouldHideAttributeForContext(
 	if (sub === "hex cap screws" && key === "headType") return true;
 	if (sub === "hex cap screws" && key === "fastenerType") return true;
 
+	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "fastenerType") return true;
+	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "threadSeries") return true;
+	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "threadPitch") return true;
+	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "threadType") return true;
+	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "headDetail") return true;
+
 	return false;
 }
 
 function formatAttributeLabel(key = "") {
 	const baseMap = {
-		measurementSystem: "Measurement System",
+		measurementSystem: "Measuring System",
+		thread: "Thread",
 		threadPitch: "Thread Pitch",
 		threadSeries: "Thread Series",
-		threadCoverage: "Thread Coverage",
-		origin: "Origin",
 		drive_type: "Drive Type",
 		diameter: "Diameter",
 		width: "Width",
@@ -191,31 +194,6 @@ function formatAttributeLabel(key = "") {
 		.replace(/_/g, " ")
 		.replace(/([a-z])([A-Z])/g, "$1 $2")
 		.replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function formatAttributeValue(key = "", value = "") {
-	const raw = String(value || "").trim();
-	if (!raw) return "";
-
-	if (key === "measurementSystem" && raw.toLowerCase() === "imperial") {
-		return "Standard";
-	}
-
-	if (key === "threadCoverage") {
-		if (raw.toLowerCase() === "full") return "Fully Threaded";
-		if (raw.toLowerCase() === "partial") return "Partially Threaded";
-	}
-
-	if (key === "origin") {
-		if (raw.toLowerCase() === "domestic") return "Domestic";
-		if (raw.toLowerCase() === "standard") return "Standard";
-	}
-
-	return raw;
-}
-
-function normalizeOptionValue(value = "") {
-	return String(value || "").trim().toLowerCase();
 }
 
 function formatCurrency(value = 0, currency = "USD") {
@@ -286,24 +264,37 @@ function reorderAttributeEntriesForSubcategory(
 	subcategoryId = "",
 ) {
 	const sub = String(subcategoryId || "").toLowerCase();
-	if (sub !== "hex cap screws") return entries;
 
-const boltOrder = [
-	"measurementSystem",
-	"grade",
-	"diameter",
-	"threadSeries",
-	"threadPitch",
-	"length",
-	"threadCoverage",
-	"origin",
-	"materialFinish",
-	"drive_type",
-];
+	const order =
+		sub === "hex cap screws"
+			? [
+					"measurementSystem",
+					"diameter",
+					"threadSeries",
+					"threadPitch",
+					"length",
+					"drive_type",
+					"materialFinish",
+					"grade",
+				]
+			: sub === "machine screws" || sub === "sheet metal screws"
+				? [
+						"measurementSystem",
+						"headType",
+						"drive_type",
+						"diameter",
+						"length",
+						"thread",
+						"materialFinish",
+						"grade",
+					]
+				: null;
+
+	if (!order) return entries;
 
 	return [...entries].sort(([a], [b]) => {
-		const aIndex = boltOrder.indexOf(a);
-		const bIndex = boltOrder.indexOf(b);
+		const aIndex = order.indexOf(a);
+		const bIndex = order.indexOf(b);
 
 		if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
 		if (aIndex === -1) return 1;
@@ -385,7 +376,7 @@ function SelectedPathSummary({ selected = {}, attributeEntries = [] }) {
 		.map(([key]) => ({
 			key,
 			label: formatAttributeLabel(key),
-			value: formatAttributeValue(key, selected[key] || ""),
+			value: selected[key] || "",
 		}))
 		.filter((item) => item.value);
 
@@ -417,21 +408,6 @@ function getSectionOpenState(attributeEntries = [], selected = {}) {
 
 	return state;
 }
-
-function shouldShowOriginPanel({ attributeEntries = [], variants = [], selected = {} }) {
-	const allowedOriginValues = getAllowedValuesForKey(variants, selected, "origin");
-	const hasDomesticOption = allowedOriginValues.some(
-		(value) => normalizeOptionValue(value) === "domestic",
-	);
-
-	if (!hasDomesticOption) return false;
-
-	return attributeEntries.every(([key]) => {
-		if (key === "origin") return true;
-		return Boolean(selected[key]);
-	});
-}
-
 
 export default function ProductDetailFacetPanel() {
 	const { categoryId, subcategoryId } = useParams();
@@ -536,25 +512,15 @@ const attributeEntries = useMemo(() => {
 }, [attributes, builderData?.subcategoryId]);
 
 	const filteredAttributeEntries = useMemo(() => {
-		const showOrigin = shouldShowOriginPanel({
-			attributeEntries,
-			variants,
-			selected,
-		});
-
 		return attributeEntries
 			.map(([key, values]) => {
 				const allowedValues = sortOptionValues(
 					getAllowedValuesForKey(variants, selected, key),
 					key,
 				);
-				const nextValues = allowedValues.length ? allowedValues : values;
-
-				if (key === "origin" && !showOrigin) return null;
-
-				return [key, nextValues];
+				return [key, allowedValues.length ? allowedValues : values];
 			})
-			.filter((entry) => entry && entry[1].length > 0);
+			.filter(([_, values]) => values.length > 0);
 	}, [attributeEntries, variants, selected]);
 
 	useEffect(() => {
@@ -647,7 +613,6 @@ const attributeEntries = useMemo(() => {
 
 		setExpandedSections((prev) => ({
 			...prev,
-			[attr]: false,
 			[nextKey]: true,
 		}));
 
@@ -683,10 +648,6 @@ const attributeEntries = useMemo(() => {
 			}
 
 			if (next[attr]) {
-				setExpandedSections((prevOpen) => ({
-					...prevOpen,
-					[attr]: false,
-				}));
 				setTimeout(() => scrollToNextSection(attr), 50);
 			}
 
@@ -796,13 +757,10 @@ const handleAddToCart = () => {
 									type='button'
 									className='btn btn-outline-secondary btn-sm'
 									onClick={() =>
-										{
-											setSelected((prev) => ({
-												...INITIAL_SELECTED_STATE,
-												quantity: prev.quantity || 1,
-											}));
-											setExpandedSections({});
-										}
+										setSelected((prev) => ({
+											...INITIAL_SELECTED_STATE,
+											quantity: prev.quantity || 1,
+										}))
 									}>
 									Clear
 								</button>
@@ -860,7 +818,7 @@ const handleAddToCart = () => {
 														{formatAttributeLabel(key)}
 													</div>
 													<div className='small text-muted text-capitalize'>
-														{selected[key] ? formatAttributeValue(key, selected[key]) : "Choose an option"}
+														{selected[key] || "Choose an option"}
 													</div>
 												</div>
 
@@ -883,7 +841,7 @@ const handleAddToCart = () => {
 																	key={`${key}-${value}`}
 																	className='col-12 col-sm-6'>
 																	<FacetOptionCard
-																		label={formatAttributeValue(key, value)}
+																		label={value}
 																		count={count}
 																		selected={selected[key] === value}
 																		onClick={() => handleSelect(key, value)}
@@ -906,7 +864,7 @@ const handleAddToCart = () => {
 							ref={detailCardRef}
 							style={{
 								transform: `translateY(${detailOffset}px)`,
-								transition: "transform 70ms ease-out",
+								transition: "transform 180ms ease-out",
 								willChange: "transform",
 							}}>
 							<div className='rounded-4 p-3 p-md-4 theme-section-container bg-main-light'>
