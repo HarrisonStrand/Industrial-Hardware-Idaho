@@ -726,6 +726,16 @@ function parseMetricMachineScrew(product = {}) {
 }
 
 
+function formatThreadTypeForTitle(threadType = "") {
+  const value = normalize(threadType);
+  if (!value || value === "standard") return "";
+  if (value === "type a") return "Type A";
+  if (value === "type b") return "Type B";
+  if (value === "type f") return "Type F";
+  if (value === "sharp point") return "Sharp Point";
+  return toTitle(value);
+}
+
 function makeSpecificParsedScrew(partNumber = "", overrides = {}) {
   const material = overrides.material || "steel";
   const finish = material === "stainless steel" ? "" : (overrides.finish || "zinc");
@@ -746,17 +756,17 @@ function makeSpecificParsedScrew(partNumber = "", overrides = {}) {
     familyLabel,
     overrides.headDetail ? toTitle(overrides.headDetail) : "",
     driveLabelForTitle({ headType, driveType }),
-    overrides.threadType === "type b" ? "Type B" : overrides.threadType === "sharp point" ? "Sharp Point" : "",
+    formatThreadTypeForTitle(overrides.threadType),
     material === "stainless steel" ? "Stainless Steel" : toTitle(finish || material),
     overrides.familyType === "machine screw" && threadSeries === "fine" ? "Fine Thread" : "",
   ].filter(Boolean);
 
   return {
-    productKind: overrides.familyType === "sheet metal screw" ? "sheet-metal" : "machine",
+    productKind: overrides.productKind || (overrides.familyType === "sheet metal screw" ? "sheet-metal" : "machine"),
     category: "screws",
-    subcategory: overrides.familyType === "sheet metal screw" ? "sheet metal screws" : "machine screws",
+    subcategory: overrides.subcategory || (overrides.familyType === "sheet metal screw" ? "sheet metal screws" : "machine screws"),
     familyType: overrides.familyType,
-    fastenerType: overrides.familyType,
+    fastenerType: overrides.fastenerType || overrides.familyType,
     familyCode: overrides.familyCode,
     headType,
     headDetail: overrides.headDetail || "",
@@ -788,6 +798,33 @@ function parseSpecificScrewOverride(product = {}) {
   const ss = { material: "stainless steel", finish: "", grade: "304", measurementSystem: "imperial" };
 
   const overrides = {
+    SSMSF000008P: {
+      ...ss,
+      familyType: "machine screw",
+      familyCode: "MSF",
+      familyLabel: "Machine Screw Flat",
+      headType: "flat",
+      driveType: "slotted",
+      diameter: "0",
+      threadPitch: "80",
+      threadSeries: "coarse",
+      length: "1/2",
+      size: "0-80",
+    },
+    SSMSP005008P: {
+      ...ss,
+      familyType: "machine screw",
+      familyCode: "MSP",
+      familyLabel: "Machine Screw Pan",
+      headType: "pan",
+      driveType: "phillips",
+      diameter: "5",
+      threadPitch: "40",
+      threadSeries: "coarse",
+      length: "1/2",
+      size: "5-40",
+    },
+    "SSSMP010012P TYPE F": { ignore: true },
     MSH008006H: {
       ...base,
       familyType: "machine screw",
@@ -1060,7 +1097,7 @@ function parseSheetMetalScrewFromDescription(product = {}, context = {}) {
     head.familyLabel,
     headDetail ? toTitle(headDetail) : "",
     driveLabelForTitle({ headType: head.headType, driveType }),
-    threadType === "type b" ? "Type B" : threadType === "sharp point" ? "Sharp Point" : "",
+    formatThreadTypeForTitle(threadType),
     material === "stainless steel" ? "Stainless Steel" : toTitle(finish || material),
   ].filter(Boolean);
 
@@ -1135,7 +1172,7 @@ function parseSheetMetalScrew(product = {}) {
     head.familyLabel,
     headDetail ? toTitle(headDetail) : "",
     driveLabelForTitle({ headType: head.headType, driveType }),
-    threadType === "type b" ? "Type B" : threadType === "sharp point" ? "Sharp Point" : "",
+    formatThreadTypeForTitle(threadType),
     material === "stainless steel" ? "Stainless Steel" : toTitle(finish || material),
   ].filter(Boolean);
 
@@ -1188,7 +1225,7 @@ function buildFamilyFields(parsed = {}) {
   const familyDriveLabel = driveLabelForTitle(parsed);
   const familyTitle = [
     parsed.material === "stainless steel" ? "Stainless Steel" : toTitle(parsed.finish || parsed.material),
-    parsed.threadType === "type b" ? "Type B" : "",
+    formatThreadTypeForTitle(parsed.threadType),
     toTitle(parsed.headType),
     parsed.headDetail ? toTitle(parsed.headDetail) : "",
     toTitle(parsed.familyType),

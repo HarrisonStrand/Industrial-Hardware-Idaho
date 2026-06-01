@@ -152,6 +152,18 @@ function normalizeVariantAttributesForBuilder(
 		};
 	}
 
+	if (sub === "threaded rod" || sub === "threaded rods") {
+		return {
+			measurementSystem: formatMeasurementSystemForBuilder(attrs.measurementSystem || ""),
+			diameter: attrs.diameter || "",
+			threadSeries: attrs.threadSeries || attrs.thread_series || "",
+			threadPitch: attrs.threadPitch || "",
+			length: attrs.length || "",
+			materialFinish: attrs.materialFinish || "",
+			grade: attrs.grade || "",
+		};
+	}
+
 	return attrs;
 }
 
@@ -244,7 +256,17 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 									"materialFinish",
 									"grade",
 								]
-							: [
+							: sub === "threaded rod" || sub === "threaded rods"
+								? [
+										"measurementSystem",
+										"diameter",
+										"threadSeries",
+										"threadPitch",
+										"length",
+										"materialFinish",
+										"grade",
+									]
+								: [
 									"size",
 									"diameter",
 									"threadPitch",
