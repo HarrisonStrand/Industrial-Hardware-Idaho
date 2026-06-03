@@ -1,0 +1,357 @@
+{
+  "totals": {
+    "candidates": 196,
+    "parseable": 180,
+    "unparseable": 0,
+    "skippedExcluded": 16,
+    "missingEnrichment": 0,
+    "alreadyPublished": 0,
+    "wrongCategory": 0,
+    "wrongSubcategory": 0,
+    "wrongFamilyType": 0,
+    "missingSize": 0,
+    "missingGrit": 2,
+    "missingAbrasiveMaterial": 0,
+    "needsReview": 0,
+    "ready": 180
+  },
+  "counts": {
+    "subcategory": {
+      "cut-off wheels": 30,
+      "twist lock discs": 30,
+      "grinding wheels": 8,
+      "flap wheels": 44,
+      "fibre discs": 23,
+      "hand pads": 6,
+      "shop rolls": 25,
+      "velcro discs": 14
+    },
+    "familyType": {
+      "cut-off wheel": 30,
+      "twist lock disc": 30,
+      "grinding wheel": 8,
+      "flap wheel": 44,
+      "fibre disc": 23,
+      "hand pad": 6,
+      "shop roll": 25,
+      "velcro disc": 14
+    },
+    "grit": {
+      "24": 7,
+      "36": 11,
+      "40": 7,
+      "50": 9,
+      "60": 19,
+      "80": 22,
+      "100": 6,
+      "120": 19,
+      "150": 1,
+      "180": 6,
+      "220": 2,
+      "240": 6,
+      "320": 2,
+      "400": 3,
+      "600": 1,
+      "(blank)": 38,
+      "coarse": 7,
+      "maroon": 3,
+      "brown": 1,
+      "gray": 1,
+      "tan": 1,
+      "medium": 5,
+      "very fine": 2,
+      "ultra fine": 1
+    },
+    "abrasiveMaterial": {
+      "ceramic": 2,
+      "(blank)": 148,
+      "zirconia alumina": 4,
+      "aluminum oxide": 26
+    },
+    "attachment": {
+      "(blank)": 135,
+      "twist lock": 30,
+      "hook and loop": 15
+    },
+    "wheelType": {
+      "type 27": 1,
+      "(blank)": 178,
+      "type 29": 1
+    },
+    "reviewStatus": {
+      "ready": 180
+    }
+  },
+  "focused": [
+    {
+      "partNumber": "BD0150 66288",
+      "description": "BUFF DISC 2\" QUICK CHANGE M",
+      "brand": "",
+      "vendor": "",
+      "currentTitle": "2 - Twist Lock Disc",
+      "currentCategory": "abrasives",
+      "currentSubcategory": "twist lock discs",
+      "currentFamilyType": "twist lock disc",
+      "currentSize": "2",
+      "currentGrit": "",
+      "currentAbrasiveMaterial": "",
+      "reviewStatus": "ready",
+      "parsed": {
+        "category": "abrasives",
+        "subcategory": "twist lock discs",
+        "productKind": "twist-lock-disc",
+        "familyType": "twist lock disc",
+        "fastenerType": "twist lock disc",
+        "familyTitleBase": "Twist Lock Disc",
+        "websiteBrand": "CGW",
+        "websiteVendor": "CGW",
+        "measurementSystem": "imperial",
+        "size": "2",
+        "diameter": "2",
+        "width": "",
+        "thickness": "",
+        "arbor": "",
+        "length": "",
+        "grit": "",
+        "abrasiveMaterial": "",
+        "material": "abrasive",
+        "finish": "",
+        "materialFinish": "abrasive",
+        "grade": "",
+        "attachment": "twist lock",
+        "wheelType": "",
+        "shape": "disc",
+        "title": "2 - Twist Lock Disc",
+        "shortTitle": "2 - Twist Lock Disc"
+      }
+    },
+    {
+      "partNumber": "BD0200 66320",
+      "description": "BUFF DISC QUICK CHANGE 3\" M",
+      "brand": "",
+      "vendor": "",
+      "currentTitle": "3 - Twist Lock Disc",
+      "currentCategory": "abrasives",
+      "currentSubcategory": "twist lock discs",
+      "currentFamilyType": "twist lock disc",
+      "currentSize": "3",
+      "currentGrit": "",
+      "currentAbrasiveMaterial": "",
+      "reviewStatus": "ready",
+      "parsed": {
+        "category": "abrasives",
+        "subcategory": "twist lock discs",
+        "productKind": "twist-lock-disc",
+        "familyType": "twist lock disc",
+        "fastenerType": "twist lock disc",
+        "familyTitleBase": "Twist Lock Disc",
+        "websiteBrand": "CGW",
+        "websiteVendor": "CGW",
+        "measurementSystem": "imperial",
+        "size": "3",
+        "diameter": "3",
+        "width": "",
+        "thickness": "",
+        "arbor": "",
+        "length": "",
+        "grit": "",
+        "abrasiveMaterial": "",
+        "material": "abrasive",
+        "finish": "",
+        "materialFinish": "abrasive",
+        "grade": "",
+        "attachment": "twist lock",
+        "wheelType": "",
+        "shape": "disc",
+        "title": "3 - Twist Lock Disc",
+        "shortTitle": "3 - Twist Lock Disc"
+      }
+    }
+  ],
+  "samples": {
+    "skippedExcluded": [
+      {
+        "partNumber": "9566PCX1",
+        "description": "6\" SJS PADDLE SWITCH CUT-OFF/ANGLE GRINDER KIT",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "AUVECO 19716",
+        "description": "CUT-OFF MANDREL 1/4-3/8X1/4 ZINC",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "AUVECO 20366",
+        "description": "FORD FENDER LINER & MUDFLAP RETAINER",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "CW0105",
+        "description": "CUT-OFF MANDREL 1/4-3/8",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "Dewalt DW1589",
+        "description": "1/4\" Quick Change Shank 12\"",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "KN050 10-499ST",
+        "description": "UTILITY KNIFE QUICK CHANGE 10-499 STANLEY",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "KN083 C03-821",
+        "description": "QUICK CHANGE RET KNF",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "TLD0150 59730",
+        "description": "TWIST LOCK HOLDER 1-1/2\"",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "TLD0200 59732",
+        "description": "TWIST LOCK HOLDER 2\"",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "TLD0300 59734",
+        "description": "TWIST LOCK HOLDER 3\"",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "TLD0400 59736",
+        "description": "TWIST LOCK HOLDER 4\"",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "XAG03Z",
+        "description": "18V LXT Lithium-Ion Brushless Cordless 4-1/2\" Cut-Off/Angle Grinder (Tool Only)",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "XAG04Z",
+        "description": "MAKITA 18V LXT 4-1/2\" / 5\" CUT OFF / ANGLE GRINDER *No Lock-Off",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "XAG11Z",
+        "description": "MAKITA 18V LXT 4-1/2\" / 5\" CUT-OFF / ANGLE GRINDER *Electric Brake",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "XWK01PT",
+        "description": "MAKITA 36V 18V X2) LXT® Brushless 14\" Cut-Off Saw Kit, dual port rapid charger, electric brake (5.0Ah)",
+        "brand": "",
+        "vendor": ""
+      },
+      {
+        "partNumber": "XWL01PT",
+        "description": "MAKITA 36V (18V X2) LXT® Brushless 14\" Cut-Off Saw Kit, dual port rapid charger, electric brake (5.0Ah)",
+        "brand": "",
+        "vendor": ""
+      }
+    ],
+    "missingGrit": [
+      {
+        "partNumber": "BD0150 66288",
+        "description": "BUFF DISC 2\" QUICK CHANGE M",
+        "brand": "",
+        "vendor": "",
+        "currentTitle": "2 - Twist Lock Disc",
+        "currentCategory": "abrasives",
+        "currentSubcategory": "twist lock discs",
+        "currentFamilyType": "twist lock disc",
+        "currentSize": "2",
+        "currentGrit": "",
+        "currentAbrasiveMaterial": "",
+        "reviewStatus": "ready",
+        "parsed": {
+          "category": "abrasives",
+          "subcategory": "twist lock discs",
+          "productKind": "twist-lock-disc",
+          "familyType": "twist lock disc",
+          "fastenerType": "twist lock disc",
+          "familyTitleBase": "Twist Lock Disc",
+          "websiteBrand": "CGW",
+          "websiteVendor": "CGW",
+          "measurementSystem": "imperial",
+          "size": "2",
+          "diameter": "2",
+          "width": "",
+          "thickness": "",
+          "arbor": "",
+          "length": "",
+          "grit": "",
+          "abrasiveMaterial": "",
+          "material": "abrasive",
+          "finish": "",
+          "materialFinish": "abrasive",
+          "grade": "",
+          "attachment": "twist lock",
+          "wheelType": "",
+          "shape": "disc",
+          "title": "2 - Twist Lock Disc",
+          "shortTitle": "2 - Twist Lock Disc"
+        }
+      },
+      {
+        "partNumber": "BD0200 66320",
+        "description": "BUFF DISC QUICK CHANGE 3\" M",
+        "brand": "",
+        "vendor": "",
+        "currentTitle": "3 - Twist Lock Disc",
+        "currentCategory": "abrasives",
+        "currentSubcategory": "twist lock discs",
+        "currentFamilyType": "twist lock disc",
+        "currentSize": "3",
+        "currentGrit": "",
+        "currentAbrasiveMaterial": "",
+        "reviewStatus": "ready",
+        "parsed": {
+          "category": "abrasives",
+          "subcategory": "twist lock discs",
+          "productKind": "twist-lock-disc",
+          "familyType": "twist lock disc",
+          "fastenerType": "twist lock disc",
+          "familyTitleBase": "Twist Lock Disc",
+          "websiteBrand": "CGW",
+          "websiteVendor": "CGW",
+          "measurementSystem": "imperial",
+          "size": "3",
+          "diameter": "3",
+          "width": "",
+          "thickness": "",
+          "arbor": "",
+          "length": "",
+          "grit": "",
+          "abrasiveMaterial": "",
+          "material": "abrasive",
+          "finish": "",
+          "materialFinish": "abrasive",
+          "grade": "",
+          "attachment": "twist lock",
+          "wheelType": "",
+          "shape": "disc",
+          "title": "3 - Twist Lock Disc",
+          "shortTitle": "3 - Twist Lock Disc"
+        }
+      }
+    ]
+  }
+}
