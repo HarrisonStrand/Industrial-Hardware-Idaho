@@ -39,6 +39,7 @@ const ATTRIBUTE_ORDER = [
 	"washerType",
 	"width",
 	"thickness",
+	"headStandard",
 	"fastenerType",
 ];
 
@@ -160,6 +161,9 @@ function shouldHideAttributeForContext(
 	if (sub === "hex cap screws" && key === "headType") return true;
 	if (sub === "hex cap screws" && key === "fastenerType") return true;
 
+	if (sub === "flange bolts" && key === "headType") return true;
+	if (sub === "flange bolts" && key === "fastenerType") return true;
+
 	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "fastenerType") return true;
 	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "threadSeries") return true;
 	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "threadPitch") return true;
@@ -185,6 +189,7 @@ function formatAttributeLabel(key = "") {
 		washerType: "Type",
 		materialFinish: "Material / Finish",
 		headType: "Head Type",
+		headStandard: "Style",
 		fastenerType: "Fastener Type",
 	};
 
@@ -277,6 +282,18 @@ function reorderAttributeEntriesForSubcategory(
 					"materialFinish",
 					"grade",
 				]
+			: sub === "flange bolts"
+				? [
+						"measurementSystem",
+						"diameter",
+						"threadSeries",
+						"threadPitch",
+						"length",
+						"drive_type",
+						"materialFinish",
+						"grade",
+						"headStandard",
+					]
 			: sub === "machine screws" || sub === "sheet metal screws"
 				? [
 						"measurementSystem",

@@ -322,11 +322,41 @@
       ]
     },
     {
-      "id": "drill-bits",
-      "name": "Drill Bits",
+      "id": "bits-drivers",
+      "name": "Bits & Drivers",
       "image": "/images/categories/DRILL-BITS.png",
-      "subcategories": [],
-      "directPath": "/products/drill-bits/drill-bits"
+      "subcategories": [
+        {
+          "id": "drill-bits",
+          "name": "Drill Bits",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "driver-bits",
+          "name": "Driver Bits",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "nut-setters",
+          "name": "Nut Setters",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "hanger-bolt-drivers",
+          "name": "Hanger Bolt Drivers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "hole-saws-arbors",
+          "name": "Hole Saws & Arbors",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "taps-dies",
+          "name": "Taps & Dies",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
     },
     {
       "id": "au-ve-co",
@@ -351,8 +381,8 @@
       ]
     },
     {
-      "id": "paints-silicone",
-      "name": "Paints & Silicone",
+      "id": "chemicals-paints-sealants",
+      "name": "Chemicals, Paints & Sealants",
       "image": "/images/categories/PAINT-SILICONE.png",
       "subcategories": [
         {
@@ -361,8 +391,33 @@
           "image": "/images/subcategories/subcategory-placeholder.png"
         },
         {
-          "id": "caulk-silicone",
-          "name": "Caulk & Silicone",
+          "id": "sealants-caulk",
+          "name": "Sealants & Caulk",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "adhesives-threadlockers",
+          "name": "Adhesives & Threadlockers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "cleaners-degreasers",
+          "name": "Cleaners & Degreasers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "lubricants-penetrants",
+          "name": "Lubricants & Penetrants",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "anti-seize",
+          "name": "Anti-Seize",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "cutting-tapping-fluid",
+          "name": "Cutting & Tapping Fluid",
           "image": "/images/subcategories/subcategory-placeholder.png"
         }
       ]

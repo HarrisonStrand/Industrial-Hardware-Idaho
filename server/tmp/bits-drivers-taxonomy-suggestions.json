@@ -1,0 +1,61 @@
+{
+  "totals": {
+    "scanned": 21039,
+    "withEnrichment": 21039,
+    "proposed": 0,
+    "proposedChanges": 0
+  },
+  "counts": {
+    "currentCategory": {
+      "uncategorized": 13022,
+      "washers": 758,
+      "pins": 110,
+      "bolts": 3716,
+      "screws": 1680,
+      "abrasives": 217,
+      "threaded rod": 258,
+      "specialty hardware": 1273,
+      "bits & drivers": 4,
+      "Fasteners": 1
+    },
+    "currentSubcategory": {
+      "needs classification": 13022,
+      "flat washers": 474,
+      "cotter pins": 110,
+      "hex cap screws": 2515,
+      "sheet metal screws": 602,
+      "flange bolts": 103,
+      "cut-off wheels": 30,
+      "lock washers": 228,
+      "carriage bolts": 2,
+      "threaded rod": 258,
+      "abrasive belts": 37,
+      "flat head cap screws": 115,
+      "auveco hardware": 937,
+      "auveco retainers": 249,
+      "auveco clips": 84,
+      "auveco panel fasteners": 3,
+      "twist lock discs": 30,
+      "button head cap screws": 171,
+      "lag screws": 250,
+      "grinding wheels": 8,
+      "socket head cap screws": 537,
+      "fender washers": 56,
+      "flap wheels": 44,
+      "fibre discs": 23,
+      "hand pads": 6,
+      "hanger bolt drivers": 4,
+      "hanger bolts": 23,
+      "machine screws": 1078,
+      "shop rolls": 25,
+      "Anchors": 1,
+      "velcro discs": 14
+    },
+    "proposedCategory": {},
+    "proposedSubcategory": {},
+    "proposedReason": {},
+    "changePair": {}
+  },
+  "samples": {},
+  "rows": []
+}

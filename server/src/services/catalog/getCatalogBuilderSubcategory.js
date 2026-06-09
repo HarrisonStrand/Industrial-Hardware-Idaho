@@ -139,6 +139,44 @@ function normalizeVariantAttributesForBuilder(
 		};
 	}
 
+	if (sub === "flange bolts") {
+		return {
+			measurementSystem: formatMeasurementSystemForBuilder(attrs.measurementSystem || ""),
+			diameter: attrs.diameter || "",
+			threadSeries: attrs.threadSeries || attrs.thread_series || "",
+			threadPitch: attrs.threadPitch || "",
+			length: attrs.length || "",
+			drive_type: attrs.drive_type || attrs.driveType || "",
+			materialFinish: attrs.materialFinish || "",
+			grade: attrs.grade || "",
+			headStandard: attrs.headStandard && attrs.headStandard !== "standard" ? attrs.headStandard : "",
+		};
+	}
+
+	if (sub === "hanger bolts") {
+		return {
+			productType: attrs.productType || attrs.familyType || attrs.fastenerTypeCanonical || attrs.fastenerType || "hanger bolt",
+			measurementSystem: formatMeasurementSystemForBuilder(attrs.measurementSystem || ""),
+			diameter: attrs.diameter || "",
+			threadSeries: attrs.threadSeries || attrs.thread_series || "",
+			threadPitch: attrs.threadPitch || "",
+			length: attrs.length || "",
+			materialFinish: attrs.materialFinish || "",
+			grade: attrs.grade || "",
+		};
+	}
+
+	if (sub === "hanger bolt drivers") {
+		return {
+			measurementSystem: formatMeasurementSystemForBuilder(attrs.measurementSystem || ""),
+			diameter: attrs.diameter || "",
+			threadSeries: attrs.threadSeries || attrs.thread_series || "",
+			threadPitch: attrs.threadPitch || "",
+			materialFinish: attrs.materialFinish || "",
+			grade: attrs.grade || "",
+		};
+	}
+
 	if (sub === "machine screws" || sub === "sheet metal screws") {
 		return {
 			measurementSystem: formatMeasurementSystemForBuilder(attrs.measurementSystem || ""),
@@ -245,6 +283,39 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 								"grade",
 								"fastenerTypeCanonical",
 							]
+						: sub === "flange bolts"
+							? [
+									"productType",
+									"measurementSystem",
+									"diameter",
+									"threadSeries",
+									"threadPitch",
+									"length",
+									"drive_type",
+									"materialFinish",
+									"grade",
+									"headStandard",
+								]
+						: sub === "hanger bolts"
+							? [
+									"productType",
+									"measurementSystem",
+									"diameter",
+									"threadSeries",
+									"threadPitch",
+									"length",
+									"materialFinish",
+									"grade",
+								]
+						: sub === "hanger bolt drivers"
+							? [
+									"measurementSystem",
+									"diameter",
+									"threadSeries",
+									"threadPitch",
+									"materialFinish",
+									"grade",
+								]
 						: sub === "machine screws" || sub === "sheet metal screws"
 							? [
 									"measurementSystem",
@@ -434,8 +505,13 @@ export async function getCatalogBuilderSubcategory(
 		pricingSettings,
 	);
 
+	const categoryPattern =
+		normalizedCategoryId === "bits drivers"
+			? "^bits\\s*(?:(?:&|and)\\s*)?drivers$"
+			: `^${escapeRegex(normalizedCategoryId)}$`;
+
 	const enrichments = await ProductEnrichment.find({
-		category: new RegExp(`^${escapeRegex(normalizedCategoryId)}$`, "i"),
+		category: new RegExp(categoryPattern, "i"),
 		subcategory: new RegExp(`^${escapeRegex(normalizedSubcategoryId)}$`, "i"),
 	}).lean();
 
