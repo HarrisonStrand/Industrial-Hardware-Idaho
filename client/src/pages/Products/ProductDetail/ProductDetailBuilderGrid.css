@@ -582,23 +582,40 @@ body.builder-detail-modal-active {
   }
 }
 
-/* Modal pass 6: smaller image summary + full-width richer specs */
-.builder-detail-modal-summary-row {
-  align-items: stretch;
+/* Modal pass 7: align compact image with right-side summary and move specs full width */
+.builder-detail-modal-top {
+  min-height: 245px;
+}
+
+.builder-detail-modal-top > [class*="col-"] {
+  display: flex;
+}
+
+.builder-detail-modal-top > [class*="col-"] > * {
+  width: 100%;
 }
 
 .builder-detail-modal-media {
-  min-height: 220px !important;
-  max-height: 280px;
-  padding: clamp(1rem, 2vw, 1.5rem) !important;
+  min-height: 245px !important;
+  height: 100% !important;
+  padding: clamp(1rem, 2vw, 1.75rem) !important;
 }
 
 .builder-detail-modal-image {
-  max-height: 230px !important;
+  max-height: 220px !important;
 }
 
-.builder-detail-modal-empty {
-  min-height: 160px !important;
+.builder-detail-modal-info {
+  min-height: 245px;
+}
+
+.builder-detail-description-card {
+  min-height: 0;
+}
+
+.builder-detail-description-card .builder-detail-description-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .builder-detail-spec-section {
@@ -606,36 +623,43 @@ body.builder-detail-modal-active {
   box-shadow: 0 0.45rem 1.15rem rgba(0, 0, 0, 0.045) !important;
 }
 
-.builder-detail-spec-grid-full {
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+.builder-detail-spec-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.builder-detail-spec-grid-full .builder-detail-spec {
-  min-height: 86px;
-}
-
-.builder-detail-spec-grid-full .builder-detail-spec .fw-semibold {
-  overflow-wrap: anywhere;
+.builder-detail-spec {
+  min-height: 84px;
 }
 
 @media (max-width: 991.98px) {
+  .builder-detail-modal-top {
+    min-height: 0;
+  }
+
+  .builder-detail-modal-top > [class*="col-"] {
+    display: block;
+  }
+
+  .builder-detail-modal-media,
+  .builder-detail-modal-info {
+    min-height: 0 !important;
+  }
+
   .builder-detail-modal-media {
-    min-height: 190px !important;
-    max-height: 240px;
+    height: auto !important;
   }
 
   .builder-detail-modal-image {
     max-height: 190px !important;
   }
+
+  .builder-detail-spec-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 575.98px) {
-  .builder-detail-modal-media {
-    min-height: 170px !important;
-    max-height: 210px;
-  }
-
-  .builder-detail-spec-grid-full {
+  .builder-detail-spec-grid {
     grid-template-columns: 1fr;
   }
 }

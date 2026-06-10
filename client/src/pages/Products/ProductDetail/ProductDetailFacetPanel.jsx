@@ -340,27 +340,48 @@ function getVariantKey(variant = {}) {
 	);
 }
 
-function getVariantAttributeRows(variant = {}, subcategoryId = "") {
+function formatModalSpecValue(value = "") {
+	const raw = String(value || "").replace(/\s+/g, " ").trim();
+	if (!raw) return "";
+
+	const acronyms = new Set(["a307", "a325", "an", "f436", "hdg", "sae", "ss", "uss"]);
+
+	return raw.replace(/\b[a-zA-Z][a-zA-Z0-9./#-]*\b/g, (word) => {
+		const lower = word.toLowerCase();
+		if (acronyms.has(lower)) return lower.toUpperCase();
+		if (/^m\d/i.test(word)) return word.toUpperCase();
+		if (/^[a-z]+\d+$/i.test(word)) return word.toUpperCase();
+
+		return word
+			.split("-")
+			.map((part) => {
+				if (!part) return part;
+				const partLower = part.toLowerCase();
+				if (acronyms.has(partLower)) return partLower.toUpperCase();
+				return `${part.charAt(0).toUpperCase()}${part.slice(1).toLowerCase()}`;
+			})
+			.join("-");
+	});
+}
+
+function buildThreadSpecValue(attrs = {}) {
+	const threadSeries = formatModalSpecValue(attrs.threadSeries || attrs.thread_series || "");
+	const threadPitch = String(attrs.threadPitch || "").replace(/\s+/g, " ").trim();
+
+	if (threadSeries && threadPitch) return `${threadSeries} - ${threadPitch}`;
+	return threadSeries || threadPitch || "";
+}
+
+function buildVariantSpecRows(variant = {}, subcategoryId = "", maxRows = 18) {
 	const attrs = variant?.attributes || {};
 	const sub = String(subcategoryId || "").toLowerCase();
 
-	const modalHiddenKeys = new Set([
-		"fishbowlPartNum",
-		"fishbowlDescription",
-		"sku",
-		"internalPartNumber",
-		"familyKey",
-		"familySlug",
-		"familyTitle",
-		"familyTitleBase",
-		"familyAttributeOptions",
-		"categoryCanonical",
-		"subcategoryCanonical",
-	]);
-
 	const preferredKeys = sub.includes("abrasive")
 		? [
+				"measurementSystem",
 				"productType",
+				"size",
+				"diameter",
 				"width",
 				"length",
 				"thickness",
@@ -377,51 +398,94 @@ function getVariantAttributeRows(variant = {}, subcategoryId = "") {
 			? [
 					"productType",
 					"drive_type",
+					"driveType",
 					"diameter",
 					"length",
 					"size",
 					"materialFinish",
 					"material",
 					"finish",
+					"grade",
 					"brand",
 				]
 			: [
 					"measurementSystem",
 					"diameter",
 					"length",
-					"threadSeries",
-					"threadPitch",
+					"threadCoverage",
+					"drive_type",
+					"driveType",
+					"headType",
 					"materialFinish",
 					"material",
 					"finish",
 					"grade",
-					"drive_type",
-					"headType",
-					"fastenerType",
 					"washerStandard",
 					"washerType",
+					"size",
 					"width",
 					"thickness",
-					"size",
 				];
 
-	const orderedKeys = [
-		...preferredKeys,
-		...Object.keys(attrs).filter(
-			(key) => !preferredKeys.includes(key) && !modalHiddenKeys.has(key),
-		),
-	];
+	const hiddenSpecKeys = new Set([
+		"fishbowlPartNum",
+		"sku",
+		"internalPartNumber",
+		"familyKey",
+		"familySlug",
+		"familyTitle",
+		"familyTitleBase",
+		"familyAttributeOptions",
+		"categoryCanonical",
+		"subcategoryCanonical",
+		"fishbowlDescription",
+		"fastenerType",
+		"fastenerTypeCanonical",
+		"threadSeries",
+		"thread_series",
+		"threadPitch",
+	]);
 
-	return orderedKeys
-		.map((key) => ({ key, label: formatAttributeLabel(key), value: attrs[key] }))
-		.filter(
-			(row) =>
-				row.value !== undefined &&
-				row.value !== null &&
-				row.value !== "" &&
-				!modalHiddenKeys.has(row.key),
-		)
-		.slice(0, 16);
+	const seen = new Set();
+	const rows = [];
+	const threadValue = buildThreadSpecValue(attrs);
+
+	if (threadValue) {
+		seen.add("thread");
+		seen.add("threadSeries");
+		seen.add("thread_series");
+		seen.add("threadPitch");
+		rows.push({
+			key: "thread",
+			label: "Thread",
+			value: threadValue,
+		});
+	}
+
+	const pushRow = (key) => {
+		if (!key || seen.has(key) || hiddenSpecKeys.has(key)) return;
+		const value = attrs[key];
+		if (value === undefined || value === null || value === "") return;
+
+		seen.add(key);
+		rows.push({
+			key,
+			label: formatAttributeLabel(key === "driveType" ? "drive_type" : key),
+			value: formatModalSpecValue(value),
+		});
+	};
+
+	preferredKeys.forEach(pushRow);
+
+	Object.keys(attrs)
+		.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" }))
+		.forEach(pushRow);
+
+	return rows.slice(0, maxRows);
+}
+
+function getVariantAttributeRows(variant = {}, subcategoryId = "") {
+	return buildVariantSpecRows(variant, subcategoryId, 6);
 }
 
 function getStockLabel(variant = {}) {
@@ -628,6 +692,7 @@ function ProductResultsGrid({
 function ProductPreviewPanel({
 	variant,
 	builderImage = "",
+	subcategoryId = "",
 	displayName = "",
 	unitPrice = 0,
 	currency = "USD",
@@ -709,7 +774,7 @@ function ProductPreviewPanel({
 					<div className='d-flex flex-wrap justify-content-md-end gap-2'>
 						<button
 							type='button'
-							className='btn-secondary-cta rounded-4 text-uppercase text-main px-4 py-2'
+							className='btn btn-outline-secondary rounded-pill px-3'
 							disabled={!variant}
 							onClick={onOpenDetails}>
 							View Full Details
@@ -718,8 +783,7 @@ function ProductPreviewPanel({
 
 						<button
 							type='button'
-							className='btn-main-cta rounded-4 text-uppercase text-main-light px-4 py-2'
-							disabled={!exactVariant}
+							className='btn-main-cta rounded-pill text-uppercase text-main-light px-4 py-2'
 							onClick={onAddToCart}>
 							Add to Cart
 						</button>
@@ -727,7 +791,7 @@ function ProductPreviewPanel({
 						{showViewCartCta ? (
 							<button
 								type='button'
-								className='btn-secondary-cta rounded-4 text-uppercase text-main px-4 py-2'
+								className='btn btn-outline-secondary rounded-pill px-3'
 								onClick={onViewCart}>
 								View Cart
 							</button>
@@ -743,6 +807,7 @@ function ProductDetailModal({
 	show = false,
 	variant,
 	builderImage = "",
+	subcategoryId = "",
 	displayName = "",
 	displayDescription = "",
 	unitPrice = 0,
@@ -751,7 +816,6 @@ function ProductDetailModal({
 	quantity = 1,
 	totalPrice = 0,
 	exactVariant = null,
-	subcategoryId = "",
 	onClose,
 	onAddToCart,
 	onQuantityChange,
@@ -786,7 +850,7 @@ function ProductDetailModal({
 	const image = variant?.image || builderImage || "";
 	const title = variant?.name || variant?.title || displayName || "Product details";
 	const partNumber = variant?.partNumber || variant?.sku || "—";
-	const rows = getVariantAttributeRows(variant, subcategoryId);
+	const rows = buildVariantSpecRows(variant, subcategoryId, 18);
 	const fullDescription =
 		variant?.description ||
 		displayDescription ||
@@ -827,7 +891,7 @@ function ProductDetailModal({
 						</div>
 
 						<div className='modal-body builder-detail-modal-body py-0'>
-							<div className='row g-4 align-items-stretch builder-detail-modal-summary-row'>
+							<div className='builder-detail-modal-top row g-4 align-items-stretch'>
 								<div className='col-12 col-lg-4'>
 									<div className='builder-detail-modal-media rounded-4 border h-100 d-flex align-items-center justify-content-center'>
 										{image ? (
@@ -839,7 +903,7 @@ function ProductDetailModal({
 								</div>
 
 								<div className='col-12 col-lg-8'>
-									<div className='builder-detail-modal-info d-flex flex-column gap-4'>
+									<div className='builder-detail-modal-info d-flex flex-column gap-4 h-100'>
 										<div className='row g-3'>
 											<div className='col-6 col-md-4'>
 												<div className='builder-detail-stat rounded-4 border p-3 h-100'>
@@ -864,7 +928,7 @@ function ProductDetailModal({
 											</div>
 										</div>
 
-										<div className='builder-detail-description-card rounded-4 border p-3 p-md-4'>
+										<div className='builder-detail-description-card rounded-4 border p-3 p-md-4 flex-grow-1 d-flex flex-column'>
 											<div className='d-flex justify-content-between align-items-center gap-3 mb-2'>
 												<div className='small text-muted text-uppercase'>Product Description</div>
 												{hasLongDescription ? (
@@ -882,29 +946,22 @@ function ProductDetailModal({
 										</div>
 									</div>
 								</div>
-
-								{rows.length ? (
-									<div className='col-12'>
-										<div className='builder-detail-spec-section rounded-4 border p-3 p-md-4'>
-											<div className='d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3'>
-												<div>
-													<div className='small text-muted text-uppercase'>Product Specs</div>
-												</div>
-											</div>
-											<div className='builder-detail-spec-grid builder-detail-spec-grid-full'>
-												{rows.map((row) => (
-													<div key={row.key} className='builder-detail-spec rounded-4 border p-3'>
-														<div className='small text-muted text-uppercase'>{row.label}</div>
-														<div className='fw-semibold text-main'>{row.value}</div>
-													</div>
-												))}
-											</div>
-										</div>
-									</div>
-								) : null}
 							</div>
-						</div>
 
+							{rows.length ? (
+								<div className='builder-detail-spec-section rounded-4 border p-3 p-md-4 mt-4'>
+									<div className='small text-muted text-uppercase mb-3'>Specs</div>
+									<div className='builder-detail-spec-grid'>
+										{rows.map((row) => (
+											<div key={row.key} className='builder-detail-spec rounded-4 border p-3'>
+												<div className='small text-muted text-uppercase'>{row.label}</div>
+												<div className='fw-semibold text-main'>{row.value}</div>
+											</div>
+										))}
+									</div>
+								</div>
+							) : null}
+						</div>
 						<div className='modal-footer builder-detail-modal-footer border-0'>
 							<button type='button' className='btn btn-outline-secondary rounded-pill px-4' onClick={onClose}>
 								Back to Builder
@@ -940,8 +997,7 @@ function ProductDetailModal({
 
 								<button
 									type='button'
-									className='btn-main-cta rounded-4 text-uppercase text-main-light px-4 py-2 w-100'
-									disabled={!exactVariant}
+									className='btn-main-cta rounded-pill text-uppercase text-main-light px-4 py-2 w-100'
 									onClick={onAddToCart}>
 									Add to Cart
 								</button>
@@ -1536,6 +1592,7 @@ const handleAddToCart = () => {
 							show={showProductDetailModal}
 							variant={previewVariant}
 							builderImage={builderData?.image || ""}
+							subcategoryId={builderData?.subcategoryId || subcategoryId}
 							displayName={displayName}
 							displayDescription={displayDescription}
 							unitPrice={unitPrice}
@@ -1544,7 +1601,6 @@ const handleAddToCart = () => {
 							quantity={quantity}
 							totalPrice={totalPrice}
 							exactVariant={exactVariant}
-							subcategoryId={builderData?.subcategoryId || subcategoryId}
 							onClose={() => setShowProductDetailModal(false)}
 							onAddToCart={handleAddToCart}
 							onQuantityChange={(value) =>

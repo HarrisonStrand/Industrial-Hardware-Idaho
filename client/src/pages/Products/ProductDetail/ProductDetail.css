@@ -1,10 +1,16 @@
 .fade-in {
-  animation: fadeIn 0.3s ease-out;
+	animation: fadeIn 0.3s ease-out;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to   { opacity: 1; transform: translateY(0); }
+	from {
+		opacity: 0;
+		transform: translateY(5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .product-image-card {
@@ -16,7 +22,9 @@
 	height: clamp(220px, 24vw, 320px);
 	padding: 1rem;
 	background: rgb(from var(--main-light) r g b / 0.45);
-	transition: transform 0.4s ease, box-shadow 0.4s ease;
+	transition:
+		transform 0.4s ease,
+		box-shadow 0.4s ease;
 }
 
 .product-image {
@@ -31,23 +39,20 @@
 
 .product-image-card:hover {
 	cursor: pointer;
-  transform: scale(1.03);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.15);
+	transform: scale(1.03);
+	box-shadow: 0 12px 26px rgba(0, 0, 0, 0.15);
 }
-
-
 
 /* CTA Button */
 .btn-main-cta {
 	line-height: 28px !important;
-  max-width: 250px;
+	max-width: 250px;
 }
 
 .btn-secondary-cta {
 	line-height: 28px !important;
-  max-width: 250px;
+	max-width: 250px;
 }
-
 
 /* OPTION INPUT STYLING */
 
@@ -87,16 +92,36 @@ input[type="number"] {
 }
 
 .option-box {
-	box-shadow: 0 3px 4px rgba(0, 0, 0, 0.15);
+	cursor: pointer;
+	box-shadow: 1px 3px 4px 0px rgb(0 0 0 / 20%);
+	/* border: 2px solid rgba(from var(--main-light) r g b / 0.35); */
+	/* box-shadow: 0 3px 4px rgba(0, 0, 0, 0.15); */
 	border: 1px solid rgba(0, 0, 0, 0.25);
 	background: white;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
+	transition:
+		transform 0.4s ease,
+		box-shadow 0.4s ease;
+}
+
+.option-box:hover {
+	transform: translate3d(0, -2px, 0);
+	box-shadow: 1px 4px 6px 0px rgb(0 0 0 / 40%);
+}
+
+.option-box:active {
+	transform: translate3d(0, 0px, 0);
+	filter: brightness(0.9);
+	box-shadow: inset 1px 2px 2px 0px rgba(0, 0, 0, 0.5);
+	box-sizing: border-box;
+	border: 2px solid rgba(from var(--main-light) r g b / 0);
 }
 
 .option-box-selected {
 	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.35) inset;
 	background: rgb(from var(--main-light) r g b / 0.35);
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
+	transition:
+		transform 0.4s ease,
+		box-shadow 0.4s ease;
 	border: 2px solid rgb(from var(--main-color) r g b / 0.65);
 }
 
