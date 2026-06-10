@@ -1,0 +1,641 @@
+/* Live builder grid polish: accordion animation + follow scroll */
+.builder-accordion-section {
+  will-change: box-shadow, border-color;
+}
+
+.builder-accordion-header {
+  transition: background-color 180ms ease;
+}
+
+.builder-accordion-header:hover {
+  background-color: rgba(0, 0, 0, 0.025) !important;
+}
+
+.builder-accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 260ms ease, opacity 220ms ease;
+}
+
+.builder-accordion-body > div {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.builder-accordion-body.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.builder-plus-toggle {
+  position: relative;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex: 0 0 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.builder-plus-line {
+  position: absolute;
+  width: 1.05rem;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  color: var(--main-text, #2f2a24);
+  opacity: 0.7;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.builder-plus-line-vertical {
+  transform: rotate(90deg);
+}
+
+.builder-plus-toggle.is-open .builder-plus-line-vertical {
+  transform: rotate(0deg);
+  opacity: 0;
+}
+
+.builder-results-follow-shell {
+  transition: transform 160ms ease-out;
+  will-change: transform;
+}
+
+.product-result-card {
+  transition: box-shadow 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.product-result-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0.65rem 1.4rem rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 1199.98px) {
+  .builder-results-follow-shell {
+    transform: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .builder-accordion-body,
+  .builder-plus-line,
+  .builder-results-follow-shell,
+  .product-result-card {
+    transition: none !important;
+  }
+}
+
+/* Builder result preview + modal detail view */
+.builder-product-preview-image {
+  width: 112px;
+  height: 112px;
+  flex: 0 0 112px;
+  overflow: hidden;
+}
+
+.builder-product-preview-image img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  padding: 0.45rem;
+}
+
+.builder-product-preview-actions {
+  flex: 0 0 auto;
+  min-width: min(100%, 280px);
+}
+
+.builder-detail-modal {
+  z-index: 1060;
+}
+
+.builder-detail-modal-backdrop {
+  z-index: 1055;
+}
+
+.builder-detail-modal .modal-content {
+  border: 0;
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.22);
+}
+
+@media (max-width: 767.98px) {
+  .builder-product-preview-image {
+    width: 96px;
+    height: 96px;
+  }
+
+  .builder-product-preview-actions {
+    width: 100%;
+  }
+}
+
+/* Clean modal layout for builder product details */
+.builder-detail-modal {
+  --builder-modal-radius: 1.35rem;
+}
+
+.builder-detail-modal .modal-dialog {
+  max-width: min(1040px, calc(100vw - 2rem));
+}
+
+.builder-detail-modal-content {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.builder-detail-modal-header,
+.builder-detail-modal-footer {
+  background: rgba(248, 247, 242, 0.96);
+}
+
+.builder-detail-modal-header {
+  padding: 1.25rem 1.5rem;
+}
+
+.builder-detail-modal-footer {
+  padding: 1rem 1.5rem;
+}
+
+.builder-detail-modal-part {
+  letter-spacing: 0.02em;
+}
+
+.builder-detail-modal-media {
+  min-height: 390px;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(248, 247, 242, 0.95), rgba(255, 255, 255, 0.85));
+  border-right: 1px solid rgba(0, 0, 0, 0.07);
+}
+
+.builder-detail-modal-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 430px;
+  object-fit: contain;
+  filter: drop-shadow(0 0.8rem 1.2rem rgba(0, 0, 0, 0.1));
+}
+
+.builder-detail-modal-empty {
+  width: 100%;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  border-radius: var(--builder-modal-radius);
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.builder-detail-modal-info {
+  min-height: 100%;
+}
+
+.builder-detail-modal-copy {
+  line-height: 1.65;
+}
+
+.builder-detail-stat,
+.builder-detail-spec {
+  box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.035);
+}
+
+.builder-detail-spec-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.builder-detail-modal .btn-main-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 991.98px) {
+  .builder-detail-modal-media {
+    min-height: 260px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  }
+}
+
+@media (max-width: 575.98px) {
+  .builder-detail-modal .modal-dialog {
+    max-width: calc(100vw - 1rem);
+    margin: 0.5rem auto;
+  }
+
+  .builder-detail-modal-header,
+  .builder-detail-modal-footer {
+    padding: 1rem;
+  }
+
+  .builder-detail-modal-footer {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .builder-detail-modal-footer .btn,
+  .builder-detail-modal-footer .btn-main-cta {
+    width: 100%;
+    max-width: none;
+  }
+
+  .builder-detail-spec-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Modal pass 3: centered product detail modal with transparent darkened blur backdrop */
+body.builder-detail-modal-active {
+  overflow: hidden;
+}
+
+.builder-detail-modal-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1055;
+  background: rgba(18, 16, 14, 0.46) !important;
+  opacity: 1 !important;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.builder-detail-modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1060;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 1.25rem;
+  background: transparent !important;
+  pointer-events: auto;
+}
+
+.builder-detail-modal .modal-dialog {
+  width: min(1040px, calc(100vw - 2rem));
+  max-width: min(1040px, calc(100vw - 2rem));
+  margin: 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center;
+  transform: none !important;
+}
+
+.builder-detail-modal-content {
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  box-shadow: 0 1.35rem 4rem rgba(0, 0, 0, 0.34) !important;
+  max-height: min(88vh, 820px);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.builder-detail-modal-body {
+  background: #ffffff;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.builder-detail-modal-header,
+.builder-detail-modal-footer {
+  background: #f8f7f2 !important;
+  flex: 0 0 auto;
+}
+
+.builder-detail-modal-media {
+  background: #ffffff !important;
+}
+
+.builder-detail-modal-image {
+  filter: drop-shadow(0 0.8rem 1.2rem rgba(0, 0, 0, 0.1));
+}
+
+.builder-detail-modal-empty {
+  background: #ffffff !important;
+}
+
+.builder-detail-stat,
+.builder-detail-spec,
+.builder-detail-modal-qty {
+  box-shadow: none !important;
+  background: #f8f7f2 !important;
+}
+
+.builder-detail-qty-btn {
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+
+.builder-detail-qty-input {
+  width: 82px;
+  border-radius: 999px;
+}
+
+@media (max-width: 575.98px) {
+  .builder-detail-modal {
+    padding: 0.75rem;
+    align-items: center;
+  }
+
+  .builder-detail-modal .modal-dialog {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .builder-detail-modal-content {
+    max-height: calc(100vh - 1.5rem);
+  }
+
+  .builder-detail-qty-control {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .builder-detail-qty-input {
+    flex: 1 1 auto;
+    width: auto;
+  }
+}
+
+/* Modal pass 4: portal-backed viewport overlay + true fixed center */
+body.builder-detail-modal-active {
+  overflow: hidden !important;
+}
+
+.builder-detail-modal-backdrop {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 4090 !important;
+  background: rgba(0, 0, 0, 0.52) !important;
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
+  opacity: 1 !important;
+}
+
+.builder-detail-modal {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  z-index: 4100 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: clamp(0.75rem, 2vw, 1.5rem) !important;
+  overflow: hidden !important;
+  background: transparent !important;
+}
+
+.builder-detail-modal-dialog {
+  width: min(1040px, calc(100vw - 2rem)) !important;
+  max-width: min(1040px, calc(100vw - 2rem)) !important;
+  height: auto !important;
+  max-height: calc(100vh - 2rem) !important;
+  max-height: calc(100dvh - 2rem) !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transform: none !important;
+}
+
+.builder-detail-modal-content {
+  width: 100% !important;
+  max-height: calc(100vh - 2rem) !important;
+  max-height: calc(100dvh - 2rem) !important;
+  overflow: hidden !important;
+}
+
+.builder-detail-modal-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}
+
+@media (max-width: 575.98px) {
+  .builder-detail-modal {
+    padding: 0.65rem !important;
+  }
+
+  .builder-detail-modal-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100vh - 1.3rem) !important;
+    max-height: calc(100dvh - 1.3rem) !important;
+  }
+
+  .builder-detail-modal-content {
+    max-height: calc(100vh - 1.3rem) !important;
+    max-height: calc(100dvh - 1.3rem) !important;
+  }
+}
+
+/* Modal pass 5: container polish, matching CTA area, and compact scrollable description */
+.builder-detail-modal-content.theme-section-container {
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  background: #f8f7f2 !important;
+  box-shadow: 0 1.5rem 4.25rem rgba(0, 0, 0, 0.36) !important;
+}
+
+.builder-detail-modal-header,
+.builder-detail-modal-footer {
+  background: #f8f7f2 !important;
+  padding: 1.15rem clamp(1rem, 2.2vw, 1.75rem) !important;
+}
+
+.builder-detail-modal-body {
+  background: #f8f7f2 !important;
+  padding: clamp(1rem, 2.4vw, 1.75rem) !important;
+}
+
+.builder-detail-modal-media,
+.builder-detail-stat,
+.builder-detail-spec,
+.builder-detail-description-card {
+  background: #ffffff !important;
+  box-shadow: 0 0.45rem 1.15rem rgba(0, 0, 0, 0.045) !important;
+}
+
+.builder-detail-modal-media {
+  min-height: 360px;
+  padding: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.builder-detail-modal-info {
+  min-height: 100%;
+}
+
+.builder-detail-description-card {
+  position: relative;
+}
+
+.builder-detail-description-scroll {
+  max-height: 5.75rem;
+  overflow: hidden;
+  padding-right: 0.25rem;
+  transition: max-height 0.22s ease;
+}
+
+.builder-detail-description-scroll.is-expanded {
+  max-height: 11.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.builder-detail-description-scroll:not(.is-expanded) {
+  mask-image: linear-gradient(to bottom, #000 68%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 68%, transparent 100%);
+}
+
+.builder-detail-description-scroll.is-expanded::-webkit-scrollbar {
+  width: 0.45rem;
+}
+
+.builder-detail-description-scroll.is-expanded::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 999px;
+}
+
+.builder-detail-description-toggle {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.builder-detail-description-toggle:hover {
+  text-decoration: underline;
+}
+
+.builder-detail-modal-footer {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  gap: 1rem !important;
+}
+
+.builder-detail-modal-purchase {
+  width: min(100%, 290px);
+}
+
+.builder-detail-modal-purchase .btn-main-cta {
+  border: 0;
+  min-height: 42px;
+}
+
+.builder-detail-modal-purchase .btn-main-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.builder-detail-modal-purchase .builder-detail-qty-input {
+  width: 76px;
+}
+
+@media (max-width: 991.98px) {
+  .builder-detail-modal-media {
+    min-height: 250px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .builder-detail-modal-body {
+    padding: 0.85rem !important;
+  }
+
+  .builder-detail-modal-footer {
+    align-items: stretch !important;
+    flex-direction: column !important;
+  }
+
+  .builder-detail-modal-purchase {
+    width: 100%;
+  }
+
+  .builder-detail-modal-purchase .d-flex {
+    justify-content: space-between !important;
+  }
+
+  .builder-detail-modal-purchase .builder-detail-qty-input {
+    flex: 1 1 auto;
+    width: auto;
+  }
+}
+
+/* Modal pass 6: smaller image summary + full-width richer specs */
+.builder-detail-modal-summary-row {
+  align-items: stretch;
+}
+
+.builder-detail-modal-media {
+  min-height: 220px !important;
+  max-height: 280px;
+  padding: clamp(1rem, 2vw, 1.5rem) !important;
+}
+
+.builder-detail-modal-image {
+  max-height: 230px !important;
+}
+
+.builder-detail-modal-empty {
+  min-height: 160px !important;
+}
+
+.builder-detail-spec-section {
+  background: #ffffff !important;
+  box-shadow: 0 0.45rem 1.15rem rgba(0, 0, 0, 0.045) !important;
+}
+
+.builder-detail-spec-grid-full {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.builder-detail-spec-grid-full .builder-detail-spec {
+  min-height: 86px;
+}
+
+.builder-detail-spec-grid-full .builder-detail-spec .fw-semibold {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 991.98px) {
+  .builder-detail-modal-media {
+    min-height: 190px !important;
+    max-height: 240px;
+  }
+
+  .builder-detail-modal-image {
+    max-height: 190px !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .builder-detail-modal-media {
+    min-height: 170px !important;
+    max-height: 210px;
+  }
+
+  .builder-detail-spec-grid-full {
+    grid-template-columns: 1fr;
+  }
+}

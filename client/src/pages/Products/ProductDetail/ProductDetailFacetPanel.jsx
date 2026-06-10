@@ -1,9 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
 import { fetchCatalogBuilderSubcategory } from "../../../services/catalogBuilderApi.js";
 import "./ProductDetail.css";
+import "./ProductDetailBuilderGrid.css";
 
 const HIDDEN_ATTRIBUTE_KEYS = new Set([
 	"fishbowlPartNum",
@@ -26,21 +28,19 @@ const HIDDEN_ATTRIBUTE_KEYS = new Set([
 
 const ATTRIBUTE_ORDER = [
 	"measurementSystem",
-	"headType",
-	"drive_type",
 	"diameter",
-	"length",
-	"thread",
 	"threadSeries",
 	"threadPitch",
+	"length",
+	"drive_type",
 	"materialFinish",
 	"grade",
 	"washerStandard",
 	"washerType",
 	"width",
 	"thickness",
-	"headStandard",
 	"fastenerType",
+	"headType",
 ];
 
 const INITIAL_SELECTED_STATE = {
@@ -49,7 +49,6 @@ const INITIAL_SELECTED_STATE = {
 	threadSeries: "",
 	threadPitch: "",
 	length: "",
-	thread: "",
 	drive_type: "",
 	materialFinish: "",
 	grade: "",
@@ -161,22 +160,12 @@ function shouldHideAttributeForContext(
 	if (sub === "hex cap screws" && key === "headType") return true;
 	if (sub === "hex cap screws" && key === "fastenerType") return true;
 
-	if (sub === "flange bolts" && key === "headType") return true;
-	if (sub === "flange bolts" && key === "fastenerType") return true;
-
-	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "fastenerType") return true;
-	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "threadSeries") return true;
-	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "threadPitch") return true;
-	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "threadType") return true;
-	if ((sub === "machine screws" || sub === "sheet metal screws") && key === "headDetail") return true;
-
 	return false;
 }
 
 function formatAttributeLabel(key = "") {
 	const baseMap = {
-		measurementSystem: "Measuring System",
-		thread: "Thread",
+		measurementSystem: "Measurement System",
 		threadPitch: "Thread Pitch",
 		threadSeries: "Thread Series",
 		drive_type: "Drive Type",
@@ -189,7 +178,6 @@ function formatAttributeLabel(key = "") {
 		washerType: "Type",
 		materialFinish: "Material / Finish",
 		headType: "Head Type",
-		headStandard: "Style",
 		fastenerType: "Fastener Type",
 	};
 
@@ -269,49 +257,22 @@ function reorderAttributeEntriesForSubcategory(
 	subcategoryId = "",
 ) {
 	const sub = String(subcategoryId || "").toLowerCase();
+	if (sub !== "hex cap screws") return entries;
 
-	const order =
-		sub === "hex cap screws"
-			? [
-					"measurementSystem",
-					"diameter",
-					"threadSeries",
-					"threadPitch",
-					"length",
-					"drive_type",
-					"materialFinish",
-					"grade",
-				]
-			: sub === "flange bolts"
-				? [
-						"measurementSystem",
-						"diameter",
-						"threadSeries",
-						"threadPitch",
-						"length",
-						"drive_type",
-						"materialFinish",
-						"grade",
-						"headStandard",
-					]
-			: sub === "machine screws" || sub === "sheet metal screws"
-				? [
-						"measurementSystem",
-						"headType",
-						"drive_type",
-						"diameter",
-						"length",
-						"thread",
-						"materialFinish",
-						"grade",
-					]
-				: null;
-
-	if (!order) return entries;
+const boltOrder = [
+	"measurementSystem",
+	"diameter",
+	"threadSeries",
+	"threadPitch",
+	"length",
+	"drive_type",
+	"materialFinish",
+	"grade",
+];
 
 	return [...entries].sort(([a], [b]) => {
-		const aIndex = order.indexOf(a);
-		const bIndex = order.indexOf(b);
+		const aIndex = boltOrder.indexOf(a);
+		const bIndex = boltOrder.indexOf(b);
 
 		if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
 		if (aIndex === -1) return 1;
@@ -368,6 +329,107 @@ function hasAnyRealSelection(selected = {}) {
 	);
 }
 
+function getVariantKey(variant = {}) {
+	return String(
+		variant?.productId ||
+			variant?.enrichmentId ||
+			variant?.partNumber ||
+			variant?.sku ||
+			variant?.name ||
+			"",
+	);
+}
+
+function getVariantAttributeRows(variant = {}, subcategoryId = "") {
+	const attrs = variant?.attributes || {};
+	const sub = String(subcategoryId || "").toLowerCase();
+
+	const modalHiddenKeys = new Set([
+		"fishbowlPartNum",
+		"fishbowlDescription",
+		"sku",
+		"internalPartNumber",
+		"familyKey",
+		"familySlug",
+		"familyTitle",
+		"familyTitleBase",
+		"familyAttributeOptions",
+		"categoryCanonical",
+		"subcategoryCanonical",
+	]);
+
+	const preferredKeys = sub.includes("abrasive")
+		? [
+				"productType",
+				"width",
+				"length",
+				"thickness",
+				"grit",
+				"arborSize",
+				"abrasiveMaterial",
+				"wheelType",
+				"attachmentStyle",
+				"materialFinish",
+				"material",
+				"finish",
+			]
+		: sub.includes("driver") || sub.includes("bit")
+			? [
+					"productType",
+					"drive_type",
+					"diameter",
+					"length",
+					"size",
+					"materialFinish",
+					"material",
+					"finish",
+					"brand",
+				]
+			: [
+					"measurementSystem",
+					"diameter",
+					"length",
+					"threadSeries",
+					"threadPitch",
+					"materialFinish",
+					"material",
+					"finish",
+					"grade",
+					"drive_type",
+					"headType",
+					"fastenerType",
+					"washerStandard",
+					"washerType",
+					"width",
+					"thickness",
+					"size",
+				];
+
+	const orderedKeys = [
+		...preferredKeys,
+		...Object.keys(attrs).filter(
+			(key) => !preferredKeys.includes(key) && !modalHiddenKeys.has(key),
+		),
+	];
+
+	return orderedKeys
+		.map((key) => ({ key, label: formatAttributeLabel(key), value: attrs[key] }))
+		.filter(
+			(row) =>
+				row.value !== undefined &&
+				row.value !== null &&
+				row.value !== "" &&
+				!modalHiddenKeys.has(row.key),
+		)
+		.slice(0, 16);
+}
+
+function getStockLabel(variant = {}) {
+	const qty = Number(variant?.qtyAvailable || 0);
+	if (qty > 0) return `${qty} available`;
+	return "Available on request";
+}
+
 function getGenericDisplayName(builderData, subcategoryId) {
 	return builderData?.name || String(subcategoryId || "").replace(/-/g, " ");
 }
@@ -414,16 +476,517 @@ function SelectedPathSummary({ selected = {}, attributeEntries = [] }) {
 	);
 }
 
+function ProductResultCard({
+	variant,
+	builderImage = "",
+	subcategoryId = "",
+	selected = false,
+	onClick,
+}) {
+	const image = variant?.image || builderImage || "";
+	const title = variant?.name || variant?.title || "Product option";
+	const rows = getVariantAttributeRows(variant, subcategoryId);
+	const price = Number(variant?.price || 0);
+	const currency = variant?.currency || "USD";
+
+	return (
+		<button
+			type='button'
+			onClick={onClick}
+			className={`h-100 w-100 text-start border rounded-4 bg-light p-0 overflow-hidden product-result-card ${
+				selected ? "border-success shadow" : "border-secondary-subtle"
+			}`}
+			style={{ transition: "box-shadow 180ms ease, border-color 180ms ease" }}>
+			<div className='row g-0 h-100'>
+				<div className='col-4 col-sm-12'>
+					<div
+						className='bg-white d-flex align-items-center justify-content-center border-bottom'
+						style={{ minHeight: "120px" }}>
+						{image ? (
+							<img
+								src={image}
+								alt={title}
+								className='img-fluid p-2'
+								style={{ maxHeight: "130px", objectFit: "contain" }}
+							/>
+						) : (
+							<div className='small text-muted text-center p-3'>No image</div>
+						)}
+					</div>
+				</div>
+
+				<div className='col-8 col-sm-12'>
+					<div className='p-3 d-flex flex-column gap-2 h-100'>
+						<div className='fw-semibold text-main lh-sm'>{title}</div>
+
+						{rows.length ? (
+							<div className='d-flex flex-wrap gap-1'>
+								{rows.map((row) => (
+									<span
+										key={`${getVariantKey(variant)}-${row.key}`}
+										className='badge rounded-pill text-bg-light border fw-normal'>
+										{row.label}: {row.value}
+									</span>
+								))}
+							</div>
+						) : null}
+
+						<div className='mt-auto pt-2 d-flex justify-content-between align-items-end gap-2'>
+							<div>
+								<div className='small text-muted'>Part #</div>
+								<div className='small fw-semibold text-main'>
+									{variant?.partNumber || variant?.sku || "—"}
+								</div>
+							</div>
+
+							<div className='text-end'>
+								<div className='fw-semibold text-main'>
+									{formatCurrency(price, currency)}
+								</div>
+								<div className='small text-muted'>{getStockLabel(variant)}</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</button>
+	);
+}
+
+function ProductResultsGrid({
+	variants = [],
+	builderImage = "",
+	subcategoryId = "",
+	selectedVariantKey = "",
+	visibleCount = 9,
+	onSelectVariant,
+	onShowMore,
+}) {
+	const visibleVariants = variants.slice(0, visibleCount);
+	const remainingCount = Math.max(0, variants.length - visibleVariants.length);
+
+	return (
+		<div className='rounded-4 p-3 p-md-4 theme-section-container bg-main-light mb-4'>
+			<div className='d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3'>
+				<div>
+					<div className='text-main text-uppercase fs-4'>Matching Products</div>
+					<div className='small text-muted'>
+						Click a card to preview full details and add it to cart.
+					</div>
+				</div>
+
+				<div className='badge rounded-pill text-bg-light border px-3 py-2'>
+					{variants.length} match{variants.length === 1 ? "" : "es"}
+				</div>
+			</div>
+
+			{visibleVariants.length ? (
+				<>
+					<div className='row g-3'>
+						{visibleVariants.map((variant) => {
+							const key = getVariantKey(variant);
+							return (
+								<div key={key} className='col-12 col-md-6 col-xxl-4'>
+									<ProductResultCard
+										variant={variant}
+										builderImage={builderImage}
+										subcategoryId={subcategoryId}
+										selected={selectedVariantKey === key}
+										onClick={() => onSelectVariant?.(variant)}
+									/>
+								</div>
+							);
+						})}
+					</div>
+
+					{remainingCount > 0 ? (
+						<div className='text-center mt-3'>
+							<button
+								type='button'
+								className='btn btn-outline-secondary rounded-pill px-4'
+								onClick={onShowMore}>
+								Show {Math.min(9, remainingCount)} more
+							</button>
+							<div className='small text-muted mt-2'>
+								{remainingCount} more matching products hidden
+							</div>
+						</div>
+					) : null}
+				</>
+			) : (
+				<div className='text-muted text-center py-4'>
+					No products match the current filters. Clear a filter to broaden the
+					results.
+				</div>
+			)}
+		</div>
+	);
+}
+
+
+
+function ProductPreviewPanel({
+	variant,
+	builderImage = "",
+	displayName = "",
+	unitPrice = 0,
+	currency = "USD",
+	qtyAvailable = 0,
+	quantity = 1,
+	totalPrice = 0,
+	exactVariant = null,
+	showViewCartCta = false,
+	onQuantityChange,
+	onAddToCart,
+	onViewCart,
+	onOpenDetails,
+}) {
+	const image = variant?.image || builderImage || "";
+	const title = variant?.name || variant?.title || displayName || "Product preview";
+	return (
+		<div className='rounded-4 p-3 p-md-4 theme-section-container bg-main-light builder-product-preview mb-4'>
+			<div className='d-flex flex-column flex-md-row align-items-md-center gap-3'>
+				<div className='builder-product-preview-image bg-white rounded-4 border d-flex align-items-center justify-content-center'>
+					{image ? (
+						<img src={image} alt={title} className='img-fluid' />
+					) : (
+						<div className='small text-muted text-center p-3'>No image</div>
+					)}
+				</div>
+
+				<div className='flex-grow-1 min-w-0'>
+					<div className='small text-muted text-uppercase mb-1'>Selected Preview</div>
+					<div className='text-main text-uppercase fs-4 lh-sm'>{title}</div>
+					<div className='d-flex flex-wrap gap-2 mt-2'>
+						<span className='badge rounded-pill text-bg-light border fw-normal'>
+							Part #: {variant?.partNumber || variant?.sku || "Select a product"}
+						</span>
+						<span className='badge rounded-pill text-bg-light border fw-normal'>
+							{variant ? getStockLabel(variant) : "Select options"}
+						</span>
+						<span className='badge rounded-pill text-bg-light border fw-normal'>
+							Qty: {variant ? qtyAvailable : "—"}
+						</span>
+					</div>
+				</div>
+
+				<div className='builder-product-preview-actions'>
+					<div className='price-container text-main font-secondary fs-2 text-md-end mb-2'>
+						{variant ? formatCurrency(totalPrice, currency) : "--"}
+						<div className='fs-6 text-muted font-sans-serif'>
+							{variant ? `${formatCurrency(unitPrice, currency)} each` : "Select a card for pricing"}
+						</div>
+					</div>
+
+					<div className='d-flex align-items-center justify-content-md-end gap-2 mb-3'>
+						<label className='form-label text-uppercase small fw-bold mb-0 text-main'>Qty</label>
+						<button
+							type='button'
+							className='btn btn-outline-secondary btn-sm'
+							onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) - 1))}>
+							−
+						</button>
+						<input
+							type='number'
+							min='1'
+							className='form-control form-control-sm text-center'
+							style={{ width: "76px" }}
+							value={getDisplayQuantityValue(quantity)}
+							onChange={(e) => {
+								const raw = e.target.value;
+								if (raw === "" || /^\d+$/.test(raw)) onQuantityChange?.(raw);
+							}}
+							onBlur={() => onQuantityChange?.(Math.max(1, Number(quantity || 1)))}
+						/>
+						<button
+							type='button'
+							className='btn btn-outline-secondary btn-sm'
+							onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) + 1))}>
+							+
+						</button>
+					</div>
+
+					<div className='d-flex flex-wrap justify-content-md-end gap-2'>
+						<button
+							type='button'
+							className='btn-secondary-cta rounded-4 text-uppercase text-main px-4 py-2'
+							disabled={!variant}
+							onClick={onOpenDetails}>
+							View Full Details
+						</button>
+
+
+						<button
+							type='button'
+							className='btn-main-cta rounded-4 text-uppercase text-main-light px-4 py-2'
+							disabled={!exactVariant}
+							onClick={onAddToCart}>
+							Add to Cart
+						</button>
+
+						{showViewCartCta ? (
+							<button
+								type='button'
+								className='btn-secondary-cta rounded-4 text-uppercase text-main px-4 py-2'
+								onClick={onViewCart}>
+								View Cart
+							</button>
+						) : null}
+					</div>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function ProductDetailModal({
+	show = false,
+	variant,
+	builderImage = "",
+	displayName = "",
+	displayDescription = "",
+	unitPrice = 0,
+	currency = "USD",
+	qtyAvailable = 0,
+	quantity = 1,
+	totalPrice = 0,
+	exactVariant = null,
+	subcategoryId = "",
+	onClose,
+	onAddToCart,
+	onQuantityChange,
+}) {
+	const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+
+	useEffect(() => {
+		if (!show) return undefined;
+
+		const handleKeyDown = (event) => {
+			if (event.key === "Escape") onClose?.();
+		};
+
+		setDescriptionExpanded(false);
+		document.body.classList.add("builder-detail-modal-active");
+		document.addEventListener("keydown", handleKeyDown);
+
+		requestAnimationFrame(() => {
+			document.querySelector(".builder-detail-modal")?.scrollTo?.(0, 0);
+			document.querySelector(".builder-detail-modal-body")?.scrollTo?.(0, 0);
+			document.querySelector(".builder-detail-description-scroll")?.scrollTo?.(0, 0);
+		});
+
+		return () => {
+			document.body.classList.remove("builder-detail-modal-active");
+			document.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [show, onClose, variant]);
+
+	if (!show || !variant) return null;
+
+	const image = variant?.image || builderImage || "";
+	const title = variant?.name || variant?.title || displayName || "Product details";
+	const partNumber = variant?.partNumber || variant?.sku || "—";
+	const rows = getVariantAttributeRows(variant, subcategoryId);
+	const fullDescription =
+		variant?.description ||
+		displayDescription ||
+		variant?.shortDescription ||
+		"Review the selected product details before adding it to your cart.";
+	const descriptionText = String(fullDescription || "").trim();
+	const hasLongDescription = descriptionText.length > 240;
+	const descriptionClassName = `builder-detail-description-scroll ${
+		descriptionExpanded ? "is-expanded" : ""
+	}`;
+
+	return createPortal(
+		<>
+			<div
+				className='builder-detail-modal-backdrop'
+				onClick={onClose}
+			/>
+			<div
+				className='builder-detail-modal'
+				tabIndex='-1'
+				role='dialog'
+				aria-modal='true'
+				aria-labelledby='builderProductDetailModalTitle'
+				onMouseDown={(event) => {
+					if (event.target === event.currentTarget) onClose?.();
+				}}>
+				<div className='builder-detail-modal-dialog modal-dialog modal-xl'>
+					<div className='modal-content builder-detail-modal-content theme-section-container bg-main-light rounded-4 overflow-hidden'>
+						<div className='modal-header builder-detail-modal-header border-0'>
+							<div className='pe-3'>
+								<div className='small text-muted text-uppercase mb-1'>Product Details</div>
+								<h5 id='builderProductDetailModalTitle' className='modal-title text-main text-uppercase mb-1'>
+									{title}
+								</h5>
+								<div className='builder-detail-modal-part small text-muted'>Part #: {partNumber}</div>
+							</div>
+							<button type='button' className='btn-close' aria-label='Close' onClick={onClose} />
+						</div>
+
+						<div className='modal-body builder-detail-modal-body py-0'>
+							<div className='row g-4 align-items-stretch builder-detail-modal-summary-row'>
+								<div className='col-12 col-lg-4'>
+									<div className='builder-detail-modal-media rounded-4 border h-100 d-flex align-items-center justify-content-center'>
+										{image ? (
+											<img src={image} alt={title} className='builder-detail-modal-image' />
+										) : (
+											<div className='builder-detail-modal-empty text-muted text-center'>No image available</div>
+										)}
+									</div>
+								</div>
+
+								<div className='col-12 col-lg-8'>
+									<div className='builder-detail-modal-info d-flex flex-column gap-4'>
+										<div className='row g-3'>
+											<div className='col-6 col-md-4'>
+												<div className='builder-detail-stat rounded-4 border p-3 h-100'>
+													<div className='small text-muted text-uppercase'>Price</div>
+													<div className='fw-semibold text-main'>{formatCurrency(unitPrice, currency)}</div>
+													<div className='small text-muted'>each</div>
+												</div>
+											</div>
+											<div className='col-6 col-md-4'>
+												<div className='builder-detail-stat rounded-4 border p-3 h-100'>
+													<div className='small text-muted text-uppercase'>Available</div>
+													<div className='fw-semibold text-main'>{qtyAvailable}</div>
+													<div className='small text-muted'>{getStockLabel(variant)}</div>
+												</div>
+											</div>
+											<div className='col-12 col-md-4'>
+												<div className='builder-detail-stat rounded-4 border p-3 h-100'>
+													<div className='small text-muted text-uppercase'>Total</div>
+													<div className='fw-semibold text-main'>{formatCurrency(totalPrice, currency)}</div>
+													<div className='small text-muted'>{quantity} selected</div>
+												</div>
+											</div>
+										</div>
+
+										<div className='builder-detail-description-card rounded-4 border p-3 p-md-4'>
+											<div className='d-flex justify-content-between align-items-center gap-3 mb-2'>
+												<div className='small text-muted text-uppercase'>Product Description</div>
+												{hasLongDescription ? (
+													<button
+														type='button'
+														className='btn btn-link btn-sm p-0 text-main builder-detail-description-toggle'
+														onClick={() => setDescriptionExpanded((prev) => !prev)}>
+														{descriptionExpanded ? "See less" : "See more"}
+													</button>
+												) : null}
+											</div>
+											<div className={descriptionClassName}>
+												<p className='text-main mb-0 builder-detail-modal-copy'>{descriptionText}</p>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								{rows.length ? (
+									<div className='col-12'>
+										<div className='builder-detail-spec-section rounded-4 border p-3 p-md-4'>
+											<div className='d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3'>
+												<div>
+													<div className='small text-muted text-uppercase'>Product Specs</div>
+												</div>
+											</div>
+											<div className='builder-detail-spec-grid builder-detail-spec-grid-full'>
+												{rows.map((row) => (
+													<div key={row.key} className='builder-detail-spec rounded-4 border p-3'>
+														<div className='small text-muted text-uppercase'>{row.label}</div>
+														<div className='fw-semibold text-main'>{row.value}</div>
+													</div>
+												))}
+											</div>
+										</div>
+									</div>
+								) : null}
+							</div>
+						</div>
+
+						<div className='modal-footer builder-detail-modal-footer border-0'>
+							<button type='button' className='btn btn-outline-secondary rounded-pill px-4' onClick={onClose}>
+								Back to Builder
+							</button>
+
+							<div className='builder-detail-modal-purchase text-end'>
+								<div className='d-flex align-items-center justify-content-end gap-2 mb-3'>
+									<label className='form-label text-uppercase small fw-bold mb-0 text-main'>Qty</label>
+									<button
+										type='button'
+										className='btn btn-outline-secondary btn-sm builder-detail-qty-btn'
+										onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) - 1))}>
+										−
+									</button>
+									<input
+										type='number'
+										min='1'
+										className='form-control form-control-sm text-center builder-detail-qty-input'
+										value={getDisplayQuantityValue(quantity)}
+										onChange={(e) => {
+											const raw = e.target.value;
+											if (raw === "" || /^\d+$/.test(raw)) onQuantityChange?.(raw);
+										}}
+										onBlur={() => onQuantityChange?.(Math.max(1, Number(quantity || 1)))}
+									/>
+									<button
+										type='button'
+										className='btn btn-outline-secondary btn-sm builder-detail-qty-btn'
+										onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) + 1))}>
+										+
+									</button>
+								</div>
+
+								<button
+									type='button'
+									className='btn-main-cta rounded-4 text-uppercase text-main-light px-4 py-2 w-100'
+									disabled={!exactVariant}
+									onClick={onAddToCart}>
+									Add to Cart
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</>,
+		document.body,
+	);
+}
+
 function getSectionOpenState(attributeEntries = [], selected = {}) {
 	const state = {};
-	let unlocked = true;
+	let firstOpenKey = "";
 
 	for (const [key] of attributeEntries) {
-		state[key] = unlocked;
-		if (!selected[key]) unlocked = false;
+		state[key] = false;
+		if (!firstOpenKey && !selected[key]) {
+			firstOpenKey = key;
+		}
+	}
+
+	if (firstOpenKey) {
+		state[firstOpenKey] = true;
 	}
 
 	return state;
+}
+
+function getNextAttributeKey(attributeEntries = [], currentKey = "") {
+	const keys = attributeEntries.map(([key]) => key);
+	const currentIndex = keys.indexOf(currentKey);
+	return currentIndex >= 0 ? keys[currentIndex + 1] || "" : "";
+}
+
+function scrollElementToContainerTop(element, offset = 138) {
+	if (!element || typeof window === "undefined") return;
+
+	const top = element.getBoundingClientRect().top + window.scrollY - offset;
+	window.scrollTo({
+		top: Math.max(0, top),
+		behavior: "smooth",
+	});
 }
 
 export default function ProductDetailFacetPanel() {
@@ -440,11 +1003,15 @@ export default function ProductDetailFacetPanel() {
 	const [activeSectionKey, setActiveSectionKey] = useState("");
 	const [detailOffset, setDetailOffset] = useState(0);
 	const [isResettingBuilder, setIsResettingBuilder] = useState(false);
+	const [selectedVariantKey, setSelectedVariantKey] = useState("");
+	const [visibleResultCount, setVisibleResultCount] = useState(9);
+	const [showProductDetailModal, setShowProductDetailModal] = useState(false);
 
 	const sectionRefs = useRef({});
 	const highlightTimeoutRef = useRef(null);
 	const detailCardRef = useRef(null);
 	const builderCardRef = useRef(null);
+	const detailColumnRef = useRef(null);
 
 	useEffect(() => {
 		let alive = true;
@@ -463,6 +1030,9 @@ export default function ProductDetailFacetPanel() {
 				setSelected(INITIAL_SELECTED_STATE);
 				setActiveSectionKey("");
 				setDetailOffset(0);
+				setSelectedVariantKey("");
+				setShowProductDetailModal(false);
+				setVisibleResultCount(9);
 			} catch (error) {
 				console.error("Failed to load builder data:", error);
 				if (alive) setBuilderData(null);
@@ -541,8 +1111,7 @@ const attributeEntries = useMemo(() => {
 	}, [attributeEntries, variants, selected]);
 
 	useEffect(() => {
-		const progressive = getSectionOpenState(filteredAttributeEntries, selected);
-		setExpandedSections((prev) => ({ ...progressive, ...prev }));
+		setExpandedSections(getSectionOpenState(filteredAttributeEntries, selected));
 	}, [filteredAttributeEntries, selected]);
 
 	const validVariants = useMemo(() => {
@@ -550,12 +1119,37 @@ const attributeEntries = useMemo(() => {
 		return getCompatibleVariants(variants, selected);
 	}, [variants, selected]);
 
+	const selectedResultVariant = useMemo(() => {
+		if (!selectedVariantKey) return null;
+		return (
+			validVariants.find(
+				(variant) => getVariantKey(variant) === selectedVariantKey,
+			) || null
+		);
+	}, [selectedVariantKey, validVariants]);
+
 	const exactVariant = useMemo(() => {
+		if (selectedResultVariant) return selectedResultVariant;
 		if (!hasAnyRealSelection(selected)) return null;
 		return validVariants.length === 1 ? validVariants[0] : null;
-	}, [selected, validVariants]);
+	}, [selected, selectedResultVariant, validVariants]);
 
 	const previewVariant = exactVariant || validVariants[0] || null;
+
+	useEffect(() => {
+		setVisibleResultCount(9);
+	}, [selected, variants.length]);
+
+	useEffect(() => {
+		if (!selectedVariantKey) return;
+		const stillMatches = validVariants.some(
+			(variant) => getVariantKey(variant) === selectedVariantKey,
+		);
+		if (!stillMatches) {
+			setSelectedVariantKey("");
+			setShowProductDetailModal(false);
+		}
+	}, [selectedVariantKey, validVariants]);
 
 	const displayName =
 		previewVariant?.name || getGenericDisplayName(builderData, subcategoryId);
@@ -577,7 +1171,7 @@ const attributeEntries = useMemo(() => {
 			}
 
 			const builder = builderCardRef.current;
-			const detail = detailCardRef.current;
+			const detail = detailColumnRef.current;
 
 			if (!builder || !detail) {
 				setDetailOffset(0);
@@ -588,7 +1182,7 @@ const attributeEntries = useMemo(() => {
 			const builderTop = builder.getBoundingClientRect().top + scrollY;
 			const builderHeight = builder.offsetHeight;
 			const detailHeight = detail.offsetHeight;
-			const topGap = 16;
+			const topGap = 18;
 
 			const maxOffset = Math.max(0, builderHeight - detailHeight);
 			const rawOffset = scrollY + topGap - builderTop;
@@ -623,49 +1217,48 @@ const attributeEntries = useMemo(() => {
 	};
 
 	const scrollToNextSection = (attr) => {
-		const keys = filteredAttributeEntries.map(([key]) => key);
-		const currentIndex = keys.indexOf(attr);
-		const nextKey = keys[currentIndex + 1];
+		const nextKey = getNextAttributeKey(filteredAttributeEntries, attr);
 		if (!nextKey) return;
-
-		setExpandedSections((prev) => ({
-			...prev,
-			[nextKey]: true,
-		}));
 
 		flashSection(nextKey);
 
 		requestAnimationFrame(() => {
 			const el = sectionRefs.current[nextKey];
-			if (el) {
-				el.scrollIntoView({
-					behavior: "smooth",
-					block: "center",
-				});
-			}
+			if (el) scrollElementToContainerTop(el);
 		});
 	};
 
 	const handleSelect = (attr, value) => {
+		setSelectedVariantKey("");
+		setShowProductDetailModal(false);
 		setSelected((prev) => {
 			let next;
+			let nextValue;
 
 			if (attr === "measurementSystem") {
+				nextValue = prev.measurementSystem === value ? "" : value;
 				next = {
 					...INITIAL_SELECTED_STATE,
 					quantity: prev.quantity || 1,
-					measurementSystem: prev.measurementSystem === value ? "" : value,
+					measurementSystem: nextValue,
 				};
 			} else {
-				const nextValue = prev[attr] === value ? "" : value;
+				nextValue = prev[attr] === value ? "" : value;
 				next = {
 					...prev,
 					[attr]: nextValue,
 				};
 			}
 
-			if (next[attr]) {
-				setTimeout(() => scrollToNextSection(attr), 50);
+			const nextSectionKey = getNextAttributeKey(filteredAttributeEntries, attr);
+			setExpandedSections((prevExpanded) => ({
+				...prevExpanded,
+				[attr]: !nextValue,
+				...(nextValue && nextSectionKey ? { [nextSectionKey]: true } : {}),
+			}));
+
+			if (nextValue) {
+				setTimeout(() => scrollToNextSection(attr), 340);
 			}
 
 			return next;
@@ -727,6 +1320,9 @@ const handleAddToCart = () => {
 		setExpandedSections({});
 		setActiveSectionKey("");
 		setDetailOffset(0);
+		setSelectedVariantKey("");
+		setShowProductDetailModal(false);
+		setVisibleResultCount(9);
 	}, 420);
 
 	window.setTimeout(() => {
@@ -734,13 +1330,21 @@ const handleAddToCart = () => {
 
 		const firstKey = filteredAttributeEntries?.[0]?.[0];
 		if (firstKey && sectionRefs.current[firstKey]) {
-			sectionRefs.current[firstKey].scrollIntoView({
-				behavior: "smooth",
-				block: "center",
-			});
+			scrollElementToContainerTop(sectionRefs.current[firstKey]);
 		}
 	}, 760);
 };
+
+	const handleOpenProductDetailModal = () => {
+		if (!previewVariant) return;
+
+		setShowProductDetailModal(true);
+
+		window.setTimeout(() => {
+			document.querySelector(".builder-detail-modal")?.scrollTo?.(0, 0);
+			document.querySelector(".builder-detail-modal-body")?.scrollTo?.(0, 0);
+		}, 0);
+	};
 
 	if (loading) {
 		return <h2 className='text-center mt-5'>Loading product…</h2>;
@@ -773,12 +1377,13 @@ const handleAddToCart = () => {
 								<button
 									type='button'
 									className='btn btn-outline-secondary btn-sm'
-									onClick={() =>
-										setSelected((prev) => ({
-											...INITIAL_SELECTED_STATE,
-											quantity: prev.quantity || 1,
-										}))
-									}>
+									onClick={() => {
+									setSelectedVariantKey("");
+									setSelected((prev) => ({
+										...INITIAL_SELECTED_STATE,
+										quantity: prev.quantity || 1,
+									}));
+								}}>
 									Clear
 								</button>
 							</div>
@@ -792,7 +1397,7 @@ const handleAddToCart = () => {
 							</div>
 
 							<div className='mb-4'>
-								<div className='small text-muted mb-2'>Matching Variants</div>
+								<div className='small text-muted mb-2'>Matching Products</div>
 								<div className='fw-semibold text-main fs-5'>
 									{validVariants.length}
 								</div>
@@ -809,7 +1414,7 @@ const handleAddToCart = () => {
 											ref={(el) => {
 												sectionRefs.current[key] = el;
 											}}
-											className={`section-box border rounded-4 overflow-hidden bg-light transition ${
+											className={`section-box builder-accordion-section border rounded-4 overflow-hidden bg-light transition ${
 												isActiveGlow
 													? "shadow border-success"
 													: "border-secondary-subtle"
@@ -823,7 +1428,7 @@ const handleAddToCart = () => {
 											}}>
 											<button
 												type='button'
-												className='w-100 d-flex justify-content-between align-items-center border-0 bg-light px-3 py-3 text-start'
+												className='builder-accordion-header w-100 d-flex justify-content-between align-items-center border-0 bg-light px-3 py-3 text-start'
 												onClick={() =>
 													setExpandedSections((prev) => ({
 														...prev,
@@ -839,12 +1444,15 @@ const handleAddToCart = () => {
 													</div>
 												</div>
 
-												<span className='fs-3 text-muted'>
-													{isOpen ? "−" : "+"}
+												<span
+													className={`builder-plus-toggle ${isOpen ? "is-open" : ""}`}
+													aria-hidden='true'>
+													<span className='builder-plus-line builder-plus-line-horizontal' />
+													<span className='builder-plus-line builder-plus-line-vertical' />
 												</span>
 											</button>
 
-											{isOpen ? (
+											<div className={`builder-accordion-body ${isOpen ? "is-open" : ""}`}>
 												<div className='p-3'>
 													<div className='row g-2'>
 														{values.map((value) => {
@@ -868,7 +1476,7 @@ const handleAddToCart = () => {
 														})}
 													</div>
 												</div>
-											) : null}
+											</div>
 										</div>
 									);
 								})}
@@ -878,212 +1486,75 @@ const handleAddToCart = () => {
 
 					<div className='col-12 col-xl-8 position-relative'>
 						<div
-							ref={detailCardRef}
-							style={{
-								transform: `translateY(${detailOffset}px)`,
-								transition: "transform 180ms ease-out",
-								willChange: "transform",
-							}}>
-							<div className='rounded-4 p-3 p-md-4 theme-section-container bg-main-light'>
-								<div className='text-center text-main fs-2 fs-md-1 py-2 text-uppercase mb-3'>
-									{displayName}
-								</div>
+							ref={detailColumnRef}
+							className='builder-results-follow-shell'
+							style={{ transform: `translateY(${detailOffset}px)` }}>
+						<ProductResultsGrid
+							variants={validVariants}
+							builderImage={builderData?.image || ""}
+							subcategoryId={builderData?.subcategoryId || subcategoryId}
+							selectedVariantKey={selectedVariantKey}
+							visibleCount={visibleResultCount}
+							onSelectVariant={(variant) => {
+								setSelectedVariantKey(getVariantKey(variant));
+								requestAnimationFrame(() => {
+									if (detailCardRef.current) {
+										scrollElementToContainerTop(detailCardRef.current);
+									}
+								});
+							}}
+							onShowMore={() =>
+								setVisibleResultCount((prev) => prev + 9)
+							}
+						/>
 
-								<div className='row g-4 align-items-start m-0'>
-									<div className='col-12 col-lg-4'>
-										<div className='product-image-card rounded-4 overflow-hidden'>
-											{displayImage ? (
-												<img
-													src={displayImage}
-													alt={displayName}
-													className='product-image'
-												/>
-											) : (
-												<div className='p-4 text-center text-muted'>
-													No image available
-												</div>
-											)}
-										</div>
-									</div>
+						<div ref={detailCardRef}>
+							<ProductPreviewPanel
+								variant={previewVariant}
+								builderImage={builderData?.image || ""}
+								displayName={displayName}
+								unitPrice={unitPrice}
+								currency={currency}
+								qtyAvailable={qtyAvailable}
+								quantity={selected.quantity}
+								totalPrice={totalPrice}
+								exactVariant={exactVariant}
+								showViewCartCta={showViewCartCta}
+								onQuantityChange={(value) =>
+									setSelected((prev) => ({
+										...prev,
+										quantity: value,
+									}))
+								}
+								onAddToCart={handleAddToCart}
+								onViewCart={() => navigate("/cart")}
+								onOpenDetails={handleOpenProductDetailModal}
+							/>
+						</div>
 
-									<div className='col-12 col-lg-8'>
-										<div className='d-flex flex-column gap-4'>
-											<div className='product-description rounded-4 overflow-hidden'>
-												<div className='text-main text-uppercase fs-4'>
-													Description
-												</div>
-												<hr className='mt-0 bg-main text-main' />
-												<div className='description-copy fs-5 text-main'>
-													{displayDescription}
-												</div>
-											</div>
+						<ProductDetailModal
+							show={showProductDetailModal}
+							variant={previewVariant}
+							builderImage={builderData?.image || ""}
+							displayName={displayName}
+							displayDescription={displayDescription}
+							unitPrice={unitPrice}
+							currency={currency}
+							qtyAvailable={qtyAvailable}
+							quantity={quantity}
+							totalPrice={totalPrice}
+							exactVariant={exactVariant}
+							subcategoryId={builderData?.subcategoryId || subcategoryId}
+							onClose={() => setShowProductDetailModal(false)}
+							onAddToCart={handleAddToCart}
+							onQuantityChange={(value) =>
+								setSelected((prev) => ({
+									...prev,
+									quantity: value,
+								}))
+							}
+						/>
 
-											<div className='product-description rounded-4 overflow-hidden'>
-												<div className='text-main text-uppercase fs-4'>
-													Product Details
-												</div>
-												<hr className='mt-0 bg-main text-main' />
-												<div className='description-copy fs-5 text-main row d-flex justify-content-between'>
-													<div className='col-12 col-md-6 py-2'>
-														<strong className='fw-semibold text-uppercase fs-5'>
-															Our Price:
-														</strong>{" "}
-														{previewVariant
-															? `${formatCurrency(unitPrice, currency)} each`
-															: "Select options"}
-													</div>
-
-													<div className='col-12 col-md-6 py-2'>
-														<strong className='fw-semibold text-uppercase fs-5'>
-															Status:
-														</strong>{" "}
-														{previewVariant
-															? previewVariant.inStock
-																? "Available"
-																: "Available on request"
-															: "Select options"}
-													</div>
-
-													<div className='col-12 col-md-6 py-2'>
-														<strong className='fw-semibold text-uppercase fs-5'>
-															Available Qty:
-														</strong>{" "}
-														{previewVariant ? qtyAvailable : "Select options"}
-													</div>
-
-													<div className='col-12 col-md-6 py-2'>
-														<strong className='fw-semibold text-uppercase fs-5'>
-															Part Number:
-														</strong>{" "}
-														{exactVariant?.partNumber ||
-															previewVariant?.partNumber ||
-															"Select options"}
-													</div>
-
-													<div className='col-12 py-2'>
-														<strong className='fw-semibold text-uppercase fs-5'>
-															Resolved Match:
-														</strong>{" "}
-														{exactVariant
-															? "Exact variant found"
-															: "Still narrowing"}
-													</div>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-
-								<hr className='bg-main' />
-
-								<div className='row bottom-price-row align-items-center'>
-									<div className='col-12 col-md-10'>
-										<div className='d-flex align-items-center justify-content-center justify-content-md-end gap-3 py-1 w-100'>
-											<div className='d-flex align-items-center gap-2 flex-shrink-0'>
-												<label className='form-label text-uppercase small fw-bold mb-0 text-main'>
-													Quantity
-												</label>
-
-												<button
-													type='button'
-													className='btn btn-outline-secondary'
-													onClick={() =>
-														setSelected((prev) => ({
-															...prev,
-															quantity: Math.max(
-																1,
-																Number(prev.quantity || 1) - 1,
-															),
-														}))
-													}>
-													−
-												</button>
-
-												<input
-													type='number'
-													min='1'
-													className='form-control text-center flex-shrink-0'
-													style={{ width: "90px" }}
-													value={
-														selected.quantity === ""
-															? ""
-															: String(selected.quantity)
-													}
-													onFocus={() => {
-														setSelected((prev) => ({
-															...prev,
-															quantity:
-																String(prev.quantity || "1") === "1"
-																	? ""
-																	: prev.quantity,
-														}));
-													}}
-													onChange={(e) => {
-														const raw = e.target.value;
-
-														if (raw === "" || /^\d+$/.test(raw)) {
-															setSelected((prev) => ({
-																...prev,
-																quantity: raw,
-															}));
-														}
-													}}
-													onBlur={() => {
-														setSelected((prev) => ({
-															...prev,
-															quantity: Math.max(1, Number(prev.quantity || 1)),
-														}));
-													}}
-												/>
-
-												<button
-													type='button'
-													className='btn btn-outline-secondary'
-													onClick={() =>
-														setSelected((prev) => ({
-															...prev,
-															quantity: Math.max(
-																1,
-																Number(prev.quantity || 1) + 1,
-															),
-														}))
-													}>
-													+
-												</button>
-											</div>
-
-											<button
-												className='btn-main-cta justify-content-center text-center rounded-4 text-uppercase fw-regular fs-4 py-4 text-main-light flex-shrink-0'
-												onClick={handleAddToCart}
-												disabled={!exactVariant}>
-												Add to Cart
-											</button>
-
-											{showViewCartCta && (
-												<button
-													className='btn-main-cta btn-secondary-cta justify-content-center text-center rounded-4 text-uppercase fw-regular fs-4 py-4 text-main px-3'
-													onClick={() => navigate("/cart")}
-													type='button'>
-													View Cart
-												</button>
-											)}
-										</div>
-									</div>
-
-									<div className='col-12 col-md-2'>
-										<div className='price-container text-center text-md-end fs-1 text-main font-secondary pt-3 pt-md-0'>
-											{previewVariant
-												? formatCurrency(totalPrice, currency)
-												: "--"}
-											<div className='fs-6 text-muted'>
-												{previewVariant
-													? `${formatCurrency(unitPrice, currency)} each`
-													: "Select options for pricing"}
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
 						</div>
 					</div>
 				</div>
