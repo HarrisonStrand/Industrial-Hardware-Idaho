@@ -532,7 +532,7 @@ function SelectedPathSummary({ selected = {}, attributeEntries = [] }) {
 			{chips.map((chip) => (
 				<span
 					key={chip.key}
-					className='badge rounded-pill text-bg-light border px-3 py-2'>
+					className='badge rounded-3 text-bg-light border px-3 py-2'>
 					{chip.label}: {chip.value}
 				</span>
 			))}
@@ -558,7 +558,7 @@ function ProductResultCard({
 			type='button'
 			onClick={onClick}
 			className={`h-100 w-100 text-start border rounded-4 bg-light p-0 overflow-hidden product-result-card ${
-				selected ? "border-success shadow" : "border-secondary-subtle"
+				selected ? "border-main shadow border-2" : "border-secondary-subtle"
 			}`}
 			style={{ transition: "box-shadow 180ms ease, border-color 180ms ease" }}>
 			<div className='row g-0 h-100'>
@@ -583,17 +583,17 @@ function ProductResultCard({
 					<div className='p-3 d-flex flex-column gap-2 h-100'>
 						<div className='fw-semibold text-main lh-sm'>{title}</div>
 
-						{rows.length ? (
+						{/* {rows.length ? (
 							<div className='d-flex flex-wrap gap-1'>
 								{rows.map((row) => (
 									<span
 										key={`${getVariantKey(variant)}-${row.key}`}
-										className='badge rounded-pill text-bg-light border fw-normal'>
+										className='badge rounded-4 text-bg-light border fw-normal'>
 										{row.label}: {row.value}
 									</span>
 								))}
 							</div>
-						) : null}
+						) : null} */}
 
 						<div className='mt-auto pt-2 d-flex justify-content-between align-items-end gap-2'>
 							<div>
@@ -667,7 +667,7 @@ function ProductResultsGrid({
 						<div className='text-center mt-3'>
 							<button
 								type='button'
-								className='btn btn-outline-secondary rounded-pill px-4'
+								className='btn btn-outline-secondary rounded-3 px-4'
 								onClick={onShowMore}>
 								Show {Math.min(9, remainingCount)} more
 							</button>
@@ -723,13 +723,13 @@ function ProductPreviewPanel({
 					<div className='small text-muted text-uppercase mb-1'>Selected Preview</div>
 					<div className='text-main text-uppercase fs-4 lh-sm'>{title}</div>
 					<div className='d-flex flex-wrap gap-2 mt-2'>
-						<span className='badge rounded-pill text-bg-light border fw-normal'>
+						<span className='badge rounded-3 text-bg-light border fw-normal'>
 							Part #: {variant?.partNumber || variant?.sku || "Select a product"}
 						</span>
-						<span className='badge rounded-pill text-bg-light border fw-normal'>
+						<span className='badge rounded-3 text-bg-light border fw-normal'>
 							{variant ? getStockLabel(variant) : "Select options"}
 						</span>
-						<span className='badge rounded-pill text-bg-light border fw-normal'>
+						<span className='badge rounded-3 text-bg-light border fw-normal'>
 							Qty: {variant ? qtyAvailable : "—"}
 						</span>
 					</div>
@@ -774,7 +774,7 @@ function ProductPreviewPanel({
 					<div className='d-flex flex-wrap justify-content-md-end gap-2'>
 						<button
 							type='button'
-							className='btn btn-outline-secondary rounded-pill px-3'
+							className='btn btn-outline-secondary rounded-3 px-3'
 							disabled={!variant}
 							onClick={onOpenDetails}>
 							View Full Details
@@ -783,7 +783,7 @@ function ProductPreviewPanel({
 
 						<button
 							type='button'
-							className='btn-main-cta rounded-pill text-uppercase text-main-light px-4 py-2'
+							className='btn-main-cta rounded-3 text-uppercase text-main-light px-4 py-2'
 							onClick={onAddToCart}>
 							Add to Cart
 						</button>
@@ -791,7 +791,7 @@ function ProductPreviewPanel({
 						{showViewCartCta ? (
 							<button
 								type='button'
-								className='btn btn-outline-secondary rounded-pill px-3'
+								className='btn btn-outline-secondary rounded-3 px-3'
 								onClick={onViewCart}>
 								View Cart
 							</button>
@@ -821,6 +821,20 @@ function ProductDetailModal({
 	onQuantityChange,
 }) {
 	const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+	const [modalScrollState, setModalScrollState] = useState({ atTop: true, atBottom: true });
+
+	const updateModalScrollState = (element) => {
+		if (!element) return;
+
+		const threshold = 4;
+		const maxScrollTop = Math.max(0, element.scrollHeight - element.clientHeight);
+		const scrollTop = element.scrollTop || 0;
+
+		setModalScrollState({
+			atTop: scrollTop <= threshold,
+			atBottom: scrollTop >= maxScrollTop - threshold,
+		});
+	};
 
 	useEffect(() => {
 		if (!show) return undefined;
@@ -835,8 +849,10 @@ function ProductDetailModal({
 
 		requestAnimationFrame(() => {
 			document.querySelector(".builder-detail-modal")?.scrollTo?.(0, 0);
-			document.querySelector(".builder-detail-modal-body")?.scrollTo?.(0, 0);
+			const modalBody = document.querySelector(".builder-detail-modal-body");
+			modalBody?.scrollTo?.(0, 0);
 			document.querySelector(".builder-detail-description-scroll")?.scrollTo?.(0, 0);
+			updateModalScrollState(modalBody);
 		});
 
 		return () => {
@@ -861,6 +877,9 @@ function ProductDetailModal({
 	const descriptionClassName = `builder-detail-description-scroll ${
 		descriptionExpanded ? "is-expanded" : ""
 	}`;
+	const modalContentClassName = `modal-content builder-detail-modal-content theme-detail-container rounded-4 overflow-hidden ${
+		modalScrollState.atTop ? "is-scrolled-top" : "has-scroll-above"
+	} ${modalScrollState.atBottom ? "is-scrolled-bottom" : "has-scroll-below"}`;
 
 	return createPortal(
 		<>
@@ -877,9 +896,9 @@ function ProductDetailModal({
 				onMouseDown={(event) => {
 					if (event.target === event.currentTarget) onClose?.();
 				}}>
-				<div className='builder-detail-modal-dialog modal-dialog modal-xl'>
-					<div className='modal-content builder-detail-modal-content theme-section-container bg-main-light rounded-4 overflow-hidden'>
-						<div className='modal-header builder-detail-modal-header border-0'>
+				<div className='builder-detail-modal-dialog modal-dialog modal-xl bg-secondary-light rounded-4'>
+					<div className={modalContentClassName}>
+						<div className='modal-header builder-detail-modal-header border-0 align-items-start'>
 							<div className='pe-3'>
 								<div className='small text-muted text-uppercase mb-1'>Product Details</div>
 								<h5 id='builderProductDetailModalTitle' className='modal-title text-main text-uppercase mb-1'>
@@ -890,10 +909,10 @@ function ProductDetailModal({
 							<button type='button' className='btn-close' aria-label='Close' onClick={onClose} />
 						</div>
 
-						<div className='modal-body builder-detail-modal-body py-0'>
+						<div className='modal-body builder-detail-modal-body py-0' onScroll={(event) => updateModalScrollState(event.currentTarget)}>
 							<div className='builder-detail-modal-top row g-4 align-items-stretch'>
 								<div className='col-12 col-lg-4'>
-									<div className='builder-detail-modal-media rounded-4 border h-100 d-flex align-items-center justify-content-center'>
+									<div className='builder-detail-modal-media theme-section-container bg-main-light rounded-4 h-100 d-flex align-items-center justify-content-center'>
 										{image ? (
 											<img src={image} alt={title} className='builder-detail-modal-image' />
 										) : (
@@ -906,21 +925,21 @@ function ProductDetailModal({
 									<div className='builder-detail-modal-info d-flex flex-column gap-4 h-100'>
 										<div className='row g-3'>
 											<div className='col-6 col-md-4'>
-												<div className='builder-detail-stat rounded-4 border p-3 h-100'>
+												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
 													<div className='small text-muted text-uppercase'>Price</div>
 													<div className='fw-semibold text-main'>{formatCurrency(unitPrice, currency)}</div>
 													<div className='small text-muted'>each</div>
 												</div>
 											</div>
 											<div className='col-6 col-md-4'>
-												<div className='builder-detail-stat rounded-4 border p-3 h-100'>
+												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
 													<div className='small text-muted text-uppercase'>Available</div>
 													<div className='fw-semibold text-main'>{qtyAvailable}</div>
 													<div className='small text-muted'>{getStockLabel(variant)}</div>
 												</div>
 											</div>
 											<div className='col-12 col-md-4'>
-												<div className='builder-detail-stat rounded-4 border p-3 h-100'>
+												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
 													<div className='small text-muted text-uppercase'>Total</div>
 													<div className='fw-semibold text-main'>{formatCurrency(totalPrice, currency)}</div>
 													<div className='small text-muted'>{quantity} selected</div>
@@ -928,7 +947,7 @@ function ProductDetailModal({
 											</div>
 										</div>
 
-										<div className='builder-detail-description-card rounded-4 border p-3 p-md-4 flex-grow-1 d-flex flex-column'>
+										<div className='builder-detail-description-card theme-section-container bg-main-light rounded-4 p-3 p-md-4 flex-grow-1 d-flex flex-column'>
 											<div className='d-flex justify-content-between align-items-center gap-3 mb-2'>
 												<div className='small text-muted text-uppercase'>Product Description</div>
 												{hasLongDescription ? (
@@ -949,11 +968,11 @@ function ProductDetailModal({
 							</div>
 
 							{rows.length ? (
-								<div className='builder-detail-spec-section rounded-4 border p-3 p-md-4 mt-4'>
+								<div className='builder-detail-spec-section theme-detail-container bg-main-light rounded-4 border p-3 p-md-4 my-0 my-md-4 mt-4'>
 									<div className='small text-muted text-uppercase mb-3'>Specs</div>
 									<div className='builder-detail-spec-grid'>
 										{rows.map((row) => (
-											<div key={row.key} className='builder-detail-spec rounded-4 border p-3'>
+											<div key={row.key} className='builder-detail-spec theme-section-container bg-light rounded-4 border p-3'>
 												<div className='small text-muted text-uppercase'>{row.label}</div>
 												<div className='fw-semibold text-main'>{row.value}</div>
 											</div>
@@ -963,7 +982,7 @@ function ProductDetailModal({
 							) : null}
 						</div>
 						<div className='modal-footer builder-detail-modal-footer border-0'>
-							<button type='button' className='btn btn-outline-secondary rounded-pill px-4' onClick={onClose}>
+							<button type='button' className='back-to-builder-btn rounded-3 px-4' onClick={onClose}>
 								Back to Builder
 							</button>
 
@@ -972,14 +991,14 @@ function ProductDetailModal({
 									<label className='form-label text-uppercase small fw-bold mb-0 text-main'>Qty</label>
 									<button
 										type='button'
-										className='btn btn-outline-secondary btn-sm builder-detail-qty-btn'
+										className='btn btn-md bg-main-light builder-detail-qty-btn'
 										onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) - 1))}>
 										−
 									</button>
 									<input
 										type='number'
 										min='1'
-										className='form-control form-control-sm text-center builder-detail-qty-input'
+										className='form-control form-control-md text-center builder-detail-qty-input bg-secondary-light'
 										value={getDisplayQuantityValue(quantity)}
 										onChange={(e) => {
 											const raw = e.target.value;
@@ -989,7 +1008,7 @@ function ProductDetailModal({
 									/>
 									<button
 										type='button'
-										className='btn btn-outline-secondary btn-sm builder-detail-qty-btn'
+										className='btn bg-main-light btn-md builder-detail-qty-btn'
 										onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) + 1))}>
 										+
 									</button>
@@ -997,7 +1016,7 @@ function ProductDetailModal({
 
 								<button
 									type='button'
-									className='btn-main-cta rounded-pill text-uppercase text-main-light px-4 py-2 w-100'
+									className='btn-main-cta rounded-3 text-uppercase text-main-light px-4 py-2 w-100'
 									onClick={onAddToCart}>
 									Add to Cart
 								</button>

@@ -1,5 +1,5 @@
 body {
-	background-color: #d9d9d9;
+	background-color: var(--secondary-light);
 	margin: 0;
 	max-width: 100%;
 	overflow-x: hidden !important;
