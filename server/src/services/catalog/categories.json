@@ -1,0 +1,524 @@
+{
+  "categories": [
+    {
+      "id": "bolts",
+      "name": "Bolts",
+      "image": "/images/categories/BOLTS.png",
+      "subcategories": [
+        {
+          "id": "hex-cap-screws",
+          "name": "Hex Head Bolt",
+          "image": "/images/subcategories/hex-cap-screws.png"
+        },
+        {
+          "id": "socket-head-cap-screws",
+          "name": "Socket Head Cap Screws",
+          "image": "/images/subcategories/socket-head-cap-screws.png"
+        },
+        {
+          "id": "button-head-cap-screws",
+          "name": "Button Head Cap Screws",
+          "image": "/images/subcategories/button-head-cap-screws.png"
+        },
+        {
+          "id": "flat-head-cap-screws",
+          "name": "Flat Head Cap Screws",
+          "image": "/images/subcategories/flat-head-cap-screws.png"
+        },
+        {
+          "id": "hanger-bolts",
+          "name": "Hanger Bolts",
+          "image": "/images/subcategories/hanger-bolts.png"
+        },
+        {
+          "id": "elevator-bolts",
+          "name": "Elevator Bolts",
+          "image": "/images/subcategories/elevator-bolts.png"
+        },
+        {
+          "id": "flange-bolts",
+          "name": "Flange Bolts",
+          "image": "/images/subcategories/flange-bolts.png"
+        },
+        {
+          "id": "carriage-bolts",
+          "name": "Carriage Bolts",
+          "image": "/images/subcategories/carriage-bolts.png"
+        }
+      ]
+    },
+    {
+      "id": "screws",
+      "name": "Screws",
+      "image": "/images/categories/SCREWS.png",
+      "subcategories": [
+        {
+          "id": "machine-screws",
+          "name": "Machine Screws",
+          "image": "/images/subcategories/machine-screws.png"
+        },
+        {
+          "id": "sheet-metal-screws",
+          "name": "Sheet Metal Screws",
+          "image": "/images/subcategories/sheet-metal-screws.png"
+        },
+        {
+          "id": "wood-screws",
+          "name": "Wood Screws",
+          "image": "/images/subcategories/wood-screws.png"
+        },
+        {
+          "id": "drywall-screws",
+          "name": "Drywall Screws",
+          "image": "/images/subcategories/drywall-screws.png"
+        },
+        {
+          "id": "outdoor-screws",
+          "name": "Outdoor Screws",
+          "image": "/images/subcategories/outdoor-screws.png"
+        },
+        {
+          "id": "lag-screws",
+          "name": "Lag Screws",
+          "image": "/images/subcategories/lag-screws.png"
+        },
+        {
+          "id": "self-drilling-screws",
+          "name": "Self Drilling Screws",
+          "image": "/images/subcategories/self-drilling-screws.png"
+        },
+        {
+          "id": "thread-cutting-screws",
+          "name": "Thread Cutting Screws",
+          "image": "/images/subcategories/thread-cutting-screws.png"
+        }
+      ]
+    },
+    {
+      "id": "nuts",
+      "name": "Nuts",
+      "image": "/images/categories/NUTS.png",
+      "subcategories": [
+        {
+          "id": "hex-nuts",
+          "name": "Hex Nuts",
+          "image": "/images/subcategories/hex-nuts.png"
+        },
+        {
+          "id": "lock-nuts",
+          "name": "Lock Nuts",
+          "image": "/images/subcategories/lock-nuts.png"
+        },
+        {
+          "id": "flange-nuts",
+          "name": "Flange Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "castle-nuts",
+          "name": "Castle Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "square-nuts",
+          "name": "Square Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "torque-nuts",
+          "name": "Torque Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "jam-nuts",
+          "name": "Jam Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "wing-nuts",
+          "name": "Wing Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "acorn-nuts",
+          "name": "Acorn Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "eye-nuts",
+          "name": "Eye Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "coupling-nuts",
+          "name": "Coupling Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "rivet-nuts",
+          "name": "Rivet Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "t-nuts",
+          "name": "T-Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "washers",
+      "name": "Washers",
+      "image": "/images/categories/WASHERS.png",
+      "subcategories": [
+        {
+          "id": "flat-washers",
+          "name": "Flat Washers",
+          "image": "/images/subcategories/flat-washers.png"
+        },
+        {
+          "id": "lock-washers",
+          "name": "Lock Washers",
+          "image": "/images/subcategories/lock-washers.png"
+        },
+        {
+          "id": "internal-lock-washers",
+          "name": "Internal Lock Washers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "external-lock-washers",
+          "name": "External Lock Washers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "wave-washers",
+          "name": "Wave Washers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "retaining-push-nuts",
+          "name": "Retaining Push Nuts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "square-washers",
+          "name": "Square Washers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "finishing-washers",
+          "name": "Finishing Washers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "fender-washers",
+          "name": "Fender Washers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "rivets",
+      "name": "Rivets",
+      "image": "/images/categories/RIVETS.png",
+      "subcategories": [],
+      "directPath": "/products/rivets/rivets"
+    },
+    {
+      "id": "abrasives",
+      "name": "Abrasives",
+      "image": "/images/categories/ABRASIVES.png",
+      "subcategories": [
+        {
+          "id": "cut-off-wheels",
+          "name": "Cut-Off Wheels",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "flap-wheels",
+          "name": "Flap Wheels",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "fibre-discs",
+          "name": "Fibre Discs",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "twist-lock-discs",
+          "name": "Twist Lock Discs",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "velcro-discs",
+          "name": "Velcro Discs",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "grinding-wheels",
+          "name": "Grinding Wheels",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "shop-rolls",
+          "name": "Shop Rolls",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "hand-pads",
+          "name": "Hand Pads",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "threaded-rod",
+      "name": "Threaded Rod",
+      "image": "/images/categories/THREADED-ROD.png",
+      "subcategories": [],
+      "directPath": "/products/threaded-rod/threaded-rod"
+    },
+    {
+      "id": "wire-hardware",
+      "name": "Wire Hardware",
+      "image": "/images/categories/WIRE-HARDWARE.png",
+      "subcategories": [
+        {
+          "id": "u-bolts",
+          "name": "U-Bolts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "snap-links",
+          "name": "Snap Links",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "quick-links",
+          "name": "Quick Links",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "eye-bolts",
+          "name": "Eye Bolts",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "eye-lags",
+          "name": "Eye Lags",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "j-hooks",
+          "name": "J-Hooks",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "turnbuckles",
+          "name": "Turnbuckles",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "bits-drivers",
+      "name": "Bits & Drivers",
+      "image": "/images/categories/DRILL-BITS.png",
+      "subcategories": [
+        {
+          "id": "drill-bits",
+          "name": "Drill Bits",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "driver-bits",
+          "name": "Driver Bits",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "nut-setters",
+          "name": "Nut Setters",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "hanger-bolt-drivers",
+          "name": "Hanger Bolt Drivers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "hole-saws-arbors",
+          "name": "Hole Saws & Arbors",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "taps-dies",
+          "name": "Taps & Dies",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "au-ve-co",
+      "name": "Au-ve-co",
+      "image": "/vendor-logos/Auveco.png",
+      "subcategories": [
+        {
+          "id": "fasteners",
+          "name": "Fasteners",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "electrical",
+          "name": "Electrical",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "body-hardware",
+          "name": "Body Hardware",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "chemicals-paints-sealants",
+      "name": "Chemicals, Paints & Sealants",
+      "image": "/images/categories/PAINT-SILICONE.png",
+      "subcategories": [
+        {
+          "id": "spray-paint",
+          "name": "Spray Paint",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "sealants-caulk",
+          "name": "Sealants & Caulk",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "adhesives-threadlockers",
+          "name": "Adhesives & Threadlockers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "cleaners-degreasers",
+          "name": "Cleaners & Degreasers",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "lubricants-penetrants",
+          "name": "Lubricants & Penetrants",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "anti-seize",
+          "name": "Anti-Seize",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "cutting-tapping-fluid",
+          "name": "Cutting & Tapping Fluid",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "hose-tubing",
+      "name": "Hose & Tubing",
+      "image": "/images/categories/HOSE-TUBING.png",
+      "subcategories": [
+        {
+          "id": "hose-clamps",
+          "name": "Hose Clamps",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "wire-loom",
+          "name": "Wire Loom",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "shrink-wrap",
+          "name": "Shrink Wrap",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "electrical",
+      "name": "Electrical",
+      "image": "/images/categories/ELECTRICAL.png",
+      "subcategories": [
+        {
+          "id": "ring-terminals",
+          "name": "Ring Terminals",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "spade-terminals",
+          "name": "Spade Terminals",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "butt-connectors",
+          "name": "Butt Connectors",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "quick-connectors",
+          "name": "Quick Connectors",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "wire-loom-clamps",
+          "name": "Wire Loom Clamps",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "bullet-connectors",
+          "name": "Bullet Connectors",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "primary-wire",
+          "name": "Primary Wire",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "strut",
+      "name": "Strut",
+      "image": "/images/categories/STRUTS.png",
+      "subcategories": [
+        {
+          "id": "deep-strut",
+          "name": "Deep Strut",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "shallow-strut",
+          "name": "Shallow Strut",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        },
+        {
+          "id": "connectors-accessories",
+          "name": "Connectors & Accessories",
+          "image": "/images/subcategories/subcategory-placeholder.png"
+        }
+      ]
+    },
+    {
+      "id": "tools",
+      "name": "Tools",
+      "image": "/images/categories/TOOLS.png",
+      "subcategories": []
+    },
+    {
+      "id": "utilities",
+      "name": "Utilities",
+      "image": "/images/categories/UTILITIES.png",
+      "subcategories": []
+    }
+  ]
+}

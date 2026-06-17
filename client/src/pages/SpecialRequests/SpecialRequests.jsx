@@ -1,5 +1,5 @@
-import SpecialRequestForm from "../../components/SpecialRequestForm/SpecialRequestForm";
-import CategorySection from "../../components/CategorySection/CategorySection";
+import SpecialRequestForm from "../../components/SpecialRequestForm/SpecialRequestForm.jsx";
+import CategorySection from "../../components/CategorySection/CategorySection.jsx";
 import FAQAccordion from "../../components/FAQ/FAQAccordion.jsx";
 import "../../components/FAQ/FAQAccordion.css";
 import "./SpecialRequests.css";

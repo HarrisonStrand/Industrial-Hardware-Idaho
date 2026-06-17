@@ -61,8 +61,6 @@ const INITIAL_SELECTED_STATE = {
 	quantity: 1,
 };
 
-const DEFAULT_VISIBLE_RESULT_COUNT = 12;
-
 function getDisplayQuantityValue(value) {
 	return value === "" || value === null || value === undefined
 		? ""
@@ -490,89 +488,63 @@ function getVariantAttributeRows(variant = {}, subcategoryId = "") {
 	return buildVariantSpecRows(variant, subcategoryId, 6);
 }
 
-function normalizeDisplayText(value = "") {
-	return formatModalSpecValue(String(value || "").replace(/\s+/g, " ").trim());
-}
-
-function formatDimensionValue(value = "", measurementSystem = "") {
-	const stringValue = String(value || "").trim();
-	if (!stringValue) return "";
-
-	if (/metric/i.test(measurementSystem || "")) {
-		if (/^m\d/i.test(stringValue) || /mm$/i.test(stringValue)) return stringValue;
-		return `${stringValue}mm`;
-	}
-
-	if (/"$|in\.?$/i.test(stringValue)) return stringValue;
-	return `${stringValue}"`;
-}
-
-function getProductTypeLabel(variant = {}, subcategoryId = "", fallback = "Product") {
+function getVariantGridSizeLine(variant = {}) {
 	const attrs = variant?.attributes || {};
-	const sub = String(subcategoryId || "").toLowerCase();
-	const rawType =
-		attrs.fastenerType ||
-		attrs.productType ||
-		attrs.familyTitleBase ||
-		attrs.familyTitle ||
-		fallback;
+	const diameter = formatModalSpecValue(attrs.diameter || "");
+	const threadPitch = String(attrs.threadPitch || "").replace(/\s+/g, " ").trim();
+	const length = formatModalSpecValue(attrs.length || "");
+	const size = formatModalSpecValue(attrs.size || "");
 
-	if (sub.includes("hex cap screws")) return "Hex Cap Screw";
-
-	return normalizeDisplayText(String(rawType || fallback).replace(/-/g, " "));
+	if (diameter && threadPitch && length) return `${diameter}-${threadPitch} x ${length}`;
+	if (diameter && length) return `${diameter} x ${length}`;
+	if (size && length && !/x/i.test(size)) return `${size} x ${length}`;
+	return size || diameter || "";
 }
 
-function getVariantSizeLine(variant = {}) {
+function getVariantGridMaterialFinishLine(variant = {}) {
 	const attrs = variant?.attributes || {};
-	const measurementSystem = attrs.measurementSystem || "";
-
-	const size = String(attrs.size || "").trim();
-	const diameterRaw = String(attrs.diameter || "").trim();
-	const widthRaw = String(attrs.width || "").trim();
-	const threadPitch = String(attrs.threadPitch || "").trim();
-	const lengthRaw = String(attrs.length || "").trim();
-
-	const diameter = diameterRaw;
-	const width = formatDimensionValue(widthRaw, measurementSystem);
-	const length = formatDimensionValue(lengthRaw, measurementSystem);
-
-	if (size && !diameterRaw && !widthRaw && !lengthRaw) {
-		return /^m\d/i.test(size) ? size : formatDimensionValue(size, measurementSystem);
-	}
-
-	const primarySize = diameter || width;
-	const diameterThread = [primarySize, threadPitch].filter(Boolean).join("-");
-
-	if (diameterThread && length) return `${diameterThread} x ${length}`;
-	if (diameterThread) return diameterThread;
-	if (width && length) return `${width} x ${length}`;
-	if (width) return width;
-	if (length) return length;
-
-	return size;
-}
-
-function getVariantMaterialFinishLine(variant = {}) {
-	const attrs = variant?.attributes || {};
-	const material = normalizeDisplayText(attrs.material || attrs.displayMaterial || "");
-	const finish = normalizeDisplayText(attrs.finish || attrs.displayFinish || "");
+	const material = formatModalSpecValue(attrs.material || "");
+	const finish = formatModalSpecValue(attrs.finish || "");
+	const materialFinish = String(attrs.materialFinish || "").replace(/\s+/g, " ").trim();
 
 	if (material && finish) return `${material} - ${finish}`;
 
-	const materialFinish = normalizeDisplayText(attrs.materialFinish || "").replace(
-		/\s*\/\s*/g,
-		" - ",
-	);
+	if (materialFinish) {
+		const parts = materialFinish
+			.split("/")
+			.map((part) => formatModalSpecValue(part))
+			.filter(Boolean);
+		const uniqueParts = [...new Set(parts.map((part) => part.trim()))];
 
-	return materialFinish;
+		if (uniqueParts.length > 1) return uniqueParts.join(" - ");
+		return uniqueParts[0] || formatModalSpecValue(materialFinish);
+	}
+
+	return material || finish || "";
 }
 
-function getVariantCardTitleLines(variant = {}) {
-	return [
-		getVariantSizeLine(variant),
-		normalizeDisplayText(variant?.attributes?.grade || ""),
-		getVariantMaterialFinishLine(variant),
-	].filter(Boolean);
+function getVariantGridTypeLabel(variant = {}, subcategoryId = "") {
+	const attrs = variant?.attributes || {};
+	const explicitType =
+		attrs.fastenerTypeCanonical || attrs.fastenerType || attrs.familyType || "";
+
+	if (explicitType) return formatModalSpecValue(explicitType);
+
+	const sub = String(subcategoryId || "").toLowerCase();
+	if (sub.includes("hex cap screw")) return "Hex Cap Screw";
+
+	return formatModalSpecValue(String(subcategoryId || "").replace(/-/g, " "));
+}
+
+function getVariantGridTitleLines(variant = {}) {
+	const size = getVariantGridSizeLine(variant);
+	const grade = formatModalSpecValue(variant?.attributes?.grade || "");
+	const materialFinish = getVariantGridMaterialFinishLine(variant);
+	const fallbackTitle = variant?.name || variant?.title || "Product option";
+
+	return [size, grade, materialFinish].filter(Boolean).length
+		? [size, grade, materialFinish].filter(Boolean)
+		: [fallbackTitle];
 }
 
 function getStockLabel(variant = {}) {
@@ -636,8 +608,8 @@ function ProductResultCard({
 }) {
 	const image = variant?.image || builderImage || "";
 	const title = variant?.name || variant?.title || "Product option";
-	const productTypeLabel = getProductTypeLabel(variant, subcategoryId, title);
-	const titleLines = getVariantCardTitleLines(variant);
+	const typeLabel = getVariantGridTypeLabel(variant, subcategoryId);
+	const titleLines = getVariantGridTitleLines(variant);
 	const price = Number(variant?.price || 0);
 	const currency = variant?.currency || "USD";
 
@@ -646,17 +618,19 @@ function ProductResultCard({
 			type='button'
 			onClick={onClick}
 			className={`h-100 w-100 text-start border rounded-4 bg-light p-0 overflow-hidden product-result-card ${
-				selected ? "border-main shadow border-2" : "border-secondary-subtle"
+				selected ? "selected" : "border-secondary-subtle"
 			}`}
-			style={{ transition: "box-shadow 180ms ease, border-color 180ms ease" }}>
+			style={{ transition: "box-shadow 250ms ease, border-color 250ms ease, transform 250ms ease" }}>
 			<div className='row g-0 h-100'>
 				<div className='col-4 col-sm-12'>
 					<div
-						className='bg-white d-flex align-items-center justify-content-center border-bottom builder-result-card-image-shell'
+						className='bg-white d-flex align-items-center justify-content-center border-bottom position-relative product-result-image-shell'
 						style={{ minHeight: "120px" }}>
-						<span className='builder-result-card-type-label'>
-							{productTypeLabel}
-						</span>
+						{typeLabel ? (
+							<div className='product-result-type-label text-main text-uppercase bg-light'>
+								{typeLabel}
+							</div>
+						) : null}
 						{image ? (
 							<img
 								src={image}
@@ -672,24 +646,14 @@ function ProductResultCard({
 
 				<div className='col-8 col-sm-12'>
 					<div className='p-3 d-flex flex-column gap-2 h-100'>
-						<div className='builder-result-card-title-lines'>
-							{titleLines.length ? (
-								titleLines.map((line, index) => (
-									<div
-										key={`${getVariantKey(variant)}-title-${index}`}
-										className={
-											index === 0
-												? "builder-result-card-title-line builder-result-card-title-line-main text-main"
-												: "builder-result-card-title-line text-main"
-										}>
-										{line}
-									</div>
-								))
-							) : (
-								<div className='builder-result-card-title-line builder-result-card-title-line-main text-main'>
-									{title}
+						<div className='product-result-title-stack text-main lh-sm'>
+							{titleLines.map((line, index) => (
+								<div
+									key={`${getVariantKey(variant)}-title-${index}`}
+									className={index === 0 ? "fw-semibold" : "small"}>
+									{line}
 								</div>
-							)}
+							))}
 						</div>
 
 						<div className='mt-auto pt-2 d-flex justify-content-between align-items-end gap-2'>
@@ -719,7 +683,7 @@ function ProductResultsGrid({
 	builderImage = "",
 	subcategoryId = "",
 	selectedVariantKey = "",
-	visibleCount = DEFAULT_VISIBLE_RESULT_COUNT,
+	visibleCount = 9,
 	onSelectVariant,
 	onShowMore,
 }) {
@@ -766,7 +730,7 @@ function ProductResultsGrid({
 								type='button'
 								className='btn btn-outline-secondary rounded-3 px-4'
 								onClick={onShowMore}>
-								Show {Math.min(DEFAULT_VISIBLE_RESULT_COUNT, remainingCount)} more
+								Show {Math.min(9, remainingCount)} more
 							</button>
 							<div className='small text-muted mt-2'>
 								{remainingCount} more matching products hidden
@@ -805,13 +769,8 @@ function ProductPreviewPanel({
 }) {
 	const image = variant?.image || builderImage || "";
 	const title = variant?.name || variant?.title || displayName || "Product preview";
-	const productTypeLabel = getProductTypeLabel(variant, subcategoryId, displayName || title);
-	const titleLines = getVariantCardTitleLines(variant);
 	return (
 		<div className='rounded-4 p-3 p-md-4 theme-section-container bg-main-light builder-product-preview mb-4'>
-			<div className='builder-product-preview-label small text-muted text-uppercase'>
-				Selected Preview
-			</div>
 			<div className='d-flex flex-column flex-md-row align-items-md-center gap-3'>
 				<div className='builder-product-preview-image bg-white rounded-4 border d-flex align-items-center justify-content-center'>
 					{image ? (
@@ -822,18 +781,8 @@ function ProductPreviewPanel({
 				</div>
 
 				<div className='flex-grow-1 min-w-0'>
-					<div className='text-main text-uppercase fs-4 lh-sm'>{productTypeLabel}</div>
-					{titleLines.length ? (
-						<div className='builder-product-preview-title-lines mt-1'>
-							{titleLines.map((line, index) => (
-								<div
-									key={`${getVariantKey(variant)}-preview-title-${index}`}
-									className='builder-product-preview-title-line text-main'>
-									{line}
-								</div>
-							))}
-						</div>
-					) : null}
+					<div className='small text-muted text-uppercase mb-1'>Selected Preview</div>
+					<div className='text-main text-uppercase fs-4 lh-sm'>{title}</div>
 					<div className='d-flex flex-wrap gap-2 mt-2'>
 						<span className='badge rounded-3 text-bg-light border fw-normal'>
 							Part #: {variant?.partNumber || variant?.sku || "Select a product"}
@@ -1188,14 +1137,17 @@ export default function ProductDetailFacetPanel() {
 	const [selected, setSelected] = useState(INITIAL_SELECTED_STATE);
 	const [expandedSections, setExpandedSections] = useState({});
 	const [activeSectionKey, setActiveSectionKey] = useState("");
+	const [detailOffset, setDetailOffset] = useState(0);
 	const [isResettingBuilder, setIsResettingBuilder] = useState(false);
 	const [selectedVariantKey, setSelectedVariantKey] = useState("");
-	const [visibleResultCount, setVisibleResultCount] = useState(DEFAULT_VISIBLE_RESULT_COUNT);
+	const [visibleResultCount, setVisibleResultCount] = useState(9);
 	const [showProductDetailModal, setShowProductDetailModal] = useState(false);
 
 	const sectionRefs = useRef({});
-	const selectedPreviewRef = useRef(null);
 	const highlightTimeoutRef = useRef(null);
+	const detailCardRef = useRef(null);
+	const builderCardRef = useRef(null);
+	const detailColumnRef = useRef(null);
 
 	useEffect(() => {
 		let alive = true;
@@ -1213,9 +1165,10 @@ export default function ProductDetailFacetPanel() {
 				setBuilderData(data);
 				setSelected(INITIAL_SELECTED_STATE);
 				setActiveSectionKey("");
+				setDetailOffset(0);
 				setSelectedVariantKey("");
 				setShowProductDetailModal(false);
-				setVisibleResultCount(DEFAULT_VISIBLE_RESULT_COUNT);
+				setVisibleResultCount(9);
 			} catch (error) {
 				console.error("Failed to load builder data:", error);
 				if (alive) setBuilderData(null);
@@ -1320,7 +1273,7 @@ const attributeEntries = useMemo(() => {
 	const previewVariant = exactVariant || validVariants[0] || null;
 
 	useEffect(() => {
-		setVisibleResultCount(DEFAULT_VISIBLE_RESULT_COUNT);
+		setVisibleResultCount(9);
 	}, [selected, variants.length]);
 
 	useEffect(() => {
@@ -1346,6 +1299,50 @@ const attributeEntries = useMemo(() => {
 	const totalPrice = unitPrice * quantity;
 	const qtyAvailable = Number(previewVariant?.qtyAvailable || 0);
 
+	useEffect(() => {
+		const updateDetailOffset = () => {
+			if (window.innerWidth < 1200) {
+				setDetailOffset(0);
+				return;
+			}
+
+			const builder = builderCardRef.current;
+			const detail = detailColumnRef.current;
+
+			if (!builder || !detail) {
+				setDetailOffset(0);
+				return;
+			}
+
+			const scrollY = window.scrollY;
+			const builderTop = builder.getBoundingClientRect().top + scrollY;
+			const builderHeight = builder.offsetHeight;
+			const detailHeight = detail.offsetHeight;
+			const topGap = 18;
+
+			const maxOffset = Math.max(0, builderHeight - detailHeight);
+			const rawOffset = scrollY + topGap - builderTop;
+			const nextOffset = Math.max(0, Math.min(maxOffset, rawOffset));
+
+			setDetailOffset(nextOffset);
+		};
+
+		updateDetailOffset();
+
+		window.addEventListener("scroll", updateDetailOffset, { passive: true });
+		window.addEventListener("resize", updateDetailOffset);
+
+		return () => {
+			window.removeEventListener("scroll", updateDetailOffset);
+			window.removeEventListener("resize", updateDetailOffset);
+		};
+	}, [
+		builderData,
+		filteredAttributeEntries.length,
+		selected,
+		displayDescription,
+		displayName,
+	]);
 
 	const flashSection = (key) => {
 		setActiveSectionKey(key);
@@ -1365,19 +1362,6 @@ const attributeEntries = useMemo(() => {
 			const el = sectionRefs.current[nextKey];
 			if (el) scrollElementToContainerTop(el);
 		});
-	};
-
-	const scrollToSelectedPreview = () => {
-		window.setTimeout(() => {
-			const el = selectedPreviewRef.current;
-			if (!el) return;
-
-			el.scrollIntoView({
-				behavior: "smooth",
-				block: "center",
-				inline: "nearest",
-			});
-		}, 0);
 	};
 
 	const handleSelect = (attr, value) => {
@@ -1474,7 +1458,7 @@ const handleAddToCart = () => {
 		setDetailOffset(0);
 		setSelectedVariantKey("");
 		setShowProductDetailModal(false);
-		setVisibleResultCount(DEFAULT_VISIBLE_RESULT_COUNT);
+		setVisibleResultCount(9);
 	}, 420);
 
 	window.setTimeout(() => {
@@ -1514,7 +1498,8 @@ const handleAddToCart = () => {
 						<div
 							className={`theme-section-container rounded-4 p-3 p-md-4 bg-main-light builder-reset-shell ${
 								isResettingBuilder ? "builder-resetting" : ""
-							}`}>
+							}`}
+							ref={builderCardRef}>
 							<div className='d-flex justify-content-between align-items-start gap-3 mb-3'>
 								<div>
 									<div className='text-main text-uppercase fs-5'>
@@ -1544,7 +1529,7 @@ const handleAddToCart = () => {
 								<SelectedPathSummary
 									selected={selected}
 									attributeEntries={filteredAttributeEntries}
-									/>
+								/>
 							</div>
 
 							<div className='mb-4'>
@@ -1635,29 +1620,34 @@ const handleAddToCart = () => {
 						</div>
 					</div>
 
-					<div className='col-12 col-xl-8 builder-results-column'>
-						<div className='builder-results-sticky-zone'>
-							<div className='builder-results-follow-shell mb-4'>
-								<ProductResultsGrid
-								variants={validVariants}
-								builderImage={builderData?.image || ""}
-								subcategoryId={builderData?.subcategoryId || subcategoryId}
-								selectedVariantKey={selectedVariantKey}
-								visibleCount={visibleResultCount}
-								onSelectVariant={(variant) => {
-									setSelectedVariantKey(getVariantKey(variant));
-									scrollToSelectedPreview();
-								}}
-								onShowMore={() => setVisibleResultCount((prev) => prev + DEFAULT_VISIBLE_RESULT_COUNT)}
-							/>
-							</div>
-						</div>
+					<div className='col-12 col-xl-8 position-relative'>
+						<div
+							ref={detailColumnRef}
+							className='builder-results-follow-shell'
+							style={{ transform: `translateY(${detailOffset}px)` }}>
+						<ProductResultsGrid
+							variants={validVariants}
+							builderImage={builderData?.image || ""}
+							subcategoryId={builderData?.subcategoryId || subcategoryId}
+							selectedVariantKey={selectedVariantKey}
+							visibleCount={visibleResultCount}
+							onSelectVariant={(variant) => {
+								setSelectedVariantKey(getVariantKey(variant));
+								requestAnimationFrame(() => {
+									if (detailCardRef.current) {
+										scrollElementToContainerTop(detailCardRef.current);
+									}
+								});
+							}}
+							onShowMore={() =>
+								setVisibleResultCount((prev) => prev + 9)
+							}
+						/>
 
-						<div ref={selectedPreviewRef} className='builder-selected-preview-anchor'>
+						<div ref={detailCardRef}>
 							<ProductPreviewPanel
 								variant={previewVariant}
 								builderImage={builderData?.image || ""}
-								subcategoryId={builderData?.subcategoryId || subcategoryId}
 								displayName={displayName}
 								unitPrice={unitPrice}
 								currency={currency}
@@ -1700,6 +1690,8 @@ const handleAddToCart = () => {
 								}))
 							}
 						/>
+
+						</div>
 					</div>
 				</div>
 			</div>

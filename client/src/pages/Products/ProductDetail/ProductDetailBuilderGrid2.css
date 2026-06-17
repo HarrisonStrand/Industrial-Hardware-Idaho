@@ -58,32 +58,9 @@
 	opacity: 0;
 }
 
-.builder-results-column {
-	display: flex;
-	flex-direction: column;
-	align-self: stretch;
-	min-height: 100%;
-}
-
-.builder-results-sticky-zone {
-	position: relative;
-	flex: 1 1 auto;
-	min-height: max-content;
-}
-
 .builder-results-follow-shell {
-	position: sticky;
-	top: clamp(0.75rem, 2vw, 1.25rem);
-	z-index: 1;
-	width: 100%;
-	transform: none !important;
-}
-
-.builder-selected-preview-anchor {
-	position: relative;
-	z-index: 2;
-	width: 100%;
-	flex: 0 0 auto;
+	transition: transform 160ms ease-out;
+	will-change: transform;
 }
 
 /* Product result grid cards */
@@ -105,47 +82,34 @@
 	box-sizing: border-box;
 }
 
-.builder-result-card-image-shell {
+.product-result-card.selected {
+	filter: brightness(0.95);
+	border: 2px solid rgb(from var(--main-color) r g b / 0.6) !important;
+
+}
+
+.product-result-image-shell {
 	position: relative;
 }
 
-.builder-result-card-type-label {
+.product-result-type-label {
 	position: absolute;
-	top: 0.45rem;
-	left: 0.45rem;
+	top: 0.5rem;
+	left: 0.5rem;
 	z-index: 1;
-	max-width: calc(100% - 0.9rem);
-	padding: 0.18rem 0.45rem;
-	border-radius: 999px;
-	background: rgb(from var(--main-light) r g b / 0.88);
-	box-shadow: 1px 2px 4px 0 rgb(0 0 0 / 18%);
-	color: var(--main-color);
 	font-size: 0.68rem;
-	font-weight: 700;
-	letter-spacing: 0.04em;
-	line-height: 1.15;
-	text-transform: uppercase;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	line-height: 1;
+	padding: 0.3rem 0.45rem;
+	border-radius: 999px;
+	border: 1px solid rgb(from var(--main-color) r g b / 0.2);
 }
 
-.builder-result-card-title-lines,
-.builder-product-preview-title-lines {
+.product-result-title-stack {
 	display: flex;
 	flex-direction: column;
-	gap: 0.08rem;
-}
-
-.builder-result-card-title-line {
-	font-size: 0.92rem;
-	font-weight: 500;
-	line-height: 1.2;
-}
-
-.builder-result-card-title-line-main {
-	font-size: 1rem;
-	font-weight: 700;
+	gap: 0.2rem;
 }
 
 /* Builder preview panel */
@@ -166,29 +130,6 @@
 .builder-product-preview-actions {
 	flex: 0 0 auto;
 	min-width: min(100%, 280px);
-}
-
-.builder-product-preview {
-	position: relative;
-}
-
-.builder-selected-preview-anchor .builder-product-preview {
-	margin-bottom: 0 !important;
-}
-
-.builder-product-preview-label {
-	position: absolute;
-	top: 0.65rem;
-	left: 1rem;
-	z-index: 1;
-	letter-spacing: 0.04em;
-	pointer-events: none;
-}
-
-.builder-product-preview-title-line {
-	font-size: 0.98rem;
-	font-weight: 500;
-	line-height: 1.25;
 }
 
 /* Product detail modal: fixed viewport overlay */
@@ -441,13 +382,7 @@ body.builder-detail-modal-active {
 
 /* Responsive builder/modal behavior */
 @media (max-width: 1199.98px) {
-	.builder-results-column {
-		display: block;
-		min-height: 0 !important;
-	}
-
 	.builder-results-follow-shell {
-		position: static;
 		transform: none !important;
 	}
 }
