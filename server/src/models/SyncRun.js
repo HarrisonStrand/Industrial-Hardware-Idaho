@@ -7,6 +7,7 @@ const SyncRunSchema = new mongoose.Schema(
       enum: [
         "fishbowl-products",
         "fishbowl-inventory",
+        "fishbowl-product-intake",
         "fishbowl-customers",
         "vendor-brighton-import",
         "product-enrichment-pass",

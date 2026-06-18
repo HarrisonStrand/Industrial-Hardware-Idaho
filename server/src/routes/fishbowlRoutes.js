@@ -10,6 +10,13 @@ import {
 import {
   getFishbowlInventorySyncSchedulerState,
 } from "../services/fishbowl/fishbowlInventorySyncScheduler.js";
+import {
+  getFishbowlProductIntakeRuntimeState,
+  runFishbowlProductIntakeScan,
+} from "../services/fishbowl/syncFishbowlProductIntake.js";
+import {
+  getFishbowlProductIntakeSchedulerState,
+} from "../services/fishbowl/fishbowlProductIntakeScheduler.js";
 
 const router = express.Router();
 
@@ -105,6 +112,59 @@ router.post("/inventory-sync/run", requireAuth, requireAdmin, async (req, res) =
     const status = err?.status || (err?.code === "FISHBOWL_INVENTORY_SYNC_RUNNING" ? 409 : 500);
     console.error(err);
     res.status(status).json({ message: err?.message || "Fishbowl inventory sync failed" });
+  }
+});
+
+router.get("/product-intake/status", requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const lastRun = await SyncRun.findOne({ jobType: "fishbowl-product-intake" })
+      .sort({ startedAt: -1 })
+      .lean();
+
+    res.json({
+      ok: true,
+      runtime: getFishbowlProductIntakeRuntimeState(),
+      schedule: getFishbowlProductIntakeSchedulerState(),
+      lastRun: mapSyncRun(lastRun),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err?.message || "Failed to load product intake status" });
+  }
+});
+
+router.post("/product-intake/scan", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const body = safeObject(req.body);
+    const mode = String(body.mode || "all").trim().toLowerCase();
+    const dryRun = body.dryRun === true;
+    const samples = body.samples !== false;
+    const limit = Math.max(0, Number(body.limit || 0) || 0);
+    const pageLimit = Math.max(0, Number(body.pageLimit || 0) || 0);
+    const activeOnly = body.activeOnly !== false;
+    const skipCleanupCandidates = body.skipCleanupCandidates !== false;
+
+    const result = await runFishbowlProductIntakeScan({
+      mode,
+      dryRun,
+      samples,
+      limit,
+      pageLimit,
+      activeOnly,
+      skipCleanupCandidates,
+      triggeredBy: req.user?.email || req.user?.id || "admin-button",
+      persistRun: true,
+    });
+
+    res.json({
+      ok: true,
+      message: dryRun ? "Fishbowl product intake dry run complete" : "Fishbowl product intake scan complete",
+      result,
+    });
+  } catch (err) {
+    const status = err?.status || (err?.code === "FISHBOWL_PRODUCT_INTAKE_RUNNING" ? 409 : 500);
+    console.error(err);
+    res.status(status).json({ message: err?.message || "Fishbowl product intake scan failed" });
   }
 });
 

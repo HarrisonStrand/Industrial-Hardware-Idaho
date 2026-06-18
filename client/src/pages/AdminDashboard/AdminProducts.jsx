@@ -5,6 +5,8 @@ import "./AdminProducts.css";
 
 const REVIEW_BUCKETS = [
 	{ key: "needs-review", label: "Needs Review" },
+	{ key: "fishbowl-new", label: "New From Fishbowl" },
+	{ key: "fishbowl-changed", label: "Changed In Fishbowl" },
 	{ key: "ready", label: "Ready / No Review Needed" },
 	{ key: "approved", label: "Approved" },
 	{ key: "published", label: "Published" },
@@ -53,6 +55,23 @@ function formatNumber(value = 0) {
 	const number = Number(value || 0);
 	if (!Number.isFinite(number)) return "0";
 	return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(number);
+}
+
+
+function formatIntakeStatusLabel(status = "") {
+	const value = String(status || "none").toLowerCase();
+	if (value === "new") return "New From Fishbowl";
+	if (value === "changed") return "Changed In Fishbowl";
+	if (value === "reviewed") return "Reviewed";
+	return "None";
+}
+
+function getIntakeStatusBadgeClass(status = "") {
+	const value = String(status || "none").toLowerCase();
+	if (value === "new") return "text-bg-primary";
+	if (value === "changed") return "text-bg-warning";
+	if (value === "reviewed") return "text-bg-success";
+	return "text-bg-secondary";
 }
 
 function formatDuration(value = 0) {
@@ -151,6 +170,10 @@ export default function AdminProducts() {
 	const [inventorySyncLoading, setInventorySyncLoading] = useState(false);
 	const [inventorySyncRunning, setInventorySyncRunning] = useState(false);
 	const [inventorySyncMessage, setInventorySyncMessage] = useState("");
+	const [productIntakeStatus, setProductIntakeStatus] = useState(null);
+	const [productIntakeLoading, setProductIntakeLoading] = useState(false);
+	const [productIntakeRunning, setProductIntakeRunning] = useState(false);
+	const [productIntakeMessage, setProductIntakeMessage] = useState("");
 	const [selectedId, setSelectedId] = useState("");
 	const [selectedItem, setSelectedItem] = useState(null);
 	const [loadingDetail, setLoadingDetail] = useState(false);
@@ -187,6 +210,16 @@ export default function AdminProducts() {
 			const data = await apiFetch("/api/fishbowl/inventory-sync/status");
 			setInventorySyncStatus(data);
 			setInventorySyncRunning(Boolean(data?.runtime?.running));
+		} catch (err) {
+			console.error(err);
+		}
+	}
+
+	async function loadProductIntakeStatus() {
+		try {
+			const data = await apiFetch("/api/fishbowl/product-intake/status");
+			setProductIntakeStatus(data);
+			setProductIntakeRunning(Boolean(data?.runtime?.running));
 		} catch (err) {
 			console.error(err);
 		}
@@ -282,6 +315,7 @@ export default function AdminProducts() {
 	useEffect(() => {
 		loadSummary();
 		loadInventorySyncStatus();
+		loadProductIntakeStatus();
 	}, []);
 
 	useEffect(() => {
@@ -575,12 +609,78 @@ export default function AdminProducts() {
 		}
 	}
 
+	async function handleRunProductIntakeScan(mode = "all") {
+		try {
+			setProductIntakeLoading(true);
+			setProductIntakeRunning(true);
+			setProductIntakeMessage(
+				mode === "new"
+					? "Scanning Fishbowl for new products…"
+					: mode === "changed"
+						? "Scanning Fishbowl for product changes…"
+						: "Scanning Fishbowl for new and changed products…",
+			);
+			setError("");
+
+			const data = await apiFetch("/api/fishbowl/product-intake/scan", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ mode, samples: true }),
+			});
+
+			const stats = data?.result?.stats || {};
+			setProductIntakeMessage(
+				`Scan complete. New: ${formatNumber(stats.newFound)} · Created: ${formatNumber(stats.created)} · Changed: ${formatNumber(stats.changedFound)} · Flagged: ${formatNumber(stats.changedFlagged)}`,
+			);
+			await loadProductIntakeStatus();
+			await loadSummary();
+			await loadList(bucket, filters);
+		} catch (err) {
+			console.error(err);
+			setProductIntakeMessage("");
+			setError(err.message || "Failed to run Fishbowl product intake scan");
+		} finally {
+			setProductIntakeLoading(false);
+			setProductIntakeRunning(false);
+		}
+	}
+
+	async function handleMarkFishbowlIntakeReviewed() {
+		if (!selectedId) return;
+
+		try {
+			setSaving(true);
+			setError("");
+
+			await apiFetch(`/api/products/admin/${selectedId}/fishbowl-intake-reviewed`, {
+				method: "POST",
+			});
+
+			await loadDetail(selectedId);
+			await loadList(bucket, filters);
+			await loadSummary();
+		} catch (err) {
+			console.error(err);
+			setError(err.message || "Failed to mark Fishbowl intake reviewed");
+		} finally {
+			setSaving(false);
+		}
+	}
+
 	const latestInventoryRun = inventorySyncStatus?.lastRun || null;
 	const latestInventoryMetadata = latestInventoryRun?.metadata || {};
 	const latestInventorySummary = latestInventoryMetadata?.inventorySummary || {};
 	const latestQuantitySummary = latestInventoryMetadata?.syncSummary || {};
 	const inventorySchedule = inventorySyncStatus?.schedule || {};
 	const inventoryRuntime = inventorySyncStatus?.runtime || {};
+	const latestProductIntakeRun = productIntakeStatus?.lastRun || null;
+	const latestProductIntakeMetadata = latestProductIntakeRun?.metadata || {};
+	const latestProductIntakeSummary = latestProductIntakeMetadata?.intakeSummary || {};
+	const productIntakeSchedule = productIntakeStatus?.schedule || {};
+	const productIntakeRuntime = productIntakeStatus?.runtime || {};
+	const selectedFishbowlIntake = selectedProduct?.fishbowlIntake || {};
+	const selectedFishbowlIntakeStatus = String(selectedFishbowlIntake?.status || "none").toLowerCase();
+	const selectedFishbowlIntakePending = selectedFishbowlIntakeStatus === "new" || selectedFishbowlIntakeStatus === "changed";
 
 	const totalPages = listMeta.totalPages || 0;
 	const currentPage = listMeta.page || 1;
@@ -690,6 +790,84 @@ export default function AdminProducts() {
 
 				<div className='theme-card-container card shadow-sm rounded-4 border-0'>
 					<div className='card-body'>
+						<div className='d-flex flex-column flex-xl-row justify-content-between gap-3'>
+							<div>
+								<div className='text-main text-uppercase fs-5'>
+									Fishbowl Product Intake
+								</div>
+								<div className='text-muted small'>
+									Scan Fishbowl for newly added parts and source-data changes without overwriting curated website enrichment.
+								</div>
+							</div>
+
+							<div className='d-flex flex-wrap align-items-center gap-2'>
+								<button
+									type='button'
+									className='btn btn-dark rounded-3 px-4'
+									onClick={() => handleRunProductIntakeScan("new")}
+									disabled={productIntakeLoading || productIntakeRunning}>
+									Scan New Products
+								</button>
+
+								<button
+									type='button'
+									className='btn btn-outline-dark rounded-3'
+									onClick={() => handleRunProductIntakeScan("changed")}
+									disabled={productIntakeLoading || productIntakeRunning}>
+									Scan Changes
+								</button>
+
+								<button
+									type='button'
+									className='btn btn-outline-secondary rounded-3'
+									onClick={() => handleRunProductIntakeScan("all")}
+									disabled={productIntakeLoading || productIntakeRunning}>
+									Scan Both
+								</button>
+
+								<button
+									type='button'
+									className='btn btn-outline-secondary rounded-3'
+									onClick={loadProductIntakeStatus}
+									disabled={productIntakeLoading}>
+									Refresh Status
+								</button>
+							</div>
+						</div>
+
+						<div className='row g-3 mt-1'>
+							<div className='col-6 col-lg-3'>
+								<SummaryCard label='Last Product Scan' value={formatDate(latestProductIntakeRun?.finishedAt || latestProductIntakeRun?.startedAt)} muted={!latestProductIntakeRun} />
+							</div>
+							<div className='col-6 col-lg-3'>
+								<SummaryCard label='New Found' value={formatNumber(latestProductIntakeSummary?.newFound)} />
+							</div>
+							<div className='col-6 col-lg-3'>
+								<SummaryCard label='Changed Found' value={formatNumber(latestProductIntakeSummary?.changedFound)} />
+							</div>
+							<div className='col-6 col-lg-3'>
+								<SummaryCard label='Fishbowl Rows Checked' value={formatNumber(latestProductIntakeSummary?.fishbowlRowsChecked)} />
+							</div>
+						</div>
+
+						<div className='d-flex flex-wrap gap-3 mt-3 small text-muted'>
+							<div>Status: {productIntakeRuntime?.running || productIntakeRunning ? "Running" : latestProductIntakeRun?.status || "Not run yet"}</div>
+							<div>Duration: {formatDuration(latestProductIntakeRun?.durationMs)}</div>
+							<div>Mode: {productIntakeSchedule?.mode || latestProductIntakeSummary?.mode || "all"}</div>
+							<div>Schedule: {productIntakeSchedule?.enabled ? `Every ${productIntakeSchedule.intervalMinutes} minutes` : "Disabled"}</div>
+							{productIntakeSchedule?.nextRunAt ? <div>Next: {formatDate(productIntakeSchedule.nextRunAt)}</div> : null}
+						</div>
+
+						{productIntakeMessage ? (
+							<div className='alert alert-success py-2 px-3 mt-3 mb-0'>
+								{productIntakeMessage}
+							</div>
+						) : null}
+					</div>
+				</div>
+
+				<div className='theme-card-container card shadow-sm rounded-4 border-0'>
+					<div className='card-body'>
 						<div className='row g-3'>
 							<div className='col-6 col-md-3'>
 								<SummaryCard
@@ -697,6 +875,18 @@ export default function AdminProducts() {
 									value={
 										loadingSummary ? "…" : (summary?.byStatus?.needsReview ?? 0)
 									}
+								/>
+							</div>
+							<div className='col-6 col-md-3'>
+								<SummaryCard
+									label='New From Fishbowl'
+									value={loadingSummary ? "…" : (summary?.byStatus?.fishbowlNew ?? 0)}
+								/>
+							</div>
+							<div className='col-6 col-md-3'>
+								<SummaryCard
+									label='Changed In Fishbowl'
+									value={loadingSummary ? "…" : (summary?.byStatus?.fishbowlChanged ?? 0)}
 								/>
 							</div>
 							<div className='col-6 col-md-3'>
@@ -900,6 +1090,7 @@ export default function AdminProducts() {
 									<button type='button' className='btn btn-sm btn-success' disabled={saving || selectedCount === 0} onClick={() => runBulkAction('publish')}>Bulk Publish</button>
 									<button type='button' className='btn btn-sm btn-outline-danger' disabled={saving || selectedCount === 0} onClick={() => runBulkAction('unpublish')}>Bulk Unpublish</button>
 									<button type='button' className='btn btn-sm btn-outline-secondary' disabled={saving || selectedCount === 0} onClick={() => runBulkAction('recompute')}>Bulk Recompute</button>
+									<button type='button' className='btn btn-sm btn-outline-dark' disabled={saving || selectedCount === 0} onClick={() => runBulkAction('intake-reviewed')}>Bulk Intake Reviewed</button>
 									<button type='button' className='btn btn-sm btn-danger' disabled={saving || selectedCount === 0} onClick={() => { setBulkDeleteMode(true); setShowDeleteModal(true); }}>Bulk Delete</button>
 									<button type='button' className='btn btn-sm btn-outline-secondary' disabled={selectedCount === 0} onClick={clearSelection}>Clear</button>
 								</div>
@@ -929,6 +1120,13 @@ export default function AdminProducts() {
 																<div className={`small ${isActive ? 'text-dark' : 'text-muted'}`}>{item?.category || '—'} / {item?.subcategory || '—'}</div>
 																<div className={`small ${isActive ? 'text-dark' : 'text-muted'}`}>Family: {item?.familyType || '—'}</div>
 																<div className={`small ${isActive ? 'text-dark' : 'text-muted'}`}>Status: {item?.reviewStatus || 'needs-review'} · Score: {Number(item?.qualityScore || 0).toFixed(0)}</div>
+																{item?.intakeStatus && item.intakeStatus !== 'none' ? (
+																	<div className='mt-2'>
+																		<span className={`badge rounded-pill ${getIntakeStatusBadgeClass(item.intakeStatus)}`}>
+																			{formatIntakeStatusLabel(item.intakeStatus)}
+																		</span>
+																	</div>
+																) : null}
 															</button>
 														</div>
 													</div>
@@ -1041,6 +1239,30 @@ export default function AdminProducts() {
 												</button>
 											</div>
 										</div>
+
+										{selectedFishbowlIntakePending ? (
+											<div className='alert alert-warning rounded-4 mb-4'>
+												<div className='d-flex flex-column flex-lg-row justify-content-between gap-3'>
+													<div>
+														<div className='fw-semibold'>{formatIntakeStatusLabel(selectedFishbowlIntakeStatus)}</div>
+														<div className='small'>Detected: {formatDate(selectedFishbowlIntake?.lastDetectedAt)}</div>
+														{safeArray(selectedFishbowlIntake?.changeSummary).length ? (
+															<ul className='small mb-0 mt-2 ps-3'>
+																{safeArray(selectedFishbowlIntake.changeSummary).slice(0, 5).map((change) => (
+																	<li key={change.key || change.label}>
+																		{change.label || change.key}: {String(change.previous ?? '—')} → {String(change.next ?? '—')}
+																	</li>
+																))}
+															</ul>
+														) : null}
+													</div>
+
+													<button type='button' className='btn btn-outline-dark align-self-start' disabled={saving} onClick={handleMarkFishbowlIntakeReviewed}>
+														Mark Intake Reviewed
+													</button>
+												</div>
+											</div>
+										) : null}
 
 										<div className='row g-3 mb-4'>
 											<div className='col-md-3'>

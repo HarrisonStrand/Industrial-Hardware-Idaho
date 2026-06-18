@@ -42,6 +42,36 @@ const FishbowlLinkSchema = new mongoose.Schema(
   { _id: false }
 );
 
+
+const FishbowlIntakeSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ["none", "new", "changed", "reviewed"],
+      default: "none",
+      index: true,
+    },
+    changeType: {
+      type: String,
+      enum: ["", "new-product", "fishbowl-source-changed"],
+      default: "",
+      index: true,
+    },
+    firstDetectedAt: { type: Date, default: null },
+    lastDetectedAt: { type: Date, default: null },
+    lastReviewedAt: { type: Date, default: null },
+    detectedBy: { type: String, default: "" },
+    reviewedBy: { type: mongoose.Schema.Types.Mixed, default: null },
+    sourceHash: { type: String, default: "" },
+    previousHash: { type: String, default: "" },
+    currentHash: { type: String, default: "" },
+    sourcePartNumber: { type: String, default: "", index: true },
+    pendingFishbowlSnapshot: { type: mongoose.Schema.Types.Mixed, default: null },
+    changeSummary: { type: mongoose.Schema.Types.Mixed, default: [] },
+  },
+  { _id: false }
+);
+
 const ReviewIssueSchema = new mongoose.Schema(
   {
     code: { type: String, default: "" },
@@ -128,6 +158,8 @@ const ProductSchema = new mongoose.Schema(
 
     review: { type: ReviewSchema, default: () => ({}) },
 
+    fishbowlIntake: { type: FishbowlIntakeSchema, default: () => ({}) },
+
     categoryHints: [{ type: String }],
     searchKeywords: [{ type: String }],
 
@@ -150,6 +182,7 @@ ProductSchema.index({ vendor: 1, isPublished: 1 });
 ProductSchema.index({ brand: 1, isPublished: 1 });
 ProductSchema.index({ catalogStatus: 1, isCurated: 1 });
 ProductSchema.index({ "fishbowl.partNum": 1 });
+ProductSchema.index({ "fishbowlIntake.status": 1, "fishbowlIntake.lastDetectedAt": -1 });
 ProductSchema.index({ internalPartNumber: 1 });
 
 ProductSchema.index({

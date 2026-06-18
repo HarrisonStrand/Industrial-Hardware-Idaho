@@ -3,6 +3,7 @@ import Product from "../models/Product.js";
 import ProductEnrichment from "../models/ProductEnrichment.js";
 import evaluateProductPublishReadiness from "../services/catalog/evaluateProductPublishReadiness.js";
 import publishProduct from "../services/catalog/publishProduct.js";
+import { markFishbowlIntakeReviewed } from "../services/fishbowl/syncFishbowlProductIntake.js";
 
 function safeObject(value) {
 	return value && typeof value === "object" && !Array.isArray(value)
@@ -207,6 +208,10 @@ async function performBulkAction(action, productId, userId, productPayload = {},
 			await recomputeAndPersist(productId, userId);
 			return { success: true, action, productId };
 		}
+		case "intake-reviewed": {
+			await markFishbowlIntakeReviewed(productId, userId);
+			return { success: true, action, productId };
+		}
 		case "delete": {
 			const product = await Product.findById(productId);
 			if (!product) throw new Error("Not found");
@@ -224,6 +229,14 @@ function buildStatusProductFilter(status = "") {
 
 	if (normalizedStatus === "published") {
 		return { isPublished: true };
+	}
+
+	if (normalizedStatus === "fishbowl-new") {
+		return { "fishbowlIntake.status": "new" };
+	}
+
+	if (normalizedStatus === "fishbowl-changed") {
+		return { "fishbowlIntake.status": "changed" };
 	}
 
 	if (normalizedStatus === "needs-review") {
@@ -479,6 +492,12 @@ export const getAdminReviewSummary = async (req, res) => {
 				}),
 				published: await Product.countDocuments({
 					isPublished: true,
+				}),
+				fishbowlNew: await Product.countDocuments({
+					"fishbowlIntake.status": "new",
+				}),
+				fishbowlChanged: await Product.countDocuments({
+					"fishbowlIntake.status": "changed",
 				}),
 			},
 			categories: [],
@@ -895,6 +914,9 @@ export const listAdminReviewProducts = async (req, res) => {
 							in: "$$issue.code",
 						},
 					},
+					intakeStatus: { $ifNull: ["$fishbowlIntake.status", "none"] },
+					intakeChangeType: { $ifNull: ["$fishbowlIntake.changeType", ""] },
+					intakeLastDetectedAt: "$fishbowlIntake.lastDetectedAt",
 				},
 			},
 		];
@@ -1079,6 +1101,31 @@ export const recomputeAdminProduct = async (req, res) => {
 	}
 };
 
+
+
+export const markFishbowlIntakeReviewedAdminProduct = async (req, res) => {
+	try {
+		const productId = req.params.id;
+		const product = await markFishbowlIntakeReviewed(productId, req.user?.id || null);
+		const enrichment = await ProductEnrichment.findOne({ productId }).lean();
+		let readiness = null;
+		try {
+			readiness = await evaluateProductPublishReadiness(productId);
+		} catch {
+			readiness = null;
+		}
+
+		return res.json({
+			success: true,
+			product,
+			enrichment,
+			readiness,
+		});
+	} catch (err) {
+		console.error(err);
+		res.status(400).json({ message: err.message || "Failed to mark Fishbowl intake reviewed" });
+	}
+};
 
 export const bulkAdminProducts = async (req, res) => {
 	try {
