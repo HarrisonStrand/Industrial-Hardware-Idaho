@@ -33,6 +33,8 @@ const SyncRunSchema = new mongoose.Schema(
       failed: { type: Number, default: 0 },
     },
 
+    metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
+
     errors: [
       {
         key: { type: String, default: "" },
@@ -42,9 +44,9 @@ const SyncRunSchema = new mongoose.Schema(
     ],
 
     notes: { type: String, default: "" },
+    durationMs: { type: Number, default: 0 },
   },
-  { timestamps: true },
-	{ suppressReservedKeysWarning: true }
+  { timestamps: true, suppressReservedKeysWarning: true }
 );
 
 export default mongoose.model("SyncRun", SyncRunSchema);

@@ -49,6 +49,23 @@ function formatDate(value) {
 	}
 }
 
+function formatNumber(value = 0) {
+	const number = Number(value || 0);
+	if (!Number.isFinite(number)) return "0";
+	return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(number);
+}
+
+function formatDuration(value = 0) {
+	const ms = Number(value || 0);
+	if (!Number.isFinite(ms) || ms <= 0) return "—";
+	if (ms < 1000) return `${ms}ms`;
+	const seconds = Math.round(ms / 1000);
+	if (seconds < 60) return `${seconds}s`;
+	const minutes = Math.floor(seconds / 60);
+	const remainingSeconds = seconds % 60;
+	return remainingSeconds ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+}
+
 function safeArray(value) {
 	return Array.isArray(value) ? value : [];
 }
@@ -130,6 +147,10 @@ export default function AdminProducts() {
 	const [filters, setFilters] = useState(DEFAULT_FILTERS);
 	const [loadingList, setLoadingList] = useState(true);
 	const [loadingSummary, setLoadingSummary] = useState(true);
+	const [inventorySyncStatus, setInventorySyncStatus] = useState(null);
+	const [inventorySyncLoading, setInventorySyncLoading] = useState(false);
+	const [inventorySyncRunning, setInventorySyncRunning] = useState(false);
+	const [inventorySyncMessage, setInventorySyncMessage] = useState("");
 	const [selectedId, setSelectedId] = useState("");
 	const [selectedItem, setSelectedItem] = useState(null);
 	const [loadingDetail, setLoadingDetail] = useState(false);
@@ -158,6 +179,16 @@ export default function AdminProducts() {
 			setError(err.message || "Failed to load review summary");
 		} finally {
 			setLoadingSummary(false);
+		}
+	}
+
+	async function loadInventorySyncStatus() {
+		try {
+			const data = await apiFetch("/api/fishbowl/inventory-sync/status");
+			setInventorySyncStatus(data);
+			setInventorySyncRunning(Boolean(data?.runtime?.running));
+		} catch (err) {
+			console.error(err);
 		}
 	}
 
@@ -250,6 +281,7 @@ export default function AdminProducts() {
 
 	useEffect(() => {
 		loadSummary();
+		loadInventorySyncStatus();
 	}, []);
 
 	useEffect(() => {
@@ -517,6 +549,39 @@ export default function AdminProducts() {
 		}
 	}
 
+	async function handleRunInventorySync() {
+		try {
+			setInventorySyncLoading(true);
+			setInventorySyncRunning(true);
+			setInventorySyncMessage("Checking Fishbowl quantities now…");
+			setError("");
+
+			const data = await apiFetch("/api/fishbowl/inventory-sync/run", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ samples: true, category: "bolts" }),
+			});
+
+			setInventorySyncMessage(data?.message || "Inventory quantities updated.");
+			await loadInventorySyncStatus();
+			if (selectedId) await loadDetail(selectedId);
+		} catch (err) {
+			console.error(err);
+			setInventorySyncMessage("");
+			setError(err.message || "Failed to run Fishbowl quantity sync");
+		} finally {
+			setInventorySyncLoading(false);
+			setInventorySyncRunning(false);
+		}
+	}
+
+	const latestInventoryRun = inventorySyncStatus?.lastRun || null;
+	const latestInventoryMetadata = latestInventoryRun?.metadata || {};
+	const latestInventorySummary = latestInventoryMetadata?.inventorySummary || {};
+	const latestQuantitySummary = latestInventoryMetadata?.syncSummary || {};
+	const inventorySchedule = inventorySyncStatus?.schedule || {};
+	const inventoryRuntime = inventorySyncStatus?.runtime || {};
+
 	const totalPages = listMeta.totalPages || 0;
 	const currentPage = listMeta.page || 1;
 
@@ -538,6 +603,90 @@ export default function AdminProducts() {
 						{error}
 					</div>
 				) : null}
+
+				<div className='theme-card-container card shadow-sm rounded-4 border-0'>
+					<div className='card-body'>
+						<div className='d-flex flex-column flex-xl-row justify-content-between gap-3'>
+							<div>
+								<div className='text-main text-uppercase fs-5'>
+									Fishbowl Quantity Sync
+								</div>
+								<div className='text-muted small'>
+									Update website quantities from Fishbowl live inventory for bolt products.
+								</div>
+							</div>
+
+							<div className='d-flex flex-wrap align-items-center gap-2'>
+								<button
+									type='button'
+									className='btn btn-dark rounded-3 px-4'
+									onClick={handleRunInventorySync}
+									disabled={inventorySyncLoading || inventorySyncRunning}>
+									{inventorySyncLoading || inventorySyncRunning
+										? "Checking…"
+										: "Check Quantities Now"}
+								</button>
+
+								<button
+									type='button'
+									className='btn btn-outline-secondary rounded-3'
+									onClick={loadInventorySyncStatus}
+									disabled={inventorySyncLoading}>
+									Refresh Status
+								</button>
+							</div>
+						</div>
+
+						<div className='row g-3 mt-1'>
+							<div className='col-6 col-lg-3'>
+								<SummaryCard
+									label='Last Quantity Check'
+									value={formatDate(latestInventoryRun?.finishedAt || latestInventoryRun?.startedAt)}
+									muted={!latestInventoryRun}
+								/>
+							</div>
+							<div className='col-6 col-lg-3'>
+								<SummaryCard
+									label='Updated Products'
+									value={formatNumber(latestQuantitySummary?.updated)}
+								/>
+							</div>
+							<div className='col-6 col-lg-3'>
+								<SummaryCard
+									label='Missing Inventory Rows'
+									value={formatNumber(latestQuantitySummary?.noInventoryRow)}
+								/>
+							</div>
+							<div className='col-6 col-lg-3'>
+								<SummaryCard
+									label='Fishbowl Rows Mapped'
+									value={formatNumber(latestInventoryMetadata?.uniqueMappedPartNumbers || latestInventorySummary?.rowsMapped)}
+								/>
+							</div>
+						</div>
+
+						<div className='d-flex flex-wrap gap-3 mt-3 small text-muted'>
+							<div>
+								Status: {inventoryRuntime?.running || inventorySyncRunning ? "Running" : latestInventoryRun?.status || "Not run yet"}
+							</div>
+							<div>Duration: {formatDuration(latestInventoryRun?.durationMs)}</div>
+							<div>
+								Schedule: {inventorySchedule?.enabled
+									? `Every ${inventorySchedule.intervalMinutes} minutes`
+									: "Disabled"}
+							</div>
+							{inventorySchedule?.nextRunAt ? (
+								<div>Next: {formatDate(inventorySchedule.nextRunAt)}</div>
+							) : null}
+						</div>
+
+						{inventorySyncMessage ? (
+							<div className='alert alert-success py-2 px-3 mt-3 mb-0'>
+								{inventorySyncMessage}
+							</div>
+						) : null}
+					</div>
+				</div>
 
 				<div className='theme-card-container card shadow-sm rounded-4 border-0'>
 					<div className='card-body'>

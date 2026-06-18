@@ -904,14 +904,14 @@ function ProductPreviewPanel({
 						<label className='form-label text-uppercase small fw-bold mb-0 text-main'>Qty</label>
 						<button
 							type='button'
-							className='btn btn-outline-secondary btn-sm'
+							className='btn btn-md bg-main-light builder-detail-qty-btn'
 							onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) - 1))}>
 							−
 						</button>
 						<input
 							type='number'
 							min='1'
-							className='form-control form-control-sm text-center'
+							className='form-control form-control-md text-center builder-detail-qty-input bg-light'
 							style={{ width: "76px" }}
 							value={getDisplayQuantityValue(quantity)}
 							onChange={(e) => {
@@ -922,7 +922,7 @@ function ProductPreviewPanel({
 						/>
 						<button
 							type='button'
-							className='btn btn-outline-secondary btn-sm'
+							className='btn btn-md bg-main-light builder-detail-qty-btn'
 							onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) + 1))}>
 							+
 						</button>
