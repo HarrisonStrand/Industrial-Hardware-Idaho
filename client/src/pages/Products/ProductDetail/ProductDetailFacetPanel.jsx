@@ -575,10 +575,49 @@ function getVariantCardTitleLines(variant = {}) {
 	].filter(Boolean);
 }
 
+function getStockQuantityValue(variant = {}) {
+	const value = Number(variant?.qtyAvailable || 0);
+	return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+function formatStockQuantity(value = 0) {
+	const qty = Number(value || 0);
+
+	if (!Number.isFinite(qty) || qty <= 0) return "0";
+
+	return new Intl.NumberFormat("en-US", {
+		maximumFractionDigits: 0,
+	}).format(qty);
+}
+
+function formatStockQuantityCompact(value = 0) {
+	const qty = Number(value || 0);
+	if (!Number.isFinite(qty) || qty <= 0) return "0";
+
+	if (qty >= 10000) {
+		const bucket = Math.floor(qty / 10000) * 10;
+		return `${bucket}k+`;
+	}
+
+	return formatStockQuantity(qty);
+}
+
 function getStockLabel(variant = {}) {
-	const qty = Number(variant?.qtyAvailable || 0);
-	if (qty > 0) return `${qty} available`;
+	const qty = getStockQuantityValue(variant);
+	if (qty > 0) return `${formatStockQuantity(qty)} available`;
 	return "Available on request";
+}
+
+function getGridStockLabel(variant = {}) {
+	return `${formatStockQuantityCompact(getStockQuantityValue(variant))} available`;
+}
+
+function getStockLevelClass(variant = {}) {
+	const qty = getStockQuantityValue(variant);
+	if (qty > 500) return "is-high";
+	if (qty >= 101) return "is-medium";
+	if (qty >= 1) return "is-low";
+	return "is-none";
 }
 
 function getGenericDisplayName(builderData, subcategoryId) {
@@ -645,8 +684,8 @@ function ProductResultCard({
 		<button
 			type='button'
 			onClick={onClick}
-			className={`h-100 w-100 text-start border rounded-4 bg-light p-0 overflow-hidden product-result-card ${
-				selected ? "border-main shadow border-2" : "border-secondary-subtle"
+			className={`h-100 w-100 text-start rounded-4 bg-light p-0 overflow-hidden product-result-card ${
+				selected ? "selected border-2" : "border-secondary-subtle"
 			}`}
 			style={{ transition: "box-shadow 180ms ease, border-color 180ms ease" }}>
 			<div className='row g-0 h-100'>
@@ -704,7 +743,13 @@ function ProductResultCard({
 								<div className='fw-semibold text-main'>
 									{formatCurrency(price, currency)}
 								</div>
-								<div className='small text-muted'>{getStockLabel(variant)}</div>
+								<div className='builder-grid-stock small text-muted justify-content-end'>
+									<span
+										className={`builder-grid-stock-dot ${getStockLevelClass(variant)}`}
+										aria-hidden='true'
+									/>
+									<span>{getGridStockLabel(variant)}</span>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -842,7 +887,7 @@ function ProductPreviewPanel({
 							{variant ? getStockLabel(variant) : "Select options"}
 						</span>
 						<span className='badge rounded-3 text-bg-light border fw-normal'>
-							Qty: {variant ? qtyAvailable : "—"}
+							Qty: {variant ? formatStockQuantity(qtyAvailable) : "—"}
 						</span>
 					</div>
 				</div>
@@ -1046,7 +1091,7 @@ function ProductDetailModal({
 											<div className='col-6 col-md-4'>
 												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
 													<div className='small text-muted text-uppercase'>Available</div>
-													<div className='fw-semibold text-main'>{qtyAvailable}</div>
+													<div className='fw-semibold text-main'>{formatStockQuantity(qtyAvailable)}</div>
 													<div className='small text-muted'>{getStockLabel(variant)}</div>
 												</div>
 											</div>
@@ -1636,8 +1681,8 @@ const handleAddToCart = () => {
 					</div>
 
 					<div className='col-12 col-xl-8 builder-results-column'>
-						<div className='builder-results-sticky-zone'>
-							<div className='builder-results-follow-shell mb-4'>
+						<div className='builder-results-sticky-zone mb-4'>
+							<div className='builder-results-follow-shell'>
 								<ProductResultsGrid
 								variants={validVariants}
 								builderImage={builderData?.image || ""}

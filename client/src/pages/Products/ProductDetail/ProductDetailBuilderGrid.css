@@ -93,16 +93,39 @@
 	border: 1px solid rgba(0, 0, 0, 0.25);
 }
 
+.product-result-card {
+	position: relative;
+	transform: translate3d(0, 0, 0);
+	transition:
+		transform 160ms ease,
+		box-shadow 160ms ease,
+		filter 120ms ease;
+	will-change: transform;
+}
+
+.product-result-card::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: -8px;
+	height: 8px;
+}
+
 .product-result-card:hover {
 	transform: translate3d(0, -2px, 0);
 	box-shadow: 2px 4px 6px 0px rgb(0 0 0 / 35%);
 }
 
 .product-result-card:active {
-	transform: translate3d(0, 0px, 0);
+	transform: translate3d(0, 0, 0);
 	filter: brightness(0.95);
 	box-shadow: none;
 	box-sizing: border-box;
+}
+
+.product-result-card.selected {
+	border: 2px solid rgb(from var(--main-color) r g b / 0.65);
 }
 
 .builder-result-card-image-shell {
@@ -118,7 +141,7 @@
 	padding: 0.18rem 0.45rem;
 	border-radius: 999px;
 	background: rgb(from var(--main-light) r g b / 0.88);
-	box-shadow: 1px 2px 4px 0 rgb(0 0 0 / 18%);
+	box-shadow: 1px 2px 1px 0 rgb(0 0 0 / 25%);
 	color: var(--main-color);
 	font-size: 0.68rem;
 	font-weight: 700;
@@ -146,6 +169,65 @@
 .builder-result-card-title-line-main {
 	font-size: 1rem;
 	font-weight: 700;
+}
+
+.builder-grid-stock {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	white-space: nowrap;
+}
+
+.builder-grid-stock-dot {
+	width: 0.55rem;
+	height: 0.55rem;
+	flex: 0 0 0.55rem;
+	border-radius: 999px;
+	background: currentColor;
+	opacity: 0.78;
+	transform: scale(0.9);
+	animation: builderGridStockPulse 1.85s ease-in-out infinite;
+	box-shadow:
+		0 0 0.28rem currentColor,
+		0 0 0.72rem currentColor;
+}
+
+.builder-grid-stock-dot.is-high {
+	color: #2fc978;
+}
+
+.builder-grid-stock-dot.is-medium {
+	color: #ffb84d;
+}
+
+.builder-grid-stock-dot.is-low {
+	color: #ff6b6b;
+}
+
+.builder-grid-stock-dot.is-none {
+	color: #2d2d2d;
+	box-shadow:
+		0 0 0.18rem rgb(45 45 45 / 45%),
+		0 0 0.46rem rgb(45 45 45 / 28%);
+}
+
+@keyframes builderGridStockPulse {
+	0%,
+	100% {
+		opacity: 0.56;
+		transform: scale(0.82);
+		box-shadow:
+			0 0 0.12rem currentColor,
+			0 0 0.34rem currentColor;
+	}
+
+	50% {
+		opacity: 1;
+		transform: scale(1.08);
+		box-shadow:
+			0 0 0.34rem currentColor,
+			0 0 0.95rem currentColor;
+	}
 }
 
 /* Builder preview panel */
@@ -547,7 +629,9 @@ body.builder-detail-modal-active {
 	.builder-detail-description-scroll,
 	.builder-detail-modal-header,
 	.builder-detail-modal-footer,
+	.builder-grid-stock-dot,
 	.product-result-card {
+		animation: none !important;
 		transition: none !important;
 	}
 }
