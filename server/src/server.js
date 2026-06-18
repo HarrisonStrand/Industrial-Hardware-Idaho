@@ -25,6 +25,7 @@ import fishbowlRoutes from "./routes/fishbowlRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
 import catalogBuilderRoutes from "./routes/catalogBuilderRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
+import searchRoutes from "./routes/searchRoutes.js";
 import { startFishbowlInventorySyncScheduler } from "./services/fishbowl/fishbowlInventorySyncScheduler.js";
 import { startFishbowlProductIntakeScheduler } from "./services/fishbowl/fishbowlProductIntakeScheduler.js";
 // import adminVendorMappingsRoutes from "./routes/adminVendorMappingsRoutes.js";
@@ -90,6 +91,7 @@ app.use("/api/fishbowl", fishbowlRoutes);
 app.use("/api/catalog", catalogRoutes);
 app.use("/api/catalog-builder", catalogBuilderRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/search", searchRoutes);
 
 app.use("/public", express.static(path.resolve("public")));
 

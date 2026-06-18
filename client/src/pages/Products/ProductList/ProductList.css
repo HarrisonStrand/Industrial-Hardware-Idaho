@@ -1,0 +1,59 @@
+.product-search-card {
+	background: var(--main-light);
+	box-shadow: 1px 4px 8px 0px rgb(0 0 0 / 30%);
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	transition:
+		transform 0.22s ease,
+		box-shadow 0.25s ease,
+		filter 0.2s ease;
+	color: inherit;
+}
+
+.product-search-card:hover {
+	transform: translate3d(0, -3px, 0);
+	box-shadow: 1px 6px 12px 2px rgb(0 0 0 / 28%);
+}
+
+.product-search-card:active {
+	transform: translate3d(0, 0, 0);
+	filter: brightness(0.96);
+}
+
+.product-search-card-image {
+	height: 165px;
+	background:
+		radial-gradient(circle at top right, rgba(255, 255, 255, 0.72), transparent 42%),
+		rgba(255, 255, 255, 0.58);
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.product-search-card-image img {
+	max-width: 84%;
+	max-height: 84%;
+	object-fit: contain;
+	display: block;
+}
+
+.product-search-card-placeholder {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+}
+
+.product-search-card-title {
+	font-size: 1rem;
+	line-height: 1.25;
+}
+
+.product-search-card-meta {
+	min-height: 1.25rem;
+}
+
+.product-search-chip {
+	background: rgba(0, 0, 0, 0.055);
+	color: var(--main-color);
+	font-size: 0.75rem;
+	font-weight: 600;
+}

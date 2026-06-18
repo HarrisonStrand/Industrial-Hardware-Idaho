@@ -37,3 +37,4 @@ docker-compose.override.yml
 # === Build Artifacts ===
 server/build/
 coverage/
+*.zip

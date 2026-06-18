@@ -3,6 +3,7 @@ import { ThemeContext } from "../../context/ThemeContext.jsx";
 import { BrandContext } from "../../context/BrandContext";
 import { SearchContext } from "../../context/SearchContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { fetchGlobalSearch } from "../../services/searchApi.js";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import ShopNowItems from "../../data/shop-now-items.json";
 import ShopNowFeatured from "../../data/shop-now-featured.json";
@@ -35,6 +36,17 @@ export default function Header({ onCartOpen }) {
 
 	const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 	const accountMenuRef = useRef(null);
+	const searchBoxRef = useRef(null);
+	const searchInputRef = useRef(null);
+
+	const [searchFocused, setSearchFocused] = useState(false);
+	const [searchLoading, setSearchLoading] = useState(false);
+	const [searchError, setSearchError] = useState("");
+	const [searchResults, setSearchResults] = useState({
+		products: [],
+		builders: [],
+		totals: { products: 0, builders: 0 },
+	});
 
 	const companyName = user?.company?.name || user?.company?.companyName || "";
 
@@ -130,23 +142,19 @@ export default function Header({ onCartOpen }) {
 	}, [location.pathname, location.search, setSearchQuery]);
 
 	const handleSearchChange = (e) => {
-		const value = e.target.value;
-		setSearchQuery(value);
+		setSearchQuery(e.target.value);
+		setSearchFocused(true);
+	};
 
-		if (location.pathname.startsWith("/products")) {
-			const trimmed = value.trim();
-			if (trimmed) {
-				navigate(`/products?search=${encodeURIComponent(trimmed)}`);
-			} else {
-				navigate("/products");
-			}
-		}
+	const closeSearchResults = () => {
+		setSearchFocused(false);
 	};
 
 	const handleSearchSubmit = (e) => {
 		e.preventDefault();
 
 		const trimmed = searchQuery.trim();
+		closeSearchResults();
 
 		if (trimmed) {
 			navigate(`/products?search=${encodeURIComponent(trimmed)}`);
@@ -154,6 +162,82 @@ export default function Header({ onCartOpen }) {
 			navigate("/products");
 		}
 	};
+
+	const handleSearchResultClick = () => {
+		closeSearchResults();
+		searchInputRef.current?.blur?.();
+	};
+
+	useEffect(() => {
+		const trimmed = searchQuery.trim();
+
+		if (trimmed.length < 2) {
+			setSearchLoading(false);
+			setSearchError("");
+			setSearchResults({
+				products: [],
+				builders: [],
+				totals: { products: 0, builders: 0 },
+			});
+			return;
+		}
+
+		const controller = new AbortController();
+		const timer = window.setTimeout(async () => {
+			try {
+				setSearchLoading(true);
+				setSearchError("");
+
+				const data = await fetchGlobalSearch(trimmed, {
+					productLimit: 6,
+					builderLimit: 4,
+					signal: controller.signal,
+				});
+
+				setSearchResults({
+					products: Array.isArray(data?.products) ? data.products : [],
+					builders: Array.isArray(data?.builders) ? data.builders : [],
+					totals: data?.totals || { products: 0, builders: 0 },
+				});
+			} catch (error) {
+				if (error?.name === "AbortError") return;
+				console.error("Header search failed:", error);
+				setSearchError("Search is unavailable right now.");
+			} finally {
+				if (!controller.signal.aborted) setSearchLoading(false);
+			}
+		}, 180);
+
+		return () => {
+			window.clearTimeout(timer);
+			controller.abort();
+		};
+	}, [searchQuery]);
+
+	useEffect(() => {
+		function onDocClick(e) {
+			if (!searchBoxRef.current) return;
+			if (!searchBoxRef.current.contains(e.target)) {
+				closeSearchResults();
+			}
+		}
+
+		document.addEventListener("mousedown", onDocClick);
+		return () => document.removeEventListener("mousedown", onDocClick);
+	}, []);
+
+	useEffect(() => {
+		closeSearchResults();
+	}, [location.pathname, location.search]);
+
+	const trimmedSearchQuery = searchQuery.trim();
+	const showSearchResults =
+		searchFocused &&
+		trimmedSearchQuery.length >= 2 &&
+		(searchLoading ||
+			searchError ||
+			searchResults.products.length > 0 ||
+			searchResults.builders.length > 0);
 
 	const { theme, toggleTheme } = useContext(ThemeContext);
 	const [logoSrc, setLogoSrc] = useState("");
@@ -581,20 +665,115 @@ export default function Header({ onCartOpen }) {
 
 				<div className='col-12 col-lg-6 d-flex text-end justify-content-end px-sm-0 px-md-4 px-lg-0'>
 					<form
+						ref={searchBoxRef}
 						onSubmit={handleSearchSubmit}
-						className='d-flex position-relative w-100'>
+						className='header-search-form d-flex position-relative w-100'>
 						<input
+							ref={searchInputRef}
 							type='text'
 							className='search-bar me-lg-4 d-flex w-100 fw-lighter ps-3 pe-lg-5 align-items-center'
 							value={searchQuery}
 							onChange={handleSearchChange}
-							placeholder='Search Products'
+							onFocus={() => setSearchFocused(true)}
+							placeholder='Search products, part numbers, sizes...'
+							aria-label='Search products'
+							aria-expanded={showSearchResults}
 						/>
 						<button
 							type='submit'
 							className='search-bar-magnifier btn position-absolute end-0 top-50 pt-0 pe-2 me-1 border-0 bg-transparent'>
 							<i className='bi bi-search fs-5'></i>
 						</button>
+
+						{showSearchResults && (
+							<div className='header-search-results rounded-4 overflow-hidden text-start'>
+								{searchLoading && (
+									<div className='header-search-status px-3 py-3 small text-muted'>
+										Searching…
+									</div>
+								)}
+
+								{!searchLoading && searchError && (
+									<div className='header-search-status px-3 py-3 small text-danger'>
+										{searchError}
+									</div>
+								)}
+
+								{!searchLoading && !searchError && searchResults.products.length > 0 && (
+									<div className='header-search-section'>
+										<div className='header-search-section-title px-3 pt-3 pb-1'>
+											Products
+										</div>
+										{searchResults.products.map((item) => (
+											<Link
+												key={`product-${item.productId}`}
+												to={item.path || "/products"}
+												onClick={handleSearchResultClick}
+												className='header-search-result-item d-flex gap-3 px-3 py-2 text-decoration-none'>
+												<div className='header-search-thumb rounded-3 overflow-hidden flex-shrink-0'>
+													{item.image ? (
+														<img src={item.image} alt={item.title} />
+													) : (
+														<div className='header-search-thumb-placeholder'>
+															<i className='bi bi-box-seam' />
+														</div>
+													)}
+												</div>
+												<div className='min-w-0 flex-grow-1'>
+													<div className='header-search-result-title text-main fw-semibold'>
+														{item.title}
+													</div>
+													<div className='header-search-result-meta small text-muted'>
+														{item.partNumber || item.matchLabel}
+														{item.category ? ` • ${item.category}` : ""}
+													</div>
+													{item.attributes?.length > 0 && (
+														<div className='header-search-result-specs small text-muted'>
+															{item.attributes.join(" • ")}
+														</div>
+													)}
+												</div>
+											</Link>
+										))}
+									</div>
+								)}
+
+								{!searchLoading && !searchError && searchResults.builders.length > 0 && (
+									<div className='header-search-section'>
+										<div className='header-search-section-title px-3 pt-3 pb-1'>
+											Builders / Categories
+										</div>
+										{searchResults.builders.map((item) => (
+											<Link
+												key={`builder-${item.path}`}
+												to={item.path || "/products"}
+												onClick={handleSearchResultClick}
+												className='header-search-builder-item d-flex align-items-center justify-content-between px-3 py-2 text-decoration-none'>
+												<span className='text-main fw-semibold'>{item.label}</span>
+												<span className='small text-muted'>{item.matchLabel}</span>
+											</Link>
+										))}
+									</div>
+								)}
+
+								{!searchLoading &&
+									!searchError &&
+									searchResults.products.length === 0 &&
+									searchResults.builders.length === 0 && (
+										<div className='header-search-status px-3 py-3 small text-muted'>
+											No quick matches. Press Enter to search all products.
+										</div>
+									)}
+
+								{trimmedSearchQuery && (
+									<button
+										type='submit'
+										className='header-search-view-all border-0 w-100 text-start px-3 py-3'>
+										Search all for “{trimmedSearchQuery}”
+									</button>
+								)}
+							</div>
+						)}
 					</form>
 				</div>
 			</div>
