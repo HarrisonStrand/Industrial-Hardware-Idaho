@@ -127,7 +127,7 @@ export default function AdminOrders() {
 				onSubmit={onSearchSubmit}
 				className='d-flex gap-2 flex-wrap align-items-center mb-3'>
 				<input
-					className='form-control'
+					className='form-control form-input'
 					style={{ maxWidth: 420 }}
 					value={q}
 					onChange={(e) => setQ(e.target.value)}
@@ -135,7 +135,7 @@ export default function AdminOrders() {
 				/>
 
 				<select
-					className='form-select'
+					className='form-select form-input'
 					style={{ maxWidth: 280 }}
 					value={adminStatus}
 					onChange={(e) => {
@@ -150,7 +150,7 @@ export default function AdminOrders() {
 				</select>
 
 				<select
-					className='form-select'
+					className='form-select form-input'
 					style={{ maxWidth: 240 }}
 					value={paymentStatus}
 					onChange={(e) => {
@@ -164,7 +164,7 @@ export default function AdminOrders() {
 					))}
 				</select>
 
-				<button className='btn btn-dark' disabled={saving}>
+				<button className='btn-main-cta py-1 rounded-3 text-main-light text-uppercase' disabled={saving}>
 					Search
 				</button>
 			</form>

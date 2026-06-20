@@ -61,7 +61,7 @@ export default function AdminAccounts() {
           const approvalStatus = account.approvalStatus || "NONE";
 
           return (
-            <div key={u._id} className='mb-4 p-3 rounded-3 border'>
+            <div key={u._id} className='theme-sub-card-container mb-4 p-3 rounded-4 border'>
               <div className='d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2'>
                 <div>
                   <div className='text-main fw-semibold'>

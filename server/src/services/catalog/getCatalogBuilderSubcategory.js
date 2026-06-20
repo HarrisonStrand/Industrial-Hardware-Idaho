@@ -672,6 +672,9 @@ export async function getCatalogBuilderSubcategory(
 
 	const products = await Product.find({
 		_id: { $in: productIds },
+		isPublished: true,
+		isActive: { $ne: false },
+		"fishbowl.active": { $ne: false },
 	}).lean();
 
 	const productMap = new Map(products.map((p) => [String(p._id), p]));

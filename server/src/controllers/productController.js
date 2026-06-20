@@ -19,6 +19,25 @@ function escapeRegex(value = "") {
 	return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function getUnpublishedReviewStatus(product = {}) {
+	const currentStatus = String(product?.review?.status || "").trim();
+	if (currentStatus && currentStatus !== "published") return currentStatus;
+	if (product?.review?.publishReady) return "approved";
+	return "needs-review";
+}
+
+function applyUnpublishState(product, { inactive = false } = {}) {
+	if (!product) return;
+	product.isPublished = false;
+	if (inactive) product.isActive = false;
+	product.catalogStatus = inactive ? "archived" : "ready";
+	product.review = {
+		...(product.review?.toObject?.() || product.review || {}),
+		status: getUnpublishedReviewStatus(product),
+	};
+	product.needsReview = product.review.status === "needs-review";
+}
+
 function mapReviewStatusFromReadiness(readiness = {}, product = {}) {
 	if (product?.isPublished) return "published";
 	if (product?.review?.status === "approved") return "approved";
@@ -103,6 +122,9 @@ async function patchAdminProductById(productId, productPayload = {}, enrichmentP
 
 	if (Object.prototype.hasOwnProperty.call(safeProductPayload, "isActive")) {
 		product.isActive = Boolean(safeProductPayload.isActive);
+		if (!product.isActive) {
+			applyUnpublishState(product, { inactive: true });
+		}
 	}
 
 	if (safeProductPayload.brand !== undefined) {
@@ -197,9 +219,7 @@ async function performBulkAction(action, productId, userId, productPayload = {},
 			const product = await Product.findById(productId);
 			const enrichment = await ProductEnrichment.findOne({ productId });
 			if (!product || !enrichment) throw new Error("Product or enrichment not found");
-			product.isPublished = false;
-			product.catalogStatus = "ready";
-			product.review = { ...(product.review?.toObject?.() || product.review || {}), status: "approved" };
+			applyUnpublishState(product);
 			await product.save();
 			await enrichment.save();
 			return { success: true, action, productId };
@@ -226,6 +246,10 @@ async function performBulkAction(action, productId, userId, productPayload = {},
 
 function buildStatusProductFilter(status = "") {
 	const normalizedStatus = normalizeQueryValue(status) || "needs-review";
+
+	if (normalizedStatus === "all") {
+		return {};
+	}
 
 	if (normalizedStatus === "published") {
 		return { isPublished: true };
@@ -375,6 +399,9 @@ async function buildFilteredAdminRows({
 			renderable: !!product?.review?.renderable,
 			publishReady: !!product?.review?.publishReady,
 			isPublished: !!product?.isPublished,
+			isActive: product?.isActive !== false,
+			fishbowlActive: product?.fishbowl?.active !== false,
+			fishbowlStatus: product?.fishbowl?.status || "",
 			category: enrichment?.category || "",
 			subcategory: enrichment?.subcategory || "",
 			familyType: enrichment?.attributes?.familyType || "",
@@ -397,7 +424,11 @@ export const listProducts = async (req, res) => {
 	try {
 		const { q } = req.query;
 
-		const filter = {};
+		const filter = {
+			isPublished: true,
+			isActive: { $ne: false },
+			"fishbowl.active": { $ne: false },
+		};
 		if (q) {
 			filter.$or = [
 				{ sku: { $regex: q, $options: "i" } },
@@ -417,7 +448,12 @@ export const listProducts = async (req, res) => {
 
 export const getProduct = async (req, res) => {
 	try {
-		const p = await Product.findById(req.params.id);
+		const p = await Product.findOne({
+			_id: req.params.id,
+			isPublished: true,
+			isActive: { $ne: false },
+			"fishbowl.active": { $ne: false },
+		});
 		if (!p) return res.status(404).json({ message: "Not found" });
 		res.json(p);
 	} catch (e) {
@@ -474,6 +510,9 @@ export const getAdminReviewSummary = async (req, res) => {
 		const summary = {
 			totalProducts: await Product.countDocuments({}),
 			byStatus: {
+				all: await Product.countDocuments({}),
+				active: await Product.countDocuments({ isActive: { $ne: false } }),
+				inactive: await Product.countDocuments({ isActive: false }),
 				needsReview: await Product.countDocuments({
 					isPublished: false,
 					$or: [
@@ -904,6 +943,9 @@ export const listAdminReviewProducts = async (req, res) => {
 					renderable: { $ifNull: ["$review.renderable", false] },
 					publishReady: { $ifNull: ["$review.publishReady", false] },
 					isPublished: { $ifNull: ["$isPublished", false] },
+					isActive: { $ne: ["$isActive", false] },
+					fishbowlActive: { $ne: ["$fishbowl.active", false] },
+					fishbowlStatus: { $ifNull: ["$fishbowl.status", ""] },
 					category: { $ifNull: ["$enrichment.category", ""] },
 					subcategory: { $ifNull: ["$enrichment.subcategory", ""] },
 					familyType: { $ifNull: ["$enrichment.attributes.familyType", ""] },
@@ -1056,12 +1098,7 @@ export const unpublishAdminProduct = async (req, res) => {
 				.json({ message: "Product or enrichment not found" });
 		}
 
-		product.isPublished = false;
-		product.catalogStatus = "ready";
-		product.review = {
-			...(product.review?.toObject?.() || product.review || {}),
-			status: "approved",
-		};
+		applyUnpublishState(product);
 
 		await product.save();
 		await enrichment.save();

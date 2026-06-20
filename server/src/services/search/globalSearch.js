@@ -381,7 +381,9 @@ async function searchProducts(query = "", options = {}) {
 	if (!regexes.length) return [];
 
 	const productQuery = {
+		isPublished: true,
 		isActive: { $ne: false },
+		"fishbowl.active": { $ne: false },
 		$or: buildOrRegexQuery(PRODUCT_SEARCH_FIELDS, regexes),
 	};
 
@@ -431,7 +433,12 @@ async function searchProducts(query = "", options = {}) {
 
 	const productIds = Array.from(productIdSet);
 	const [products, enrichments] = await Promise.all([
-		Product.find({ _id: { $in: productIds }, isActive: { $ne: false } })
+		Product.find({
+			_id: { $in: productIds },
+			isPublished: true,
+			isActive: { $ne: false },
+			"fishbowl.active": { $ne: false },
+		})
 			.select({
 				_id: 1,
 				sku: 1,

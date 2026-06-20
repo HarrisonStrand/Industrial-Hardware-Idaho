@@ -2,3 +2,113 @@
 	background: rgb(from var(--main-color) r g b / 0.25) !important;
 	border: 1px solid rgb(from var(--main-color) r g b / 0.70) !important;
 }
+.admin-products-filter-grid .form-label {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--main-color);
+}
+
+.admin-products-reset-btn {
+	min-width: 132px;
+}
+
+.admin-products-bucket-row {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 0.65rem;
+	padding-top: 1rem;
+	margin-top: 1rem;
+	border-top: 1px solid rgb(from var(--main-color) r g b / 0.14);
+}
+
+.admin-products-bucket-row .btn {
+	min-width: 132px;
+}
+
+.admin-products-action-grid,
+.admin-products-detail-action-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 0.5rem;
+	align-items: stretch;
+}
+
+.admin-products-detail-action-grid {
+	min-width: min(100%, 430px);
+}
+
+.admin-products-action-btn {
+	width: 100%;
+	min-height: 38px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	white-space: normal;
+	line-height: 1.15;
+}
+
+.admin-products-status-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin-top: 0.45rem;
+}
+
+.admin-products-status-pills .badge {
+	font-weight: 600;
+	letter-spacing: 0.01em;
+}
+
+.admin-products-candidate-card {
+	background: rgb(from var(--main-color) r g b / 0.035);
+}
+
+.admin-products-candidate-card ul,
+.admin-products-candidate-reasons {
+	line-height: 1.55;
+}
+
+@media (max-width: 575.98px) {
+	.admin-products-action-grid,
+	.admin-products-detail-action-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.admin-products-bucket-row .btn,
+	.admin-products-reset-btn {
+		width: 100%;
+	}
+}
+
+
+.admin-products-page input::placeholder,
+.admin-products-page textarea::placeholder,
+.admin-products-page .form-control::placeholder,
+.admin-products-page .form-input::placeholder {
+	color: var(--text-muted), #8a8f98 !important;
+	opacity: 0.75 !important;
+	-webkit-text-fill-color: var(--text-muted), #8a8f98 !important;
+}
+
+.admin-products-page input::-webkit-input-placeholder,
+.admin-products-page textarea::-webkit-input-placeholder,
+.admin-products-page .form-control::-webkit-input-placeholder,
+.admin-products-page .form-input::-webkit-input-placeholder {
+	color: var(--text-muted), #8a8f98 !important;
+	opacity: 0.75 !important;
+	-webkit-text-fill-color: var(--text-muted), #8a8f98 !important;
+}
+
+.admin-products-page input::-moz-placeholder,
+.admin-products-page textarea::-moz-placeholder,
+.admin-products-page .form-control::-moz-placeholder,
+.admin-products-page .form-input::-moz-placeholder {
+	color: var(--text-muted), #8a8f98 !important;
+	opacity: 0.75 !important;
+}
+
+.form-select.product-filter-input, .form-input.product-filter-input {
+	background: rgba(255, 255, 255, 0.75) !important
+}

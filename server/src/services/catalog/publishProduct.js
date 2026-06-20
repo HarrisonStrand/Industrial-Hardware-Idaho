@@ -16,6 +16,17 @@ export async function publishProduct(productId, actor = null) {
     throw new Error("Product or enrichment not found");
   }
 
+  if (product.isActive === false || product?.fishbowl?.active === false) {
+    return {
+      action: "blocked",
+      reason: "Product is inactive",
+      message: "Inactive products cannot be published until they are marked active.",
+      readiness,
+      product,
+      enrichment,
+    };
+  }
+
   product.review = {
     ...(product.review?.toObject?.() || product.review || {}),
     qualityScore: readiness.completenessScore,
