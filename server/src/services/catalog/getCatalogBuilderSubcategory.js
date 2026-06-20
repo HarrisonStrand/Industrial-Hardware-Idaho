@@ -214,6 +214,97 @@ function asNumber(value, fallback = 0) {
 	return Number.isFinite(num) ? num : fallback;
 }
 
+function cleanDimensionToken(value = "") {
+	return String(value || "")
+		.trim()
+		.replace(/[“”]/g, '"')
+		.replace(/[–—]/g, "-")
+		.replace(/\s*(?:in\.?|inch(?:es)?|")\s*$/i, "")
+		.replace(/\s*mm\s*$/i, "")
+		.replace(/^(\d+)-(\d+\/\d+)$/, "$1 $2")
+		.trim();
+}
+
+function parseFraction(value = "") {
+	const str = cleanDimensionToken(value);
+	if (!str) return null;
+
+	const metricMatch = str.match(/^m(\d+(?:\.\d+)?)$/i);
+	if (metricMatch) return Number(metricMatch[1]);
+
+	if (/^\d+\/\d+$/.test(str)) {
+		const [num, den] = str.split("/").map(Number);
+		return den ? num / den : null;
+	}
+
+	if (/^\d+\s+\d+\/\d+$/.test(str)) {
+		const [whole, frac] = str.split(/\s+/);
+		const [num, den] = frac.split("/").map(Number);
+		return den ? Number(whole) + num / den : null;
+	}
+
+	if (/^\d+(\.\d+)?$/.test(str)) return Number(str);
+
+	return null;
+}
+
+const NUMBERED_SCREW_DIAMETER_SORT = {
+	0: 0.06,
+	1: 0.073,
+	2: 0.086,
+	3: 0.099,
+	4: 0.112,
+	5: 0.125,
+	6: 0.138,
+	8: 0.164,
+	10: 0.19,
+	12: 0.216,
+};
+
+function isNumberedScrewDiameter(value = "") {
+	const str = cleanDimensionToken(value).replace(/^#/, "");
+	if (!/^\d+$/.test(str)) return false;
+	return Object.prototype.hasOwnProperty.call(NUMBERED_SCREW_DIAMETER_SORT, str);
+}
+
+function parseDiameterSortValue(value = "") {
+	const str = cleanDimensionToken(value);
+	const gauge = str.replace(/^#/, "");
+	if (isNumberedScrewDiameter(str)) return NUMBERED_SCREW_DIAMETER_SORT[gauge];
+	return parseFraction(str);
+}
+
+function parseNumericSortValue(value = "") {
+	const str = cleanDimensionToken(value).replace(/[^0-9./\s-]/g, "");
+	return parseFraction(str);
+}
+
+function compareBuilderOptionValues(a, b, key = "") {
+	const lower = String(key || "").toLowerCase();
+	let aNum = null;
+	let bNum = null;
+
+	if (lower === "diameter") {
+		aNum = parseDiameterSortValue(a);
+		bNum = parseDiameterSortValue(b);
+	} else if (["length", "width", "thickness"].includes(lower)) {
+		aNum = parseFraction(a);
+		bNum = parseFraction(b);
+	} else if (["threadpitch", "pitch"].includes(lower)) {
+		aNum = parseNumericSortValue(a);
+		bNum = parseNumericSortValue(b);
+	}
+
+	if (aNum !== null && bNum !== null && aNum !== bNum) return aNum - bNum;
+	if (aNum !== null && bNum === null) return -1;
+	if (aNum === null && bNum !== null) return 1;
+
+	return String(a).localeCompare(String(b), undefined, {
+		numeric: true,
+		sensitivity: "base",
+	});
+}
+
 function collectAttributeOptions(variants = [], subcategoryId = "") {
 	const map = new Map();
 	const sub = String(subcategoryId || "").toLowerCase();
@@ -238,10 +329,7 @@ function collectAttributeOptions(variants = [], subcategoryId = "") {
 	const result = {};
 	for (const [key, values] of map.entries()) {
 		result[key] = Array.from(values).sort((a, b) =>
-			String(a).localeCompare(String(b), undefined, {
-				numeric: true,
-				sensitivity: "base",
-			}),
+			compareBuilderOptionValues(a, b, key),
 		);
 	}
 
@@ -444,6 +532,21 @@ function isLikelyAssemblyText(value = "") {
 	);
 }
 
+function looksLikeNonHexCapScrewHeadFamily(value = "") {
+	const raw = String(value || "");
+	const text = normalizeText(raw);
+	if (!text) return false;
+
+	return (
+		/\b(?:BHCS|SSSB|MMSB)\d/i.test(raw) ||
+		text.includes("button head cap screw") ||
+		text.includes("buttonhead cap screw") ||
+		text.includes("button head c/s") ||
+		text.includes("btn hd") ||
+		text.includes("but hd")
+	);
+}
+
 function isBuilderReadyHexCapScrew(variant) {
 	const attrs = variant?.attributes || {};
 
@@ -466,6 +569,10 @@ function isBuilderReadyHexCapScrew(variant) {
 		.join(" ");
 
 	if (isLikelyAssemblyText(textToInspect)) {
+		return false;
+	}
+
+	if (looksLikeNonHexCapScrewHeadFamily(textToInspect)) {
 		return false;
 	}
 

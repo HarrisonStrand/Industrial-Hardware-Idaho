@@ -69,9 +69,23 @@ function getDisplayQuantityValue(value) {
 		: String(value);
 }
 
+function cleanDimensionToken(value = "") {
+	return String(value || "")
+		.trim()
+		.replace(/[“”]/g, '"')
+		.replace(/[–—]/g, "-")
+		.replace(/\s*(?:in\.?|inch(?:es)?|")\s*$/i, "")
+		.replace(/\s*mm\s*$/i, "")
+		.replace(/^(\d+)-(\d+\/\d+)$/, "$1 $2")
+		.trim();
+}
+
 function parseFraction(value = "") {
-	const str = String(value).trim();
+	const str = cleanDimensionToken(value);
 	if (!str) return null;
+
+	const metricMatch = str.match(/^m(\d+(?:\.\d+)?)$/i);
+	if (metricMatch) return Number(metricMatch[1]);
 
 	if (/^\d+\/\d+$/.test(str)) {
 		const [num, den] = str.split("/").map(Number);
@@ -79,7 +93,7 @@ function parseFraction(value = "") {
 	}
 
 	if (/^\d+\s+\d+\/\d+$/.test(str)) {
-		const [whole, frac] = str.split(" ");
+		const [whole, frac] = str.split(/\s+/);
 		const [num, den] = frac.split("/").map(Number);
 		return den ? Number(whole) + num / den : null;
 	}
@@ -91,29 +105,69 @@ function parseFraction(value = "") {
 	return null;
 }
 
-function sortOptionValues(values = [], key = "") {
-	const lower = String(key || "").toLowerCase();
+const NUMBERED_SCREW_DIAMETER_SORT = {
+	0: 0.06,
+	1: 0.073,
+	2: 0.086,
+	3: 0.099,
+	4: 0.112,
+	5: 0.125,
+	6: 0.138,
+	8: 0.164,
+	10: 0.19,
+	12: 0.216,
+};
 
-	if (["diameter", "length", "width", "thickness"].includes(lower)) {
-		return [...values].sort((a, b) => {
-			const aNum = parseFraction(a);
-			const bNum = parseFraction(b);
+function isNumberedScrewDiameter(value = "") {
+	const str = cleanDimensionToken(value).replace(/^#/, "");
+	if (!/^\d+$/.test(str)) return false;
+	return Object.prototype.hasOwnProperty.call(NUMBERED_SCREW_DIAMETER_SORT, str);
+}
 
-			if (aNum !== null && bNum !== null) return aNum - bNum;
+function parseDiameterSortValue(value = "") {
+	const str = cleanDimensionToken(value);
+	const gauge = str.replace(/^#/, "");
 
-			return String(a).localeCompare(String(b), undefined, {
-				numeric: true,
-				sensitivity: "base",
-			});
-		});
+	if (isNumberedScrewDiameter(str)) {
+		return NUMBERED_SCREW_DIAMETER_SORT[gauge];
 	}
 
-	return [...values].sort((a, b) =>
-		String(a).localeCompare(String(b), undefined, {
-			numeric: true,
-			sensitivity: "base",
-		}),
-	);
+	return parseFraction(str);
+}
+
+function parseNumericSortValue(value = "") {
+	const str = cleanDimensionToken(value).replace(/[^0-9./\s-]/g, "");
+	return parseFraction(str);
+}
+
+function compareOptionValues(a, b, key = "") {
+	const lower = String(key || "").toLowerCase();
+	let aNum = null;
+	let bNum = null;
+
+	if (lower === "diameter") {
+		aNum = parseDiameterSortValue(a);
+		bNum = parseDiameterSortValue(b);
+	} else if (["length", "width", "thickness"].includes(lower)) {
+		aNum = parseFraction(a);
+		bNum = parseFraction(b);
+	} else if (["threadpitch", "pitch"].includes(lower)) {
+		aNum = parseNumericSortValue(a);
+		bNum = parseNumericSortValue(b);
+	}
+
+	if (aNum !== null && bNum !== null && aNum !== bNum) return aNum - bNum;
+	if (aNum !== null && bNum === null) return -1;
+	if (aNum === null && bNum !== null) return 1;
+
+	return String(a).localeCompare(String(b), undefined, {
+		numeric: true,
+		sensitivity: "base",
+	});
+}
+
+function sortOptionValues(values = [], key = "") {
+	return [...values].sort((a, b) => compareOptionValues(a, b, key));
 }
 
 function inferProductFamilyLabelContext(builderData = {}, variants = []) {
@@ -507,6 +561,48 @@ function formatDimensionValue(value = "", measurementSystem = "") {
 	return `${stringValue}"`;
 }
 
+function formatThreadedDiameterForDisplay(diameter = "", threadPitch = "") {
+	const rawDiameter = String(diameter || "").trim();
+	const pitch = String(threadPitch || "").trim();
+	if (!rawDiameter) return "";
+
+	const displayDiameter = rawDiameter.replace(/^#/, "");
+	if (pitch) return `${displayDiameter}-${pitch}`;
+	return displayDiameter;
+}
+
+function getOnlyThreadPitchForDiameter({ value = "", selected = {}, variants = [] } = {}) {
+	const pitches = new Set();
+
+	for (const variant of variants) {
+		const attrs = variant?.attributes || {};
+		if (String(attrs.diameter || "") !== String(value || "")) continue;
+
+		const matchesOtherSelections = Object.entries(selected || {}).every(
+			([selKey, selValue]) => {
+				if (selKey === "quantity" || selKey === "diameter" || selKey === "threadPitch") return true;
+				if (!selValue) return true;
+				return String(attrs[selKey] || "") === String(selValue);
+			},
+		);
+
+		if (!matchesOtherSelections) continue;
+		if (attrs.threadPitch) pitches.add(String(attrs.threadPitch));
+	}
+
+	return pitches.size === 1 ? Array.from(pitches)[0] : "";
+}
+
+function formatFacetOptionDisplayValue(key = "", value = "", selected = {}, variants = []) {
+	if (key !== "diameter") return value;
+
+	if (!isNumberedScrewDiameter(value)) return value;
+
+	const selectedPitch = String(selected?.threadPitch || "").trim();
+	const onlyPitch = getOnlyThreadPitchForDiameter({ value, selected, variants });
+	return formatThreadedDiameterForDisplay(value, selectedPitch || onlyPitch);
+}
+
 function getProductTypeLabel(variant = {}, subcategoryId = "", fallback = "Product") {
 	const attrs = variant?.attributes || {};
 	const sub = String(subcategoryId || "").toLowerCase();
@@ -532,7 +628,7 @@ function getVariantSizeLine(variant = {}) {
 	const threadPitch = String(attrs.threadPitch || "").trim();
 	const lengthRaw = String(attrs.length || "").trim();
 
-	const diameter = diameterRaw;
+	const diameter = formatThreadedDiameterForDisplay(diameterRaw, threadPitch);
 	const width = formatDimensionValue(widthRaw, measurementSystem);
 	const length = formatDimensionValue(lengthRaw, measurementSystem);
 
@@ -541,7 +637,7 @@ function getVariantSizeLine(variant = {}) {
 	}
 
 	const primarySize = diameter || width;
-	const diameterThread = [primarySize, threadPitch].filter(Boolean).join("-");
+	const diameterThread = primarySize;
 
 	if (diameterThread && length) return `${diameterThread} x ${length}`;
 	if (diameterThread) return diameterThread;
@@ -640,12 +736,14 @@ function FacetOptionCard({ label, selected = false, count = null, onClick }) {
 	);
 }
 
-function SelectedPathSummary({ selected = {}, attributeEntries = [] }) {
+function SelectedPathSummary({ selected = {}, attributeEntries = [], variants = [] }) {
 	const chips = attributeEntries
 		.map(([key]) => ({
 			key,
 			label: formatAttributeLabel(key),
-			value: selected[key] || "",
+			value: selected[key]
+				? formatFacetOptionDisplayValue(key, selected[key], selected, variants)
+				: "",
 		}))
 		.filter((item) => item.value);
 
@@ -1589,6 +1687,7 @@ const handleAddToCart = () => {
 								<SelectedPathSummary
 									selected={selected}
 									attributeEntries={filteredAttributeEntries}
+									variants={variants}
 									/>
 							</div>
 
@@ -1636,7 +1735,9 @@ const handleAddToCart = () => {
 														{formatAttributeLabel(key)}
 													</div>
 													<div className='small text-muted text-capitalize'>
-														{selected[key] || "Choose an option"}
+														{selected[key]
+															? formatFacetOptionDisplayValue(key, selected[key], selected, variants)
+															: "Choose an option"}
 													</div>
 												</div>
 
@@ -1662,7 +1763,7 @@ const handleAddToCart = () => {
 																	key={`${key}-${value}`}
 																	className='col-12 col-sm-6'>
 																	<FacetOptionCard
-																		label={value}
+																		label={formatFacetOptionDisplayValue(key, value, selected, variants)}
 																		count={count}
 																		selected={selected[key] === value}
 																		onClick={() => handleSelect(key, value)}

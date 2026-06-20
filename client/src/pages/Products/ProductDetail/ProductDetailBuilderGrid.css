@@ -206,9 +206,11 @@
 
 .builder-grid-stock-dot.is-none {
 	color: #2d2d2d;
-	box-shadow:
+	animation: none !important;
+	box-shadow: none !important;
+	/* box-shadow:
 		0 0 0.18rem rgb(45 45 45 / 45%),
-		0 0 0.46rem rgb(45 45 45 / 28%);
+		0 0 0.46rem rgb(45 45 45 / 28%); */
 }
 
 @keyframes builderGridStockPulse {
