@@ -69,105 +69,125 @@ function getDisplayQuantityValue(value) {
 		: String(value);
 }
 
-function cleanDimensionToken(value = "") {
-	return String(value || "")
-		.trim()
-		.replace(/[“”]/g, '"')
-		.replace(/[–—]/g, "-")
-		.replace(/\s*(?:in\.?|inch(?:es)?|")\s*$/i, "")
-		.replace(/\s*mm\s*$/i, "")
-		.replace(/^(\d+)-(\d+\/\d+)$/, "$1 $2")
-		.trim();
-}
+const NUMBERED_DIAMETER_SIZES = new Set(["2", "3", "4", "5", "6", "8", "10", "12"]);
 
-function parseFraction(value = "") {
-	const str = cleanDimensionToken(value);
+function parseSizeSortValue(value = "", key = "") {
+	const lowerKey = String(key || "").toLowerCase();
+	let str = String(value || "")
+		.trim()
+		.replace(/[”″]/g, '"')
+		.replace(/"|in\.?$/gi, "")
+		.replace(/mm$/i, "")
+		.trim();
+
 	if (!str) return null;
 
 	const metricMatch = str.match(/^m(\d+(?:\.\d+)?)$/i);
-	if (metricMatch) return Number(metricMatch[1]);
+	if (metricMatch) return { primary: Number(metricMatch[1]), secondary: 0 };
+
+	const numberedThreadMatch = str.match(/^#?(\d+)\s*-\s*(\d+(?:\.\d+)?)$/);
+	if (numberedThreadMatch && NUMBERED_DIAMETER_SIZES.has(numberedThreadMatch[1])) {
+		return {
+			primary: Number(numberedThreadMatch[1]) / 1000,
+			secondary: Number(numberedThreadMatch[2]),
+		};
+	}
+
+	str = str.replace(/^(\d+)\s*-\s*(\d+\/\d+)$/, "$1 $2");
 
 	if (/^\d+\/\d+$/.test(str)) {
 		const [num, den] = str.split("/").map(Number);
-		return den ? num / den : null;
+		return den ? { primary: num / den, secondary: 0 } : null;
 	}
 
 	if (/^\d+\s+\d+\/\d+$/.test(str)) {
-		const [whole, frac] = str.split(/\s+/);
+		const [whole, frac] = str.split(/\s+/, 2);
 		const [num, den] = frac.split("/").map(Number);
-		return den ? Number(whole) + num / den : null;
+		return den ? { primary: Number(whole) + num / den, secondary: 0 } : null;
 	}
 
-	if (/^\d+(\.\d+)?$/.test(str)) {
-		return Number(str);
+	if (/^#\d+(?:\.\d+)?$/.test(str)) {
+		return { primary: Number(str.replace(/^#/, "")) / 1000, secondary: 0 };
+	}
+
+	if (lowerKey === "diameter" && NUMBERED_DIAMETER_SIZES.has(str)) {
+		return { primary: Number(str) / 1000, secondary: 0 };
+	}
+
+	if (/^\d+(?:\.\d+)?$/.test(str)) {
+		return { primary: Number(str), secondary: 0 };
 	}
 
 	return null;
 }
 
-const NUMBERED_SCREW_DIAMETER_SORT = {
-	0: 0.06,
-	1: 0.073,
-	2: 0.086,
-	3: 0.099,
-	4: 0.112,
-	5: 0.125,
-	6: 0.138,
-	8: 0.164,
-	10: 0.19,
-	12: 0.216,
-};
+function formatThreadedNumberedDiameterLabel(value = "", variants = [], selected = {}) {
+	const raw = String(value || "").trim();
+	if (!raw) return raw;
 
-function isNumberedScrewDiameter(value = "") {
-	const str = cleanDimensionToken(value).replace(/^#/, "");
-	if (!/^\d+$/.test(str)) return false;
-	return Object.prototype.hasOwnProperty.call(NUMBERED_SCREW_DIAMETER_SORT, str);
-}
-
-function parseDiameterSortValue(value = "") {
-	const str = cleanDimensionToken(value);
-	const gauge = str.replace(/^#/, "");
-
-	if (isNumberedScrewDiameter(str)) {
-		return NUMBERED_SCREW_DIAMETER_SORT[gauge];
+	const existing = raw.match(/^#?(\d+)\s*-\s*(\d+(?:\.\d+)?)$/);
+	if (existing && NUMBERED_DIAMETER_SIZES.has(existing[1])) {
+		return `${existing[1]}-${existing[2]}`;
 	}
 
-	return parseFraction(str);
-}
+	const normalizedRaw = raw.replace(/^#/, "");
+	if (!NUMBERED_DIAMETER_SIZES.has(normalizedRaw)) return raw;
 
-function parseNumericSortValue(value = "") {
-	const str = cleanDimensionToken(value).replace(/[^0-9./\s-]/g, "");
-	return parseFraction(str);
-}
-
-function compareOptionValues(a, b, key = "") {
-	const lower = String(key || "").toLowerCase();
-	let aNum = null;
-	let bNum = null;
-
-	if (lower === "diameter") {
-		aNum = parseDiameterSortValue(a);
-		bNum = parseDiameterSortValue(b);
-	} else if (["length", "width", "thickness"].includes(lower)) {
-		aNum = parseFraction(a);
-		bNum = parseFraction(b);
-	} else if (["threadpitch", "pitch"].includes(lower)) {
-		aNum = parseNumericSortValue(a);
-		bNum = parseNumericSortValue(b);
-	}
-
-	if (aNum !== null && bNum !== null && aNum !== bNum) return aNum - bNum;
-	if (aNum !== null && bNum === null) return -1;
-	if (aNum === null && bNum !== null) return 1;
-
-	return String(a).localeCompare(String(b), undefined, {
-		numeric: true,
-		sensitivity: "base",
+	const compatible = getCompatibleVariants(variants, {
+		...selected,
+		diameter: value,
 	});
+
+	const pitches = Array.from(
+		new Set(
+			compatible
+				.map((variant) => String(variant?.attributes?.threadPitch || "").trim())
+				.filter(Boolean),
+		),
+	);
+
+	if (pitches.length !== 1) return normalizedRaw;
+
+	return `${normalizedRaw}-${pitches[0]}`;
+}
+
+function formatFacetOptionLabel(key = "", value = "", variants = [], selected = {}) {
+	if (key === "diameter") {
+		return formatThreadedNumberedDiameterLabel(value, variants, selected);
+	}
+
+	return value;
 }
 
 function sortOptionValues(values = [], key = "") {
-	return [...values].sort((a, b) => compareOptionValues(a, b, key));
+	const lower = String(key || "").toLowerCase();
+
+	if (["diameter", "length", "width", "thickness", "threadpitch"].includes(lower)) {
+		return [...values].sort((a, b) => {
+			const aSort = parseSizeSortValue(a, key);
+			const bSort = parseSizeSortValue(b, key);
+
+			if (aSort && bSort) {
+				if (aSort.primary !== bSort.primary) return aSort.primary - bSort.primary;
+				if (aSort.secondary !== bSort.secondary) return aSort.secondary - bSort.secondary;
+			}
+
+			if (aSort && !bSort) return -1;
+			if (!aSort && bSort) return 1;
+
+			return String(a).localeCompare(String(b), undefined, {
+				numeric: true,
+				sensitivity: "base",
+			});
+		});
+	}
+
+	return [...values].sort((a, b) =>
+		String(a).localeCompare(String(b), undefined, {
+			numeric: true,
+			sensitivity: "base",
+		}),
+	);
 }
 
 function inferProductFamilyLabelContext(builderData = {}, variants = []) {
@@ -561,48 +581,6 @@ function formatDimensionValue(value = "", measurementSystem = "") {
 	return `${stringValue}"`;
 }
 
-function formatThreadedDiameterForDisplay(diameter = "", threadPitch = "") {
-	const rawDiameter = String(diameter || "").trim();
-	const pitch = String(threadPitch || "").trim();
-	if (!rawDiameter) return "";
-
-	const displayDiameter = rawDiameter.replace(/^#/, "");
-	if (pitch) return `${displayDiameter}-${pitch}`;
-	return displayDiameter;
-}
-
-function getOnlyThreadPitchForDiameter({ value = "", selected = {}, variants = [] } = {}) {
-	const pitches = new Set();
-
-	for (const variant of variants) {
-		const attrs = variant?.attributes || {};
-		if (String(attrs.diameter || "") !== String(value || "")) continue;
-
-		const matchesOtherSelections = Object.entries(selected || {}).every(
-			([selKey, selValue]) => {
-				if (selKey === "quantity" || selKey === "diameter" || selKey === "threadPitch") return true;
-				if (!selValue) return true;
-				return String(attrs[selKey] || "") === String(selValue);
-			},
-		);
-
-		if (!matchesOtherSelections) continue;
-		if (attrs.threadPitch) pitches.add(String(attrs.threadPitch));
-	}
-
-	return pitches.size === 1 ? Array.from(pitches)[0] : "";
-}
-
-function formatFacetOptionDisplayValue(key = "", value = "", selected = {}, variants = []) {
-	if (key !== "diameter") return value;
-
-	if (!isNumberedScrewDiameter(value)) return value;
-
-	const selectedPitch = String(selected?.threadPitch || "").trim();
-	const onlyPitch = getOnlyThreadPitchForDiameter({ value, selected, variants });
-	return formatThreadedDiameterForDisplay(value, selectedPitch || onlyPitch);
-}
-
 function getProductTypeLabel(variant = {}, subcategoryId = "", fallback = "Product") {
 	const attrs = variant?.attributes || {};
 	const sub = String(subcategoryId || "").toLowerCase();
@@ -628,7 +606,7 @@ function getVariantSizeLine(variant = {}) {
 	const threadPitch = String(attrs.threadPitch || "").trim();
 	const lengthRaw = String(attrs.length || "").trim();
 
-	const diameter = formatThreadedDiameterForDisplay(diameterRaw, threadPitch);
+	const diameter = diameterRaw;
 	const width = formatDimensionValue(widthRaw, measurementSystem);
 	const length = formatDimensionValue(lengthRaw, measurementSystem);
 
@@ -637,7 +615,12 @@ function getVariantSizeLine(variant = {}) {
 	}
 
 	const primarySize = diameter || width;
-	const diameterThread = primarySize;
+	const diameterAlreadyIncludesThread =
+		threadPitch &&
+		new RegExp(`^#?\\d+\\s*-\\s*${threadPitch.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i").test(primarySize);
+	const diameterThread = diameterAlreadyIncludesThread
+		? primarySize
+		: [primarySize, threadPitch].filter(Boolean).join("-");
 
 	if (diameterThread && length) return `${diameterThread} x ${length}`;
 	if (diameterThread) return diameterThread;
@@ -741,9 +724,7 @@ function SelectedPathSummary({ selected = {}, attributeEntries = [], variants = 
 		.map(([key]) => ({
 			key,
 			label: formatAttributeLabel(key),
-			value: selected[key]
-				? formatFacetOptionDisplayValue(key, selected[key], selected, variants)
-				: "",
+			value: formatFacetOptionLabel(key, selected[key] || "", variants, selected),
 		}))
 		.filter((item) => item.value);
 
@@ -1735,9 +1716,7 @@ const handleAddToCart = () => {
 														{formatAttributeLabel(key)}
 													</div>
 													<div className='small text-muted text-capitalize'>
-														{selected[key]
-															? formatFacetOptionDisplayValue(key, selected[key], selected, variants)
-															: "Choose an option"}
+														{selected[key] ? formatFacetOptionLabel(key, selected[key], variants, selected) : "Choose an option"}
 													</div>
 												</div>
 
@@ -1763,7 +1742,7 @@ const handleAddToCart = () => {
 																	key={`${key}-${value}`}
 																	className='col-12 col-sm-6'>
 																	<FacetOptionCard
-																		label={formatFacetOptionDisplayValue(key, value, selected, variants)}
+																		label={formatFacetOptionLabel(key, value, variants, selected)}
 																		count={count}
 																		selected={selected[key] === value}
 																		onClick={() => handleSelect(key, value)}

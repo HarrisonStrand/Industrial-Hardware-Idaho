@@ -305,7 +305,7 @@ function imperialThreadPitchAndSeriesFromCode(code = "", seriesCode = "") {
 		"20": { C: "7", F: "8" },
 		"22": { C: "6", F: "8" },
 		"24": { C: "6", F: "8" },
-		"26": { C: "4.5", F: "6" },
+		"26": { C: "5", F: "12" },
 
 		"040": { C: "20", F: "28" },
 		"050": { C: "18", F: "24" },
@@ -321,7 +321,7 @@ function imperialThreadPitchAndSeriesFromCode(code = "", seriesCode = "") {
 		"200": { C: "7", F: "8" },
 		"220": { C: "6", F: "8" },
 		"240": { C: "6", F: "8" },
-		"260": { C: "4.5", F: "6" },
+		"260": { C: "5", F: "12" },
 	};
 
 	const row = threadMap[normalized];
@@ -356,7 +356,7 @@ function imperialDiameterFromCode(code = "") {
 		"20": "1-1/4",
 		"22": "1-3/8",
 		"24": "1-1/2",
-		"26": "2",
+		"26": "1-3/4",
 
 		"040": "1/4",
 		"050": "5/16",
@@ -372,7 +372,7 @@ function imperialDiameterFromCode(code = "") {
 		"200": "1-1/4",
 		"220": "1-3/8",
 		"240": "1-1/2",
-		"260": "2",
+		"260": "1-3/4",
 	};
 
 	return map[normalized] || "";
@@ -483,6 +483,7 @@ function inferImperialThreadPitchBySeries(diameter = "", series = "") {
 		"1-1/4": "7",
 		"1-3/8": "6",
 		"1-1/2": "6",
+		"1-3/4": "5",
 		"2": "4.5",
 	};
 	const fineMap = {
@@ -636,6 +637,32 @@ function decodeMetricHexCapPartNumber(partNum = "") {
 	};
 }
 
+function decodeSiliconBronzeHexCapPartNumber(partNum = "") {
+	const raw = String(partNum || "").trim().toUpperCase();
+	const match = raw.match(/^SBRZCS(\d{2,3})(\d{4})([CF])$/i);
+	if (!match) return null;
+
+	const [, diaCode = "", lenCode = "", seriesCode = ""] = match;
+	const diameter = imperialDiameterFromCode(diaCode);
+	const length = fractionFromSixteenthsCode(lenCode);
+	const threadData = imperialThreadPitchAndSeriesFromCode(diaCode, seriesCode);
+
+	return {
+		familyType: "hex cap screw",
+		measurementSystem: "imperial",
+		diameter,
+		length,
+		threadPitch: threadData.threadPitch,
+		threadSeries: threadData.threadSeries,
+		threadCoverage: "partial",
+		grade: "",
+		materialHint: "silicon bronze",
+		finishHint: "",
+		material: "silicon bronze",
+		finish: "",
+	};
+}
+
 function getPartNumberText(product = null, parsed = {}) {
 	return clean(
 		parsed.fishbowlPartNum || product?.fishbowl?.partNum || product?.sku || "",
@@ -647,6 +674,10 @@ function decodeHexCapPartNumber(product = null, parsed = {}) {
 
 	if (partNum.startsWith("MMCS")) {
 		return decodeMetricHexCapPartNumber(partNum);
+	}
+
+	if (partNum.startsWith("SBRZCS")) {
+		return decodeSiliconBronzeHexCapPartNumber(partNum);
 	}
 
 	if (/^(?:SS|HH|SB|AN|AL|BR)?CS\d/i.test(partNum)) {
@@ -936,6 +967,7 @@ const IMPERIAL_COARSE_THREAD_PITCH_BY_DIAMETER = {
 	"1-1/4": "7",
 	"1-3/8": "6",
 	"1-1/2": "6",
+	"1-3/4": "5",
 	"2": "4.5",
 };
 
@@ -1740,6 +1772,7 @@ function detectBoltLikeFamily(text = "", parsed = {}, product = null) {
 		partNum.startsWith("CSA") ||
 		A307_CSA_SEARCH_REGEX.test(text) ||
 		/^(?:SS|HH|SB|AN|AL|BR)?CS\d/i.test(partNum) ||
+		partNum.startsWith("SBRZCS") ||
 		isStainlessHexCapCandidate(text, partNum);
 
 	const shorthand = detectImperialShorthandCapScrew(text);

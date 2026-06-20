@@ -74,7 +74,7 @@ export function imperialDiameterFromCode(code = "") {
 		"20": "1-1/4",
 		"22": "1-3/8",
 		"24": "1-1/2",
-		"26": "2",
+		"26": "1-3/4",
 		"040": "1/4",
 		"050": "5/16",
 		"060": "3/8",
@@ -89,7 +89,7 @@ export function imperialDiameterFromCode(code = "") {
 		"200": "1-1/4",
 		"220": "1-3/8",
 		"240": "1-1/2",
-		"260": "2",
+		"260": "1-3/4",
 	};
 
 	return map[String(code || "").trim().toUpperCase()] || "";
@@ -111,6 +111,7 @@ export const COARSE_PITCH = {
 	"1-1/4": "7",
 	"1-3/8": "6",
 	"1-1/2": "6",
+	"1-3/4": "5",
 	"2": "4.5",
 };
 

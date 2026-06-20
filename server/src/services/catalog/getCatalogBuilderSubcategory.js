@@ -125,11 +125,13 @@ function normalizeVariantAttributesForBuilder(
 	}
 
 	if (sub === "hex cap screws") {
+		const threadPitch = attrs.threadPitch || attrs.thread_pitch || "";
+
 		return {
 			measurementSystem: attrs.measurementSystem || "",
-			diameter: attrs.diameter || "",
+			diameter: normalizeNumberedDiameterForBuilder(attrs.diameter || "", threadPitch),
 			threadSeries: attrs.threadSeries || attrs.thread_series || "",
-			threadPitch: attrs.threadPitch || "",
+			threadPitch,
 			length: attrs.length || "",
 			drive_type: attrs.drive_type || attrs.driveType || "",
 			materialFinish: attrs.materialFinish || "",
@@ -214,95 +216,111 @@ function asNumber(value, fallback = 0) {
 	return Number.isFinite(num) ? num : fallback;
 }
 
-function cleanDimensionToken(value = "") {
-	return String(value || "")
-		.trim()
-		.replace(/[“”]/g, '"')
-		.replace(/[–—]/g, "-")
-		.replace(/\s*(?:in\.?|inch(?:es)?|")\s*$/i, "")
-		.replace(/\s*mm\s*$/i, "")
-		.replace(/^(\d+)-(\d+\/\d+)$/, "$1 $2")
-		.trim();
+
+const NUMBERED_DIAMETER_SIZES = new Set(["2", "3", "4", "5", "6", "8", "10", "12"]);
+
+function normalizeNumberedDiameterForBuilder(diameter = "", threadPitch = "") {
+	const raw = String(diameter || "").replace(/\s+/g, "").trim();
+	const pitch = String(threadPitch || "").replace(/\s+/g, "").trim();
+
+	if (!raw) return "";
+
+	const existing = raw.match(/^#?(\d+)\-(\d+(?:\.\d+)?)$/);
+	if (existing && NUMBERED_DIAMETER_SIZES.has(existing[1])) {
+		return `${existing[1]}-${existing[2]}`;
+	}
+
+	const sizeOnly = raw.match(/^#?(\d+)$/);
+	if (!sizeOnly || !NUMBERED_DIAMETER_SIZES.has(sizeOnly[1])) {
+		return String(diameter || "").trim();
+	}
+
+	if (/^\d+(?:\.\d+)?$/.test(pitch)) {
+		return `${sizeOnly[1]}-${pitch}`;
+	}
+
+	return sizeOnly[1];
 }
 
-function parseFraction(value = "") {
-	const str = cleanDimensionToken(value);
+function parseBuilderSizeSort(value = "", key = "") {
+	const lowerKey = String(key || "").toLowerCase();
+	let str = String(value || "")
+		.trim()
+		.replace(/[”″]/g, '"')
+		.replace(/"|in\.?$/gi, "")
+		.replace(/mm$/i, "")
+		.trim();
+
 	if (!str) return null;
 
 	const metricMatch = str.match(/^m(\d+(?:\.\d+)?)$/i);
-	if (metricMatch) return Number(metricMatch[1]);
+	if (metricMatch) return { primary: Number(metricMatch[1]), secondary: 0 };
+
+	const numberedThreadMatch = str.match(/^#?(\d+)\s*-\s*(\d+(?:\.\d+)?)$/);
+	if (numberedThreadMatch && NUMBERED_DIAMETER_SIZES.has(numberedThreadMatch[1])) {
+		return {
+			primary: Number(numberedThreadMatch[1]) / 1000,
+			secondary: Number(numberedThreadMatch[2]),
+		};
+	}
+
+	str = str.replace(/^(\d+)\s*-\s*(\d+\/\d+)$/, "$1 $2");
 
 	if (/^\d+\/\d+$/.test(str)) {
 		const [num, den] = str.split("/").map(Number);
-		return den ? num / den : null;
+		return den ? { primary: num / den, secondary: 0 } : null;
 	}
 
 	if (/^\d+\s+\d+\/\d+$/.test(str)) {
-		const [whole, frac] = str.split(/\s+/);
+		const [whole, frac] = str.split(/\s+/, 2);
 		const [num, den] = frac.split("/").map(Number);
-		return den ? Number(whole) + num / den : null;
+		return den ? { primary: Number(whole) + num / den, secondary: 0 } : null;
 	}
 
-	if (/^\d+(\.\d+)?$/.test(str)) return Number(str);
+	if (/^#\d+(?:\.\d+)?$/.test(str)) {
+		return { primary: Number(str.replace(/^#/, "")) / 1000, secondary: 0 };
+	}
+
+	if (lowerKey === "diameter" && NUMBERED_DIAMETER_SIZES.has(str)) {
+		return { primary: Number(str) / 1000, secondary: 0 };
+	}
+
+	if (/^\d+(?:\.\d+)?$/.test(str)) {
+		return { primary: Number(str), secondary: 0 };
+	}
 
 	return null;
 }
 
-const NUMBERED_SCREW_DIAMETER_SORT = {
-	0: 0.06,
-	1: 0.073,
-	2: 0.086,
-	3: 0.099,
-	4: 0.112,
-	5: 0.125,
-	6: 0.138,
-	8: 0.164,
-	10: 0.19,
-	12: 0.216,
-};
-
-function isNumberedScrewDiameter(value = "") {
-	const str = cleanDimensionToken(value).replace(/^#/, "");
-	if (!/^\d+$/.test(str)) return false;
-	return Object.prototype.hasOwnProperty.call(NUMBERED_SCREW_DIAMETER_SORT, str);
-}
-
-function parseDiameterSortValue(value = "") {
-	const str = cleanDimensionToken(value);
-	const gauge = str.replace(/^#/, "");
-	if (isNumberedScrewDiameter(str)) return NUMBERED_SCREW_DIAMETER_SORT[gauge];
-	return parseFraction(str);
-}
-
-function parseNumericSortValue(value = "") {
-	const str = cleanDimensionToken(value).replace(/[^0-9./\s-]/g, "");
-	return parseFraction(str);
-}
-
-function compareBuilderOptionValues(a, b, key = "") {
+function sortBuilderOptionValues(values = [], key = "") {
 	const lower = String(key || "").toLowerCase();
-	let aNum = null;
-	let bNum = null;
 
-	if (lower === "diameter") {
-		aNum = parseDiameterSortValue(a);
-		bNum = parseDiameterSortValue(b);
-	} else if (["length", "width", "thickness"].includes(lower)) {
-		aNum = parseFraction(a);
-		bNum = parseFraction(b);
-	} else if (["threadpitch", "pitch"].includes(lower)) {
-		aNum = parseNumericSortValue(a);
-		bNum = parseNumericSortValue(b);
+	if (["diameter", "length", "width", "thickness", "threadpitch"].includes(lower)) {
+		return [...values].sort((a, b) => {
+			const aSort = parseBuilderSizeSort(a, key);
+			const bSort = parseBuilderSizeSort(b, key);
+
+			if (aSort && bSort) {
+				if (aSort.primary !== bSort.primary) return aSort.primary - bSort.primary;
+				if (aSort.secondary !== bSort.secondary) return aSort.secondary - bSort.secondary;
+			}
+
+			if (aSort && !bSort) return -1;
+			if (!aSort && bSort) return 1;
+
+			return String(a).localeCompare(String(b), undefined, {
+				numeric: true,
+				sensitivity: "base",
+			});
+		});
 	}
 
-	if (aNum !== null && bNum !== null && aNum !== bNum) return aNum - bNum;
-	if (aNum !== null && bNum === null) return -1;
-	if (aNum === null && bNum !== null) return 1;
-
-	return String(a).localeCompare(String(b), undefined, {
-		numeric: true,
-		sensitivity: "base",
-	});
+	return [...values].sort((a, b) =>
+		String(a).localeCompare(String(b), undefined, {
+			numeric: true,
+			sensitivity: "base",
+		}),
+	);
 }
 
 function collectAttributeOptions(variants = [], subcategoryId = "") {
@@ -328,9 +346,7 @@ function collectAttributeOptions(variants = [], subcategoryId = "") {
 
 	const result = {};
 	for (const [key, values] of map.entries()) {
-		result[key] = Array.from(values).sort((a, b) =>
-			compareBuilderOptionValues(a, b, key),
-		);
+		result[key] = sortBuilderOptionValues(Array.from(values), key);
 	}
 
 	return result;
@@ -518,6 +534,27 @@ function normalizeText(value = "") {
 		.toLowerCase();
 }
 
+
+function isWrongHeadCapScrewForHexBuilder(value = "") {
+	const text = normalizeText(value);
+	if (!text) return false;
+
+	return (
+		/\b(?:BHCS|SHCS|FHCS)\d{5,8}(?:FLH|F|LH|Z)?\b/i.test(value) ||
+		/\b(?:SSSB|SSSH|SSSF)\d{5,8}(?:FLH|F|LH)?\b/i.test(value) ||
+		/\bMMS[BFH]\d{8}(?:SS|Z)?\b/i.test(value) ||
+		text.includes("button head cap screw") ||
+		text.includes("button hd cap screw") ||
+		text.includes("button head") ||
+		text.includes("socket head cap screw") ||
+		text.includes("socket hd cap screw") ||
+		text.includes("soc hd cap screw") ||
+		text.includes("soc. hd cap screw") ||
+		text.includes("flat head cap screw") ||
+		text.includes("flat hd cap screw")
+	);
+}
+
 function isLikelyAssemblyText(value = "") {
 	const text = normalizeText(value);
 	if (!text) return false;
@@ -529,21 +566,6 @@ function isLikelyAssemblyText(value = "") {
 		text.includes(" w/") ||
 		text.includes("with locknut") ||
 		text.includes("locknut assy")
-	);
-}
-
-function looksLikeNonHexCapScrewHeadFamily(value = "") {
-	const raw = String(value || "");
-	const text = normalizeText(raw);
-	if (!text) return false;
-
-	return (
-		/\b(?:BHCS|SSSB|MMSB)\d/i.test(raw) ||
-		text.includes("button head cap screw") ||
-		text.includes("buttonhead cap screw") ||
-		text.includes("button head c/s") ||
-		text.includes("btn hd") ||
-		text.includes("but hd")
 	);
 }
 
@@ -572,7 +594,7 @@ function isBuilderReadyHexCapScrew(variant) {
 		return false;
 	}
 
-	if (looksLikeNonHexCapScrewHeadFamily(textToInspect)) {
+	if (isWrongHeadCapScrewForHexBuilder(textToInspect)) {
 		return false;
 	}
 
