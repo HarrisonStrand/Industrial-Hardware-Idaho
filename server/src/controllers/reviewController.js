@@ -1,4 +1,9 @@
 import Review from "../models/Review.js";
+import {
+  getGoogleReviewSnapshot,
+  mapGoogleReviewSnapshotForPublic,
+  syncGoogleReviews,
+} from "../services/google/googleReviewsService.js";
 
 function clean(value = "") {
   return String(value || "").trim();
@@ -28,61 +33,53 @@ function mapReviewRow(review) {
 
 export async function getHomeReviews(req, res) {
   try {
+    const snapshot = await getGoogleReviewSnapshot();
+    const googlePayload = mapGoogleReviewSnapshotForPublic(snapshot);
+
+    // Keep the old website-review data as a soft fallback only.
+    // Once Google reviews have been synced, the public site uses the Google snapshot.
+    if (googlePayload.reviews.length || googlePayload.summary.reviewCount) {
+      return res.json(googlePayload);
+    }
+
     const approvedWebsiteReviews = await Review.find({
       status: "approved",
       source: "website",
     })
       .sort({ isFeatured: -1, approvedAt: -1, createdAt: -1 })
-      .limit(12)
+      .limit(10)
       .lean();
 
-    const approvedGoogleReviews = await Review.find({
-      status: "approved",
-      source: "google",
-    })
-      .sort({ isFeatured: -1, approvedAt: -1, createdAt: -1 })
-      .limit(12)
-      .lean();
-
-    const merged = [...approvedGoogleReviews, ...approvedWebsiteReviews]
-      .sort((a, b) => {
-        const aFeatured = a.isFeatured ? 1 : 0;
-        const bFeatured = b.isFeatured ? 1 : 0;
-        if (aFeatured !== bFeatured) return bFeatured - aFeatured;
-
-        const aDate = new Date(a.approvedAt || a.createdAt || 0).getTime();
-        const bDate = new Date(b.approvedAt || b.createdAt || 0).getTime();
-        return bDate - aDate;
-      })
-      .slice(0, 10);
-
-    const websiteApprovedCount = await Review.countDocuments({
-      status: "approved",
-      source: "website",
-    });
-
-    const googleApprovedCount = await Review.countDocuments({
-      status: "approved",
-      source: "google",
-    });
-
-    const allApproved = [...approvedGoogleReviews, ...approvedWebsiteReviews];
-    const ratingAverage = allApproved.length
-      ? allApproved.reduce((sum, item) => sum + Number(item.rating || 0), 0) /
-        allApproved.length
+    const ratingAverage = approvedWebsiteReviews.length
+      ? approvedWebsiteReviews.reduce((sum, item) => sum + Number(item.rating || 0), 0) /
+        approvedWebsiteReviews.length
       : 0;
 
     return res.json({
       summary: {
         rating: Number(ratingAverage.toFixed(1)),
-        reviewCount: websiteApprovedCount + googleApprovedCount,
+        reviewCount: approvedWebsiteReviews.length,
         sourceLabel: "Customer Reviews",
+        googleMapsUrl: "",
+        writeReviewUrl: "",
+        lastSyncedAt: null,
+        syncStatus: "never",
       },
-      reviews: merged.map(mapReviewRow),
+      reviews: approvedWebsiteReviews.map(mapReviewRow),
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to load home reviews" });
+  }
+}
+
+export async function getGoogleReviewsPublic(req, res) {
+  try {
+    const snapshot = await getGoogleReviewSnapshot();
+    return res.json(mapGoogleReviewSnapshotForPublic(snapshot));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to load Google reviews" });
   }
 }
 
@@ -256,5 +253,65 @@ export async function toggleFeaturedAdminReview(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to update featured status" });
+  }
+}
+
+export async function getAdminGoogleReviews(req, res) {
+  try {
+    const snapshot = await getGoogleReviewSnapshot();
+    const publicPayload = mapGoogleReviewSnapshotForPublic(snapshot);
+
+    return res.json({
+      configured: Boolean(process.env.GOOGLE_PLACE_ID || process.env.GOOGLE_REVIEWS_PLACE_ID),
+      hasApiKey: Boolean(process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY),
+      snapshot: snapshot
+        ? {
+            placeId: snapshot.placeId,
+            placeName: snapshot.placeName,
+            rating: snapshot.rating,
+            reviewCount: snapshot.reviewCount,
+            googleMapsUrl: snapshot.googleMapsUrl,
+            writeReviewUrl: snapshot.writeReviewUrl,
+            lastSyncedAt: snapshot.lastSyncedAt,
+            syncStatus: snapshot.syncStatus,
+            syncError: snapshot.syncError,
+          }
+        : null,
+      summary: publicPayload.summary,
+      reviews: publicPayload.reviews,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to load Google review admin data" });
+  }
+}
+
+export async function syncAdminGoogleReviews(req, res) {
+  try {
+    const result = await syncGoogleReviews({ triggeredBy: req.user?.id || "admin" });
+    const publicPayload = mapGoogleReviewSnapshotForPublic(result.snapshot);
+
+    return res.json({
+      success: true,
+      message: "Google reviews synced successfully",
+      snapshot: {
+        placeId: result.snapshot.placeId,
+        placeName: result.snapshot.placeName,
+        rating: result.snapshot.rating,
+        reviewCount: result.snapshot.reviewCount,
+        googleMapsUrl: result.snapshot.googleMapsUrl,
+        writeReviewUrl: result.snapshot.writeReviewUrl,
+        lastSyncedAt: result.snapshot.lastSyncedAt,
+        syncStatus: result.snapshot.syncStatus,
+        syncError: result.snapshot.syncError,
+      },
+      summary: publicPayload.summary,
+      reviews: publicPayload.reviews,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      message: err.message || "Failed to sync Google reviews",
+    });
   }
 }

@@ -1,0 +1,17 @@
+.admin-google-reviews-page .admin-google-review-summary-card {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.admin-google-review-card {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+
+.admin-google-review-copy {
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.admin-google-review-empty {
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.02);
+}
