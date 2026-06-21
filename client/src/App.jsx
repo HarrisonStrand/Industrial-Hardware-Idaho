@@ -79,6 +79,18 @@ export default function App() {
 	const openCart = () => setCartOpen(true);
 	const closeCart = () => setCartOpen(false);
 
+	useEffect(() => {
+		const shouldForceCloseCart =
+			location.pathname === "/cart" ||
+			location.pathname === "/checkout" ||
+			location.pathname.startsWith("/order-confirmation") ||
+			location.pathname.startsWith("/order-status");
+
+		if (shouldForceCloseCart) {
+			setCartOpen(false);
+		}
+	}, [location.pathname]);
+
 	return (
 		<CartProvider openCart={openCart}>
 			<ScrollToTop />
@@ -105,7 +117,10 @@ export default function App() {
 							<Route path='/register' element={<Register />} />
 							<Route path='/forgot-password' element={<ForgotPassword />} />
 							<Route path='/reset-password' element={<ResetPassword />} />
-							<Route path='/reset-password/:token' element={<ResetPassword />} />
+							<Route
+								path='/reset-password/:token'
+								element={<ResetPassword />}
+							/>
 
 							<Route path='/products' element={<ProductList />} />
 							<Route
@@ -183,10 +198,7 @@ export default function App() {
 							<Route path='/terms' element={<TermsConditions />} />
 							<Route path='/customer-service' element={<CustomerService />} />
 							<Route path='/returns' element={<ReturnsExchanges />} />
-							<Route
-								path='/shipping'
-								element={<ShippingInformation />}
-							/>
+							<Route path='/shipping' element={<ShippingInformation />} />
 
 							<Route path='/requests' element={<SpecialRequests />} />
 							<Route path='/customer-forms' element={<CustomerForms />} />

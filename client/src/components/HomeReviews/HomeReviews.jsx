@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch";
 import "./HomeReviews.css";
 
+const REVIEW_PREVIEW_LIMIT = 185;
+
 const FALLBACK_DATA = {
   summary: {
     rating: 4.9,
@@ -53,9 +55,33 @@ function StarRow({ rating = 0 }) {
   );
 }
 
-function ReviewCard({ review }) {
+function getReviewKey(review = {}) {
+  return String(
+    review.id ||
+      review._id ||
+      review.googleReviewId ||
+      `${review.authorName || "google-user"}-${review.dateLabel || "review"}-${review.text || ""}`,
+  );
+}
+
+function buildPreviewText(text = "") {
+  const cleanText = String(text || "Great experience.").trim();
+
+  if (cleanText.length <= REVIEW_PREVIEW_LIMIT) {
+    return cleanText;
+  }
+
+  const preview = cleanText.slice(0, REVIEW_PREVIEW_LIMIT).trim();
+  return `${preview.replace(/[\s.,;:!?-]+$/, "")}…`;
+}
+
+function ReviewCard({ review, expanded = false, onToggle }) {
+  const fullText = String(review?.text || "Great experience.").trim();
+  const canExpand = fullText.length > REVIEW_PREVIEW_LIMIT;
+  const displayText = expanded || !canExpand ? fullText : buildPreviewText(fullText);
+
   return (
-    <div className="home-review-card rounded-4 h-100 p-4">
+    <div className="home-review-card rounded-4 h-100 p-3 p-md-4">
       <div className="review-author-row">
         <div>
           <div className="text-main text-uppercase fw-bold review-author">
@@ -71,9 +97,20 @@ function ReviewCard({ review }) {
         <StarRow rating={review.rating} />
       </div>
 
-      <div className="text-main review-copy">
-        “{review.text || "Great experience."}”
-      </div>
+      <div className="text-main review-copy">“{displayText}”</div>
+
+      {canExpand ? (
+        <div className="review-copy-toggle-wrap">
+          <button
+            type="button"
+            className="review-copy-toggle text-uppercase"
+            onClick={onToggle}
+            aria-expanded={expanded}
+          >
+            {expanded ? "See Less" : "See More"}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -83,6 +120,8 @@ export default function HomeReviews() {
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [expandedReviewIds, setExpandedReviewIds] = useState(() => new Set());
 
   useEffect(() => {
     let alive = true;
@@ -127,10 +166,11 @@ export default function HomeReviews() {
   useEffect(() => {
     setActiveIndex(0);
     setIsTransitioning(true);
+    setExpandedReviewIds(new Set());
   }, [reviews.length]);
 
   useEffect(() => {
-    if (reviews.length <= 1) return;
+    if (reviews.length <= 1 || isPaused) return;
 
     const interval = window.setInterval(() => {
       setIsTransitioning(true);
@@ -138,7 +178,7 @@ export default function HomeReviews() {
     }, 5500);
 
     return () => window.clearInterval(interval);
-  }, [reviews.length]);
+  }, [reviews.length, isPaused]);
 
   useEffect(() => {
     if (reviews.length <= 1) return;
@@ -175,13 +215,30 @@ export default function HomeReviews() {
     }
   }, [isTransitioning]);
 
+  function toggleExpandedReview(review) {
+    const reviewKey = getReviewKey(review);
+
+    setExpandedReviewIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(reviewKey)) {
+        next.delete(reviewKey);
+      } else {
+        next.add(reviewKey);
+      }
+      return next;
+    });
+  }
+
   const displayIndex = reviews.length > 1 ? activeIndex + 1 : activeIndex;
+  const normalizedActiveIndex = reviews.length
+    ? ((activeIndex % reviews.length) + reviews.length) % reviews.length
+    : 0;
   const googleMapsUrl = data?.summary?.googleMapsUrl || "";
   const writeReviewUrl = data?.summary?.writeReviewUrl || googleMapsUrl;
 
   return (
     <section className="container-fluid px-3 px-sm-4 py-4 justify-content-center">
-      <div className="theme-section-container home-reviews-shell rounded-4 p-3 p-md-2 mx-auto mb-5">
+      <div className="theme-section-container home-reviews-shell rounded-4 p-3 p-md-2 mx-auto mb-2 mb-sm-5">
         <div className="row justify-content-center align-items-end pb-0 mb-0 mx-auto banner-title pt-3">
           <div className="col-12 col-xl-6">
             <div className="section-title text-main text-uppercase mb-0">Google Reviews</div>
@@ -209,7 +266,11 @@ export default function HomeReviews() {
 
         <div className="row justify-content-center">
           <div className="col-12 col-xl-12">
-            <div className="home-review-carousel-wrap position-relative">
+            <div
+              className="home-review-carousel-wrap position-relative"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
               {loading ? (
                 <div className="home-review-card rounded-4 p-4 text-center text-muted">
                   Loading Google reviews...
@@ -223,16 +284,24 @@ export default function HomeReviews() {
                       transition: isTransitioning ? "transform 500ms ease" : "none",
                     }}
                   >
-                    {extendedReviews.map((review, index) => (
-                      <div
-                        className="home-review-slide"
-                        key={`${review.id || review._id || "review"}-${index}`}
-                      >
-                        <div className="review-slide-inner">
-                          <ReviewCard review={review} />
+                    {extendedReviews.map((review, index) => {
+                      const reviewKey = getReviewKey(review);
+
+                      return (
+                        <div
+                          className="home-review-slide"
+                          key={`${reviewKey}-${index}`}
+                        >
+                          <div className="review-slide-inner">
+                            <ReviewCard
+                              review={review}
+                              expanded={expandedReviewIds.has(reviewKey)}
+                              onToggle={() => toggleExpandedReview(review)}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ) : (
@@ -248,7 +317,7 @@ export default function HomeReviews() {
                   <button
                     key={review.id || review._id || index}
                     type="button"
-                    className={`review-dot ${index === activeIndex ? "active" : ""}`}
+                    className={`review-dot ${index === normalizedActiveIndex ? "active" : ""}`}
                     onClick={() => {
                       setIsTransitioning(true);
                       setActiveIndex(index);
@@ -263,22 +332,22 @@ export default function HomeReviews() {
               {writeReviewUrl ? (
                 <a
                   href={writeReviewUrl}
-                  className="btn-main-cta rounded-4 text-uppercase fw-regular fs-5 py-3 text-main-light text-decoration-none"
+                  className="btn-main-cta review-google-action rounded-4 text-uppercase fw-regular fs-5 py-3 text-main-light text-decoration-none"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Review Us On Google
+                  Leave A Review
                 </a>
               ) : null}
 
               {googleMapsUrl ? (
                 <a
                   href={googleMapsUrl}
-                  className="btn-secondary-cta rounded-4 text-uppercase fw-regular fs-5 py-3 text-main bg-white text-decoration-none"
+                  className="btn-secondary-cta review-google-action rounded-4 text-uppercase fw-regular fs-5 py-3 text-main bg-white text-decoration-none"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Read More Reviews
+                  More Reviews
                 </a>
               ) : null}
             </div>

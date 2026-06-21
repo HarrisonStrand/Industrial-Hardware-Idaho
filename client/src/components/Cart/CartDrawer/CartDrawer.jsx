@@ -43,14 +43,14 @@ export default function CartDrawer({ isOpen, onClose }) {
 					<div className='cta-container container px-0 bg-main-light overflow-hidden'>
 						<div className='row px-3 gx-4'>
 							<div className='col-12 col-lg-6'>
-								<Link to='/products'>
+								<Link to='/products' onClick={onClose}>
 									<button className='continue-btn text-uppercase font-secondary fw-light rounded-3 text-main p-3 w-100'>
 										Browse Products
 									</button>
 								</Link>
 							</div>
 							<div className='col-12 col-lg-6'>
-								<Link to='/checkout'>
+								<Link to='/checkout' onClick={onClose}>
 									<button className='checkout-btn text-uppercase font-secondary fw-regular rounded-3 text-main-light p-3 w-100'>
 										Checkout
 									</button>

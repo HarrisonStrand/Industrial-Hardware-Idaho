@@ -3,7 +3,7 @@ import brandLogos from "../../data/brand-logos.json";
 
 export default function LogoSlider() {
   return (
-    <div className="logo-slider-container mb-5 py-2">
+    <div className="logo-slider-container mb-4 mb-sm-5 py-2">
 				<div className="logo-slider-overlay"></div>
       <div className="logo-track">
 
