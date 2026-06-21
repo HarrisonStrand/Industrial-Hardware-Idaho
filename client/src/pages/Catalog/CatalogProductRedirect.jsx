@@ -49,6 +49,24 @@ export default function CatalogProductRedirect() {
           product.enrichment?.attributes ||
           {};
 
+        if (product.productId) {
+          params.set("productId", String(product.productId));
+        }
+
+        const partNumber =
+          attrs.fishbowlPartNum ||
+          product.sku ||
+          product.internalPartNumber ||
+          "";
+
+        if (partNumber) {
+          params.set("partNumber", String(partNumber));
+        }
+
+        if (product.sku) {
+          params.set("sku", String(product.sku));
+        }
+
         Object.entries(attrs).forEach(([key, value]) => {
           if (value !== undefined && value !== null && value !== "") {
             params.set(key, String(value));

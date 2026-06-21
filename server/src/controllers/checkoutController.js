@@ -4,6 +4,7 @@ import Order from "../models/Order.js";
 import { generateOrderNumber } from "../utils/orderNumber.js";
 import { normalizeOrderItems, calcAmountTotalCents } from "../utils/normalizeOrderItems.js";
 import { buildPricingContextFromUser } from "../utils/resolveProductPrice.js";
+import { sendOrderConfirmationForOrder } from "../utils/sendOrderConfirmationForOrder.js";
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" })
@@ -197,6 +198,10 @@ export async function createPayLaterOrder(req, res) {
       orderNumber: await createUniqueOrderNumber(),
     });
 
+    await sendOrderConfirmationForOrder(order).catch((emailErr) => {
+      console.error("PAY-LATER CONFIRMATION EMAIL ERROR:", emailErr);
+    });
+
     return res.status(201).json({
       success: true,
       orderId: String(order._id),
@@ -371,6 +376,12 @@ export async function payNowWithSavedCard(req, res) {
       order.payment.status = "FAILED";
     }
     await order.save();
+
+    if (order.payment.status === "SUCCEEDED") {
+      await sendOrderConfirmationForOrder(order).catch((emailErr) => {
+        console.error("SAVED-CARD CONFIRMATION EMAIL ERROR:", emailErr);
+      });
+    }
 
     return res.json({
       success: true,

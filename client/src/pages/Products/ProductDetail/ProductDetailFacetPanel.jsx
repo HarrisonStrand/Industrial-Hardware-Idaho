@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "../../../context/CartContext.jsx";
@@ -415,6 +415,93 @@ function getVariantKey(variant = {}) {
 			"",
 	);
 }
+
+const BUILDER_URL_SELECTION_KEYS = Object.keys(INITIAL_SELECTED_STATE).filter(
+	(key) => key !== "quantity",
+);
+
+function normalizeProductIdentity(value = "") {
+	return String(value || "")
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, "");
+}
+
+function getSearchParam(searchParams, key = "") {
+	return String(searchParams.get(key) || "").trim();
+}
+
+function variantIdentityValues(variant = {}) {
+	const attrs = variant?.attributes || {};
+	return [
+		variant?.productId,
+		variant?.enrichmentId,
+		variant?.slug,
+		variant?.partNumber,
+		variant?.sku,
+		variant?.internalPartNumber,
+		attrs?.fishbowlPartNum,
+		attrs?.sku,
+		attrs?.internalPartNumber,
+	]
+		.filter(Boolean)
+		.map(normalizeProductIdentity)
+		.filter(Boolean);
+}
+
+function findVariantForSearchParams(variants = [], searchParams) {
+	const identityParams = [
+		getSearchParam(searchParams, "productId"),
+		getSearchParam(searchParams, "enrichmentId"),
+		getSearchParam(searchParams, "slug"),
+		getSearchParam(searchParams, "partNumber"),
+		getSearchParam(searchParams, "sku"),
+		getSearchParam(searchParams, "internalPartNumber"),
+	]
+		.map(normalizeProductIdentity)
+		.filter(Boolean);
+
+	if (!identityParams.length) return null;
+
+	return (
+		variants.find((variant) => {
+			const identities = variantIdentityValues(variant);
+			return identityParams.some((param) => identities.includes(param));
+		}) || null
+	);
+}
+
+function buildSelectedStateFromVariant(variant = {}, searchParams) {
+	const attrs = variant?.attributes || {};
+	const next = {
+		...INITIAL_SELECTED_STATE,
+		quantity: Math.max(1, Number(getSearchParam(searchParams, "quantity") || 1)),
+	};
+
+	for (const key of BUILDER_URL_SELECTION_KEYS) {
+		const value = attrs?.[key];
+		if (value !== undefined && value !== null && value !== "") {
+			next[key] = String(value);
+		}
+	}
+
+	return next;
+}
+
+function buildSelectedStateFromSearchParams(searchParams) {
+	const next = {
+		...INITIAL_SELECTED_STATE,
+		quantity: Math.max(1, Number(getSearchParam(searchParams, "quantity") || 1)),
+	};
+
+	for (const key of BUILDER_URL_SELECTION_KEYS) {
+		const value = getSearchParam(searchParams, key);
+		if (value) next[key] = value;
+	}
+
+	return next;
+}
+
 
 function formatModalSpecValue(value = "") {
 	const raw = String(value || "").replace(/\s+/g, " ").trim();
@@ -1306,6 +1393,7 @@ export default function ProductDetailFacetPanel() {
 	const [showViewCartCta, setShowViewCartCta] = useState(false);
 	const { showToast } = useToast();
 	const navigate = useNavigate();
+	const location = useLocation();
 
 	const [builderData, setBuilderData] = useState(null);
 	const [loading, setLoading] = useState(true);
@@ -1320,6 +1408,7 @@ export default function ProductDetailFacetPanel() {
 	const sectionRefs = useRef({});
 	const selectedPreviewRef = useRef(null);
 	const highlightTimeoutRef = useRef(null);
+	const appliedSearchSelectionRef = useRef("");
 
 	useEffect(() => {
 		let alive = true;
@@ -1361,6 +1450,50 @@ export default function ProductDetailFacetPanel() {
 	const variants = useMemo(() => {
 		return Array.isArray(builderData?.variants) ? builderData.variants : [];
 	}, [builderData]);
+
+	useEffect(() => {
+		if (!variants.length || !location.search) return;
+
+		const searchParams = new URLSearchParams(location.search);
+		const hasProductTarget = [
+			"productId",
+			"enrichmentId",
+			"slug",
+			"partNumber",
+			"sku",
+			"internalPartNumber",
+		].some((key) => getSearchParam(searchParams, key));
+		const hasSelectionTarget = BUILDER_URL_SELECTION_KEYS.some((key) =>
+			getSearchParam(searchParams, key),
+		);
+
+		if (!hasProductTarget && !hasSelectionTarget) return;
+
+		const selectionKey = `${categoryId || ""}/${subcategoryId || ""}?${location.search}`;
+		if (appliedSearchSelectionRef.current === selectionKey) return;
+
+		const matchedVariant = findVariantForSearchParams(variants, searchParams);
+		const nextSelected = matchedVariant
+			? buildSelectedStateFromVariant(matchedVariant, searchParams)
+			: buildSelectedStateFromSearchParams(searchParams);
+
+		if (!matchedVariant && !hasAnyRealSelection(nextSelected)) return;
+
+		appliedSearchSelectionRef.current = selectionKey;
+		setSelected(nextSelected);
+		setSelectedVariantKey(matchedVariant ? getVariantKey(matchedVariant) : "");
+		setExpandedSections({});
+		setVisibleResultCount(DEFAULT_VISIBLE_RESULT_COUNT);
+		setShowProductDetailModal(false);
+
+		window.setTimeout(() => {
+			selectedPreviewRef.current?.scrollIntoView?.({
+				behavior: "smooth",
+				block: "center",
+				inline: "nearest",
+			});
+		}, 250);
+	}, [variants, location.search, categoryId, subcategoryId]);
 
 	const labelContext = useMemo(() => {
 		return inferProductFamilyLabelContext(builderData, variants);

@@ -83,6 +83,13 @@ const OrderSchema = new mongoose.Schema(
     fishbowlId: { type: String, default: "" },
     fishbowlNumber: { type: String, default: "" },
     fishbowlStatus: { type: String, default: "" },
+    fishbowlError: { type: String, default: "" },
+    fishbowlPushedAt: { type: Date, default: null },
+
+    confirmationEmail: {
+      sentAt: { type: Date, default: null },
+      lastError: { type: String, default: "" },
+    },
 
     adminReview: {
       status: {

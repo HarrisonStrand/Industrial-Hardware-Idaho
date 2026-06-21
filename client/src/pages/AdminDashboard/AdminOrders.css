@@ -1,4 +1,95 @@
-/* src/pages/AdminDashboard/adminBadges.css */
+.admin-orders-page {
+  width: 100%;
+}
+
+.admin-orders-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-orders-summary-card {
+  border: 1px solid rgb(from var(--main-color) r g b / 0.18);
+  background: rgb(from var(--main-color) r g b / 0.035);
+  border-radius: 1rem;
+  padding: 0.85rem 1rem;
+  min-height: 88px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.admin-orders-summary-card:hover {
+  transform: translateY(-1px);
+  border-color: rgb(from var(--main-color) r g b / 0.35);
+  box-shadow: 0 0.45rem 1rem rgb(0 0 0 / 0.08);
+}
+
+.admin-orders-summary-card span {
+  color: var(--main-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.admin-orders-summary-card strong {
+  color: var(--main-color);
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.admin-orders-filter-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr auto;
+  gap: 0.85rem;
+  align-items: end;
+  padding: 1rem;
+  border: 1px solid rgb(from var(--main-color) r g b / 0.14);
+  border-radius: 1rem;
+  background: rgb(from var(--main-color) r g b / 0.025);
+}
+
+.admin-orders-filter-field {
+  min-width: 0;
+}
+
+.admin-orders-search-btn {
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.admin-orders-table-wrap {
+  border: 1px solid rgb(from var(--main-color) r g b / 0.12);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.admin-orders-table {
+  margin-bottom: 0;
+}
+
+.admin-orders-table thead th {
+  background: rgb(from var(--main-color) r g b / 0.04);
+  color: var(--main-color);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.admin-order-row-warning {
+  background: rgb(220 53 69 / 0.035);
+}
+
+.admin-order-pi {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .status-pill {
   display: inline-flex;
@@ -13,9 +104,9 @@
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.06);
   backdrop-filter: blur(4px);
+  white-space: nowrap;
 }
 
-/* tiny dot indicator */
 .status-pill::before {
   content: "";
   width: 8px;
@@ -24,7 +115,6 @@
   background: rgba(255,255,255,.55);
 }
 
-/* PENDING: soft breathing glow */
 .status-pill.pending {
   border-color: rgba(255, 193, 7, .35);
   background: rgba(255, 193, 7, .12);
@@ -37,23 +127,17 @@
   box-shadow: 0 0 10px rgba(255, 193, 7, .55);
 }
 
-@keyframes pendingPulse {
-  0%   { box-shadow: 0 0 0 rgba(255, 193, 7, 0);   filter: brightness(1); }
-  50%  { box-shadow: 0 0 18px rgba(255, 193, 7, .28); filter: brightness(1.06); }
-  100% { box-shadow: 0 0 0 rgba(255, 193, 7, 0);   filter: brightness(1); }
-}
-
-/* APPROVED IN PROGRESS: blue */
-.status-pill.in-progress {
+.status-pill.in-progress,
+.status-pill.invoiced {
   border-color: rgba(13, 110, 253, .35);
   background: rgba(13, 110, 253, .12);
 }
-.status-pill.in-progress::before {
+.status-pill.in-progress::before,
+.status-pill.invoiced::before {
   background: rgba(13, 110, 253, .95);
   box-shadow: 0 0 10px rgba(13, 110, 253, .35);
 }
 
-/* APPROVED COMPLETED: green */
 .status-pill.completed {
   border-color: rgba(25, 135, 84, .35);
   background: rgba(25, 135, 84, .12);
@@ -63,7 +147,6 @@
   box-shadow: 0 0 10px rgba(25, 135, 84, .35);
 }
 
-/* DENIED: red */
 .status-pill.denied {
   border-color: rgba(220, 53, 69, .35);
   background: rgba(220, 53, 69, .12);
@@ -73,7 +156,199 @@
   box-shadow: 0 0 10px rgba(220, 53, 69, .35);
 }
 
-/* Optional: respect reduced motion */
+@keyframes pendingPulse {
+  0%   { box-shadow: 0 0 0 rgba(255, 193, 7, 0);   filter: brightness(1); }
+  50%  { box-shadow: 0 0 18px rgba(255, 193, 7, .20); filter: brightness(1.04); }
+  100% { box-shadow: 0 0 0 rgba(255, 193, 7, 0);   filter: brightness(1); }
+}
+
+.admin-order-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(112px, 1fr));
+  gap: 0.45rem;
+  justify-content: end;
+  min-width: min(100%, 390px);
+}
+
+.admin-order-action-btn {
+  width: 100%;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.12;
+}
+
+.admin-order-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgb(0 0 0 / 0.58);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.admin-order-detail-modal {
+  width: min(1180px, 100%);
+  max-height: min(92vh, 980px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.22);
+}
+
+.admin-order-detail-header,
+.admin-order-detail-footer {
+  padding: 1rem 1.25rem;
+  background: #fff;
+  border-bottom: 1px solid rgb(from var(--main-color) r g b / 0.12);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.admin-order-detail-footer {
+  border-top: 1px solid rgb(from var(--main-color) r g b / 0.12);
+  border-bottom: 0;
+  justify-content: flex-end;
+}
+
+.admin-order-detail-body {
+  overflow: auto;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.admin-order-status-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.admin-order-status-strip > div {
+  border: 1px solid rgb(from var(--main-color) r g b / 0.14);
+  border-radius: 1rem;
+  padding: 0.75rem;
+  background: rgb(from var(--main-color) r g b / 0.025);
+}
+
+.admin-order-status-label,
+.admin-order-detail-title {
+  color: var(--main-color);
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  margin-bottom: 0.45rem;
+}
+
+.admin-order-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.admin-order-detail-card {
+  border: 1px solid rgb(from var(--main-color) r g b / 0.14);
+  border-radius: 1rem;
+  padding: 0.95rem;
+  background: #fff;
+}
+
+.admin-order-info-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgb(from var(--main-color) r g b / 0.075);
+}
+
+.admin-order-info-row:last-child {
+  border-bottom: 0;
+}
+
+.admin-order-info-label {
+  color: var(--main-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.admin-order-info-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-order-items-table thead th {
+  color: var(--main-color);
+  font-size: 0.76rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.admin-order-deny-modal {
+  width: min(520px, 100%);
+  box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.22);
+}
+
+.form-select {
+  cursor: pointer !important;
+}
+
+.admin-orders-page input::placeholder,
+.admin-orders-page textarea::placeholder,
+.admin-orders-page .form-control::placeholder,
+.admin-orders-page .form-input::placeholder {
+  color: #8a8f98 !important;
+  opacity: 0.75 !important;
+  -webkit-text-fill-color: #8a8f98 !important;
+}
+
+@media (max-width: 1199.98px) {
+  .admin-orders-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .admin-orders-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-orders-search-field,
+  .admin-orders-search-btn {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .admin-orders-summary-grid,
+  .admin-order-status-strip,
+  .admin-order-detail-grid,
+  .admin-orders-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-orders-search-field,
+  .admin-orders-search-btn {
+    grid-column: auto;
+  }
+
+  .admin-order-action-grid {
+    grid-template-columns: 1fr;
+    min-width: 100%;
+  }
+
+  .admin-order-info-row {
+    grid-template-columns: 1fr;
+    gap: 0.15rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .status-pill.pending {
     animation: none;

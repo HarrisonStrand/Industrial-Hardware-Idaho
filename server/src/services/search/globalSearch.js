@@ -84,6 +84,12 @@ const ATTRIBUTE_SUMMARY_KEYS = [
 	"drive_type",
 ];
 
+const PUBLIC_PRODUCT_FILTER = {
+	isPublished: true,
+	isActive: { $ne: false },
+	"fishbowl.active": { $ne: false },
+};
+
 function clean(value = "") {
 	return String(value || "")
 		.replace(/\s+/g, " ")
@@ -259,6 +265,46 @@ function buildAttributeSummary(attributes = {}) {
 	return uniqueStrings(parts).slice(0, 4);
 }
 
+const BUILDER_SELECTION_PARAM_KEYS = [
+	"measurementSystem",
+	"diameter",
+	"threadSeries",
+	"threadPitch",
+	"length",
+	"drive_type",
+	"materialFinish",
+	"grade",
+	"washerStandard",
+	"washerType",
+	"width",
+	"thickness",
+	"fastenerType",
+	"headType",
+];
+
+function appendProductSelectionParams(path = "/products", product = {}, enrichment = {}) {
+	const attrs = enrichment?.attributes || {};
+	const params = new URLSearchParams();
+	const slug = clean(enrichment?.seo?.slug || "");
+	const partNumber =
+		attrs?.fishbowlPartNum || product?.fishbowl?.partNum || product?.sku || "";
+
+	if (product?._id) params.set("productId", String(product._id));
+	if (slug) params.set("slug", slug);
+	if (partNumber) params.set("partNumber", clean(partNumber));
+	if (product?.sku) params.set("sku", clean(product.sku));
+
+	for (const key of BUILDER_SELECTION_PARAM_KEYS) {
+		const value = attrs?.[key];
+		if (value !== undefined && value !== null && value !== "") {
+			params.set(key, String(value));
+		}
+	}
+
+	const query = params.toString();
+	return query ? `${path}?${query}` : path;
+}
+
 function buildProductPath(product = {}, enrichment = {}) {
 	const categoryId = slugify(enrichment?.category || enrichment?.attributes?.categoryCanonical || "");
 	const subcategoryId = slugify(
@@ -266,8 +312,15 @@ function buildProductPath(product = {}, enrichment = {}) {
 	);
 	const slug = clean(enrichment?.seo?.slug || "");
 
+	if (categoryId && subcategoryId) {
+		return appendProductSelectionParams(
+			`/products/${categoryId}/${subcategoryId}`,
+			product,
+			enrichment,
+		);
+	}
+
 	if (slug) return `/catalog/product/${slug}`;
-	if (categoryId && subcategoryId) return `/products/${categoryId}/${subcategoryId}`;
 	return "/products";
 }
 
@@ -381,9 +434,7 @@ async function searchProducts(query = "", options = {}) {
 	if (!regexes.length) return [];
 
 	const productQuery = {
-		isPublished: true,
-		isActive: { $ne: false },
-		"fishbowl.active": { $ne: false },
+		...PUBLIC_PRODUCT_FILTER,
 		$or: buildOrRegexQuery(PRODUCT_SEARCH_FIELDS, regexes),
 	};
 
@@ -433,12 +484,7 @@ async function searchProducts(query = "", options = {}) {
 
 	const productIds = Array.from(productIdSet);
 	const [products, enrichments] = await Promise.all([
-		Product.find({
-			_id: { $in: productIds },
-			isPublished: true,
-			isActive: { $ne: false },
-			"fishbowl.active": { $ne: false },
-		})
+		Product.find({ _id: { $in: productIds }, ...PUBLIC_PRODUCT_FILTER })
 			.select({
 				_id: 1,
 				sku: 1,

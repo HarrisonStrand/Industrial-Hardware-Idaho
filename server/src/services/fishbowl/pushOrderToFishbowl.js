@@ -104,6 +104,12 @@ export async function pushOrderToFishbowl(orderId) {
   }
 
   if (!resp.ok) {
+    order.fishbowlStatus = "FAILED";
+    order.fishbowlError = typeof resp.data === "string"
+      ? resp.data
+      : JSON.stringify(resp.data || {}).slice(0, 1200);
+    await order.save();
+
     return {
       pushed: false,
       status: resp.status,
@@ -114,6 +120,8 @@ export async function pushOrderToFishbowl(orderId) {
   }
 
   order.fishbowlStatus = "PUSHED";
+  order.fishbowlError = "";
+  order.fishbowlPushedAt = new Date();
   order.fishbowlNumber = externalRef;
 
   if (resp?.data?.id != null) order.fishbowlId = String(resp.data.id);

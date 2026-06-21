@@ -2,7 +2,7 @@ import express from "express";
 import { Router } from "express";
 import Stripe from "stripe";
 import Order from "../models/Order.js";
-import { sendOrderConfirmationEmail } from "../utils/mailer.js";
+import { sendOrderConfirmationForOrder } from "../utils/sendOrderConfirmationForOrder.js";
 import { pushOrderToFishbowl } from "../services/fishbowl/pushOrderToFishbowl.js";
 
 const router = Router();
@@ -46,22 +46,13 @@ router.post(
             order.payment.stripePaymentIntentId = pi.id;
             await order.save();
 
-            await pushOrderToFishbowl(order._id);
+            const autoPush = String(process.env.FISHBOWL_AUTO_PUSH_ON_PAYMENT_SUCCESS || "false") === "true";
+            if (autoPush) {
+              await pushOrderToFishbowl(order._id);
+            }
 
             if (!wasSucceeded) {
-              const to = order.customer?.email;
-
-              await sendOrderConfirmationEmail({
-                to,
-                orderNumber: order.orderNumber,
-                items: order.items,
-                amountTotalCents: order.amountTotalCents,
-                currency: order.currency,
-                customer: order.customer,
-                billingAddress: order.billingAddress,
-                shippingAddress: order.shippingAddress,
-                shippingSameAsBilling: order.shippingSameAsBilling
-              });
+              await sendOrderConfirmationForOrder(order);
             }
           }
         }
