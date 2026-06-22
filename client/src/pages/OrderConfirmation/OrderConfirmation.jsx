@@ -90,7 +90,7 @@ export default function OrderConfirmation() {
           <div className='text-main text-uppercase mb-1 fs-2'>Order Confirmation</div>
           <div className='theme-detail-container py-3 rounded-4 px-3 px-sm-5'>
             <div className='text-danger'>{err || "Order not found"}</div>
-            <Link className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light mt-3 d-inline-block px-4' to='/products'>
+            <Link className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light mt-3 d-inline-block px-4 text-decoration-none text-center' to='/products'>
               Continue Shopping
             </Link>
           </div>
@@ -113,19 +113,19 @@ export default function OrderConfirmation() {
 
           <div className='row g-3 mt-3'>
             <div className='col-12 col-md-4'>
-              <div className='border rounded-4 p-3 h-100 bg-white'>
+              <div className='border rounded-4 p-3 h-100 bg-main-light shadow-sm'>
                 <div className='text-muted small text-uppercase'>Order #</div>
                 <div className='text-main fw-semibold'>{order.orderNumber}</div>
               </div>
             </div>
             <div className='col-12 col-md-4'>
-              <div className='border rounded-4 p-3 h-100 bg-white'>
+              <div className='border rounded-4 p-3 h-100 bg-main-light shadow-sm'>
                 <div className='text-muted small text-uppercase'>Payment</div>
                 <div className='text-main fw-semibold'>{order?.payment?.status || "PENDING"}</div>
               </div>
             </div>
             <div className='col-12 col-md-4'>
-              <div className='border rounded-4 p-3 h-100 bg-white'>
+              <div className='border rounded-4 p-3 h-100 bg-main-light shadow-sm'>
                 <div className='text-muted small text-uppercase'>Total</div>
                 <div className='text-main fw-semibold'>{total}</div>
               </div>
@@ -159,10 +159,10 @@ export default function OrderConfirmation() {
           </div>
 
           <div className='mt-4 d-flex flex-wrap gap-2'>
-            <Link className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light px-4' to='/products'>
+            <Link className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 text-main-light px-4 text-decoration-none text-center' to='/products'>
               Continue Shopping
             </Link>
-            <Link className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main px-4' to='/profile'>
+            <Link className='btn-secondary-cta rounded-3 text-uppercase fw-regular py-2 text-main px-4 text-decoration-none text-center' to='/profile'>
               Account
             </Link>
           </div>

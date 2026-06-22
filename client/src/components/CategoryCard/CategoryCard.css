@@ -110,7 +110,7 @@
 .category-coming-soon {
   letter-spacing: 1px;
   color: var(--main-color) !important;
-  background: rgba(255, 255, 255, 0.58) !important;
+  background: rgb(from var(--main-light) r g b / 0.58);
 }
 
 
