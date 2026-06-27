@@ -28,6 +28,8 @@ const US_STATES = [
 
 function normalizeAddress(a) {
 	return {
+		name: a?.name || a?.companyName || "",
+		companyName: a?.companyName || a?.name || "",
 		address1: a?.address1 || "",
 		address2: a?.address2 || "",
 		city: a?.city || "",
@@ -68,6 +70,8 @@ export default function Checkout() {
 		lastName: "",
 		email: "",
 		phone: "",
+		companyName: "",
+		poNumber: "",
 		address: normalizeAddress({}),
 	});
 
@@ -75,6 +79,7 @@ export default function Checkout() {
 		firstName: "",
 		lastName: "",
 		phone: "",
+		companyName: "",
 		address: normalizeAddress({}),
 	});
 
@@ -119,6 +124,8 @@ export default function Checkout() {
 			lastName: user.lastName || "",
 			email: user.email || "",
 			phone: user.phone || "",
+			companyName: user.billingAddress?.companyName || user.billingAddress?.name || user.company?.name || user.companyName || "",
+			poNumber: "",
 			address: normalizeAddress(user.billingAddress),
 		});
 
@@ -126,6 +133,7 @@ export default function Checkout() {
 			firstName: user.firstName || "",
 			lastName: user.lastName || "",
 			phone: user.phone || "",
+			companyName: user.deliveryAddress?.companyName || user.deliveryAddress?.name || user.company?.name || user.companyName || "",
 			address: normalizeAddress(user.deliveryAddress),
 		});
 
@@ -140,13 +148,14 @@ export default function Checkout() {
 			firstName: billing.firstName,
 			lastName: billing.lastName,
 			phone: billing.phone,
-			address: { ...billing.address },
+			address: { ...billing.address, name: billing.companyName || "", companyName: billing.companyName || "" },
 		}));
 	}, [
 		shippingSameAsBilling,
 		billing.firstName,
 		billing.lastName,
 		billing.phone,
+		billing.companyName,
 		billing.address,
 	]);
 
@@ -232,10 +241,10 @@ export default function Checkout() {
 			lastName: billing.lastName,
 			email: billing.email,
 			phone: billing.phone,
-			billingAddress: { ...billing.address },
+			billingAddress: { ...billing.address, name: billing.companyName || "", companyName: billing.companyName || "" },
 			deliveryAddress: shippingSameAsBilling
-				? { ...billing.address }
-				: { ...shipping.address },
+				? { ...billing.address, name: billing.companyName || "", companyName: billing.companyName || "" }
+				: { ...shipping.address, name: shipping.companyName || "", companyName: shipping.companyName || "" },
 		};
 
 		const data = await apiFetch("/api/users/me", {
@@ -295,6 +304,8 @@ export default function Checkout() {
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					payLaterType,
+					companyName: billing.companyName,
+					poNumber: billing.poNumber,
 					items: orderItemsPayload,
 				}),
 			});
@@ -337,11 +348,13 @@ export default function Checkout() {
 				body: JSON.stringify({
 					amountCents,
 					currency: "usd",
+					companyName: billing.companyName,
+					poNumber: billing.poNumber,
 					items: orderItemsPayload,
-					billingAddress: billing?.address,
+					billingAddress: { ...billing?.address, name: billing?.companyName || "", companyName: billing?.companyName || "" },
 					shippingAddress: shippingSameAsBilling
-						? billing?.address
-						: shipping?.address,
+						? { ...billing?.address, name: billing?.companyName || "", companyName: billing?.companyName || "" }
+						: { ...shipping?.address, name: shipping?.companyName || "", companyName: shipping?.companyName || "" },
 					shippingSameAsBilling: Boolean(shippingSameAsBilling),
 				}),
 			});
@@ -479,6 +492,26 @@ export default function Checkout() {
 								<input className='form-input form-control rounded-3 text-dark' value={billing.phone} onChange={(e) => setBillingField("phone", e.target.value)} />
 							</div>
 
+							<div className='col-12 col-md-6'>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>Company name <span className='text-muted text-capitalize'>(optional)</span></label>
+								<input
+									className='form-input form-control rounded-3 text-dark'
+									value={billing.companyName}
+									onChange={(e) => setBillingField("companyName", e.target.value)}
+									placeholder='Company name'
+								/>
+							</div>
+
+							<div className='col-12 col-md-6'>
+								<label className='form-input-label text-uppercase form-label text-main mb-0'>PO# <span className='text-muted text-capitalize'>(optional)</span></label>
+								<input
+									className='form-input form-control rounded-3 text-dark'
+									value={billing.poNumber}
+									onChange={(e) => setBillingField("poNumber", e.target.value)}
+									placeholder='Purchase order number'
+								/>
+							</div>
+
 							<div className='col-12'>
 								<label className='form-input-label text-uppercase form-label text-main mb-0'>Address</label>
 								<input className='form-input form-control rounded-3 text-dark' value={billing.address.address1} onChange={(e) => setBillingAddressField("address1", e.target.value)} />
@@ -546,6 +579,16 @@ export default function Checkout() {
 									<div className='col-12 col-md-6'>
 										<label className='form-input-label text-uppercase form-label text-main mb-0'>Phone</label>
 										<input className='form-input form-control rounded-3 text-dark' value={shipping.phone} onChange={(e) => setShippingField("phone", e.target.value)} />
+									</div>
+
+									<div className='col-12 col-md-6'>
+										<label className='form-input-label text-uppercase form-label text-main mb-0'>Company name <span className='text-muted text-capitalize'>(optional)</span></label>
+										<input
+											className='form-input form-control rounded-3 text-dark'
+											value={shipping.companyName}
+											onChange={(e) => setShippingField("companyName", e.target.value)}
+											placeholder='Shipping company name'
+										/>
 									</div>
 
 									<div className='col-12'>
@@ -767,10 +810,14 @@ function PayNowManualCard({
 					body: JSON.stringify({
 						amountCents,
 						currency: "usd",
+						companyName: billing?.companyName || "",
+						poNumber: billing?.poNumber || "",
 						saveThisCard,
 						items,
-						billingAddress: billing?.address,
-						shippingAddress: shipping?.address,
+						billingAddress: { ...billing?.address, name: billing?.companyName || "", companyName: billing?.companyName || "" },
+						shippingAddress: shippingSameAsBilling
+							? { ...billing?.address, name: billing?.companyName || "", companyName: billing?.companyName || "" }
+							: { ...shipping?.address, name: shipping?.companyName || "", companyName: shipping?.companyName || "" },
 						shippingSameAsBilling: Boolean(shippingSameAsBilling),
 					}),
 				});

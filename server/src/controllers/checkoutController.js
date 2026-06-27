@@ -11,13 +11,22 @@ const stripe = process.env.STRIPE_SECRET_KEY
   : null;
 
 function safeAddress(a) {
+  const companyName = cleanText(a?.companyName || a?.name || "", 120);
+
   return {
+    name: companyName,
+    companyName,
     address1: a?.address1 || "",
     address2: a?.address2 || "",
     city: a?.city || "",
     state: a?.state || "",
     zip: a?.zip || "",
   };
+}
+
+function cleanText(value, max = 120) {
+  const text = String(value || "").trim();
+  return text.length > max ? text.slice(0, max) : text;
 }
 
 async function createUniqueOrderNumber() {
@@ -52,13 +61,15 @@ async function ensureStripeCustomerForUser(user) {
   return customerId;
 }
 
-function buildCustomerSnapshot(user) {
+function buildCustomerSnapshot(user, checkout = {}) {
+  const checkoutCompanyName = cleanText(checkout.companyName, 120);
+
   return {
     firstName: user.firstName || "",
     lastName: user.lastName || "",
     email: user.email || "",
     phone: user.phone || "",
-    companyName: user.company?.name || "",
+    companyName: checkoutCompanyName || user.company?.name || user.companyName || "",
   };
 }
 
@@ -72,6 +83,8 @@ async function buildNormalizedOrderPayload({
   paymentMode = "PAY_NOW",
   paymentStatus = "PENDING",
   pricingContext = {},
+  companyName = "",
+  poNumber = "",
 }) {
   const normalizedItems = await normalizeOrderItems(items, {
     pricingContext,
@@ -93,11 +106,20 @@ async function buildNormalizedOrderPayload({
 
   return {
     userId: user._id,
-    customer: buildCustomerSnapshot(user),
-    billingAddress: safeAddress(billingAddress || user.billingAddress),
+    customer: buildCustomerSnapshot(user, { companyName }),
+    poNumber: cleanText(poNumber, 64),
+    customerPO: cleanText(poNumber, 64),
+    purchaseOrderNumber: cleanText(poNumber, 64),
+    billingAddress: safeAddress({
+      ...(billingAddress || user.billingAddress || {}),
+      companyName: companyName || billingAddress?.companyName || billingAddress?.name || user.billingAddress?.companyName || user.billingAddress?.name || "",
+    }),
     shippingAddress: safeAddress(
       shippingSameAsBilling
-        ? billingAddress || user.billingAddress
+        ? {
+            ...(billingAddress || user.billingAddress || {}),
+            companyName: companyName || billingAddress?.companyName || billingAddress?.name || user.billingAddress?.companyName || user.billingAddress?.name || "",
+          }
         : shippingAddress || user.deliveryAddress
     ),
     shippingSameAsBilling: Boolean(shippingSameAsBilling),
@@ -156,7 +178,7 @@ export async function requestAccountType(req, res) {
 
 export async function createPayLaterOrder(req, res) {
   try {
-    const { payLaterType, items = [] } = req.body || {};
+    const { payLaterType, items = [], companyName = "", poNumber = "", customerPO = "" } = req.body || {};
 
     if (!["NET30", "HOUSE"].includes(payLaterType)) {
       return res.status(400).json({ error: "payLaterType must be NET30 or HOUSE" });
@@ -191,6 +213,8 @@ export async function createPayLaterOrder(req, res) {
       paymentMode: "PAY_LATER",
       paymentStatus: "INVOICED",
       pricingContext,
+      companyName,
+      poNumber: poNumber || customerPO,
     });
 
     const order = await Order.create({
@@ -232,6 +256,9 @@ export async function createPayNowIntent(req, res) {
       billingAddress,
       shippingAddress,
       shippingSameAsBilling = true,
+      companyName = "",
+      poNumber = "",
+      customerPO = "",
     } = req.body || {};
 
     const pricingContext = await buildPricingContextFromUser(user);
@@ -246,6 +273,8 @@ export async function createPayNowIntent(req, res) {
       paymentMode: "PAY_NOW",
       paymentStatus: "PENDING",
       pricingContext,
+      companyName,
+      poNumber: poNumber || customerPO,
     });
 
     if (Number.isFinite(Number(amountCents)) && Number(amountCents) > 0) {
@@ -318,6 +347,9 @@ export async function payNowWithSavedCard(req, res) {
       billingAddress,
       shippingAddress,
       shippingSameAsBilling = true,
+      companyName = "",
+      poNumber = "",
+      customerPO = "",
     } = req.body || {};
 
     const customerId = user.payment?.stripeCustomerId;
@@ -339,6 +371,8 @@ export async function payNowWithSavedCard(req, res) {
       paymentMode: "PAY_NOW",
       paymentStatus: "PENDING",
       pricingContext,
+      companyName,
+      poNumber: poNumber || customerPO,
     });
 
     if (Number.isFinite(Number(amountCents)) && Number(amountCents) > 0) {

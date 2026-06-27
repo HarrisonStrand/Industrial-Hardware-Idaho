@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const AddressSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true, default: "" },
+    companyName: { type: String, trim: true, default: "" },
     address1: { type: String, trim: true, default: "" },
     address2: { type: String, trim: true, default: "" },
     city: { type: String, trim: true, default: "" },

@@ -2,6 +2,8 @@ import mongoose from "mongoose";
 
 const AddressSchema = new mongoose.Schema(
   {
+    name: { type: String, default: "", trim: true },
+    companyName: { type: String, default: "", trim: true },
     address1: { type: String, default: "" },
     address2: { type: String, default: "" },
     city: { type: String, default: "" },
@@ -61,6 +63,10 @@ const OrderSchema = new mongoose.Schema(
     shippingAddress: { type: AddressSchema, default: () => ({}) },
     shippingSameAsBilling: { type: Boolean, default: true },
 
+    poNumber: { type: String, default: "", trim: true },
+    customerPO: { type: String, default: "", trim: true },
+    purchaseOrderNumber: { type: String, default: "", trim: true },
+
     items: { type: [OrderItemSchema], default: [] },
 
     currency: { type: String, default: "usd" },
@@ -87,6 +93,11 @@ const OrderSchema = new mongoose.Schema(
     fishbowlPushedAt: { type: Date, default: null },
 
     confirmationEmail: {
+      sentAt: { type: Date, default: null },
+      lastError: { type: String, default: "" },
+    },
+
+    adminNotificationEmail: {
       sentAt: { type: Date, default: null },
       lastError: { type: String, default: "" },
     },

@@ -147,6 +147,41 @@ function InfoRow({ label, value }) {
 	);
 }
 
+
+function formatErrorMessage(error, fallback = "Something went wrong") {
+	const message = error?.message || error?.error || error;
+	if (!message) return fallback;
+
+	if (typeof message === "string") {
+		if (message === "[object Object]") return fallback;
+		try {
+			const parsed = JSON.parse(message);
+			return parsed?.message || parsed?.error || message;
+		} catch {
+			return message;
+		}
+	}
+
+	if (message?.message) return message.message;
+	try {
+		return JSON.stringify(message);
+	} catch {
+		return fallback;
+	}
+}
+
+function formatFishbowlError(value) {
+	if (!value) return "";
+	if (typeof value !== "string") return formatErrorMessage(value, "Fishbowl push failed.");
+
+	try {
+		const parsed = JSON.parse(value);
+		return parsed?.message || parsed?.error || value;
+	} catch {
+		return value;
+	}
+}
+
 function AddressBlock({ title, address, sameAsBilling = false }) {
 	return (
 		<div className='admin-order-detail-card'>
@@ -246,7 +281,7 @@ export default function AdminOrders() {
 			setSelectedOrder(order);
 		} catch (e) {
 			console.error(e);
-			alert(e?.message || "Failed to load order");
+			alert(formatErrorMessage(e, "Failed to load order"));
 			setDetailOpen(false);
 		} finally {
 			setDetailLoading(false);
@@ -265,7 +300,7 @@ export default function AdminOrders() {
 			await refreshSelectedOrder(orderId);
 		} catch (e) {
 			console.error(e);
-			alert(e?.message || "Failed to update order");
+			alert(formatErrorMessage(e, "Failed to update order"));
 		} finally {
 			setSaving(false);
 		}
@@ -283,7 +318,7 @@ export default function AdminOrders() {
 			await refreshSelectedOrder(orderId);
 		} catch (e) {
 			console.error(e);
-			alert(e?.message || "Failed to push order to Fishbowl");
+			alert(formatErrorMessage(e, "Failed to push order to Fishbowl"));
 		} finally {
 			setSaving(false);
 		}
@@ -617,7 +652,7 @@ function OrderDetailModal({ order, loading, saving, onClose, onProcess, onComple
 							</div>
 						</div>
 
-						{order?.fishbowlError ? <div className='alert alert-warning mt-3 mb-0'><strong>Fishbowl error:</strong> {order.fishbowlError}</div> : null}
+						{order?.fishbowlError ? <div className='alert alert-warning mt-3 mb-0'><strong>Fishbowl error:</strong> <span className='admin-order-fishbowl-error'>{formatFishbowlError(order.fishbowlError)}</span></div> : null}
 						{adminStatus === "DENIED" && order?.adminReview?.deniedReason ? <div className='alert alert-danger mt-3 mb-0'><strong>Denied reason:</strong> {order.adminReview.deniedReason}</div> : null}
 					</div>
 				)}
