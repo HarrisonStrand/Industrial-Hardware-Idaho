@@ -119,7 +119,7 @@
           "id": "hex-nuts",
           "name": "Hex Nuts",
           "image": "/images/subcategories/hex-nuts.png",
-          "locked": true
+          "locked": false
         },
         {
           "id": "lock-nuts",

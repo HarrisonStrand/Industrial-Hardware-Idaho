@@ -126,14 +126,9 @@ export default function App() {
 							<Route
 								path='/products/:categoryId/:subcategoryId'
 								element={
-									<FeatureGate
-										enabled={SITE_ACCESS.productBuilder.enabled}
-										title={SITE_ACCESS.productBuilder.title}
-										description={SITE_ACCESS.productBuilder.description}
-										backTo='/products'
-										backLabel='Back to Products'>
+									<ProtectedRoute requireAdmin>
 										<ProductDetailFacetPanel />
-									</FeatureGate>
+									</ProtectedRoute>
 								}
 							/>
 							<Route

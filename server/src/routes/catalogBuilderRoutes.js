@@ -1,12 +1,12 @@
 import express from "express";
 import User from "../models/User.js";
-import { optionalAuth } from "../middleware/auth.js";
+import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import getCatalogBuilderSubcategory from "../services/catalog/getCatalogBuilderSubcategory.js";
 import { buildPricingContextFromUser } from "../utils/resolveProductPrice.js";
 
 const router = express.Router();
 
-router.get("/:categoryId/:subcategoryId", optionalAuth, async (req, res) => {
+router.get("/:categoryId/:subcategoryId", requireAuth, requireAdmin, async (req, res) => {
   try {
     const { categoryId, subcategoryId } = req.params;
 
@@ -25,7 +25,11 @@ router.get("/:categoryId/:subcategoryId", optionalAuth, async (req, res) => {
     const result = await getCatalogBuilderSubcategory(
       categoryId,
       subcategoryId,
-      { pricingContext }
+      {
+        pricingContext,
+        includeUnpublished: true,
+        isAdmin: true,
+      }
     );
 
     return res.json(result);

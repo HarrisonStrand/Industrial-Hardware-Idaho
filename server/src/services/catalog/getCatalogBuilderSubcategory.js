@@ -141,6 +141,18 @@ function normalizeVariantAttributesForBuilder(
 		};
 	}
 
+	if (sub === "hex nuts") {
+		return {
+			measurementSystem: formatMeasurementSystemForBuilder(attrs.measurementSystem || ""),
+			diameter: attrs.diameter || "",
+			threadSeries: attrs.threadSeries || attrs.thread_series || "",
+			threadPitch: attrs.threadPitch || "",
+			materialFinish: attrs.materialFinish || "",
+			grade: attrs.grade || "",
+			fastenerType: attrs.fastenerTypeCanonical || attrs.fastenerType || "",
+		};
+	}
+
 	if (sub === "flange bolts") {
 		return {
 			measurementSystem: formatMeasurementSystemForBuilder(attrs.measurementSystem || ""),
@@ -387,6 +399,16 @@ function buildSpecKey(attributes = {}, subcategoryId = "") {
 								"grade",
 								"fastenerTypeCanonical",
 							]
+						: sub === "hex nuts"
+							? [
+									"measurementSystem",
+									"diameter",
+									"threadSeries",
+									"threadPitch",
+									"materialFinish",
+									"grade",
+									"fastenerTypeCanonical",
+								]
 						: sub === "flange bolts"
 							? [
 									"productType",
@@ -609,11 +631,46 @@ function isBuilderReadyHexCapScrew(variant) {
 	return true;
 }
 
-function shouldApplyBuilderReadyFilter(categoryId, subcategoryId) {
-	return (
-		normalizeText(categoryId) === "bolts" &&
-		normalizeText(subcategoryId) === "hex cap screws"
+function isBuilderReadyHexNut(variant) {
+	const attrs = variant?.attributes || {};
+
+	const diameter = String(attrs.diameter || "").trim();
+	const threadPitch = String(attrs.threadPitch || "").trim();
+	const size = String(attrs.size || "").trim();
+	const fastenerType = normalizeText(
+		attrs.fastenerTypeCanonical || attrs.fastenerType || "",
 	);
+
+	const textToInspect = [
+		variant?.name,
+		variant?.description,
+		attrs?.fishbowlDescription,
+		variant?.partNumber,
+	]
+		.filter(Boolean)
+		.join(" ");
+
+	if (isLikelyAssemblyText(textToInspect)) return false;
+	if (fastenerType && !["hex nut", "heavy hex nut"].includes(fastenerType)) return false;
+	if (!diameter) return false;
+	if (!threadPitch && !size) return false;
+
+	return true;
+}
+
+function getBuilderReadyFilter(categoryId, subcategoryId) {
+	const category = normalizeText(categoryId);
+	const subcategory = normalizeText(subcategoryId);
+
+	if (category === "bolts" && subcategory === "hex cap screws") {
+		return isBuilderReadyHexCapScrew;
+	}
+
+	if (category === "nuts" && subcategory === "hex nuts") {
+		return isBuilderReadyHexNut;
+	}
+
+	return null;
 }
 
 export async function getCatalogBuilderSubcategory(
@@ -669,13 +726,19 @@ export async function getCatalogBuilderSubcategory(
 	}
 
 	const productIds = enrichments.map((e) => e.productId);
+	const includeUnpublished = options?.includeUnpublished === true;
 
-	const products = await Product.find({
+	const productFilter = {
 		_id: { $in: productIds },
-		isPublished: true,
 		isActive: { $ne: false },
 		"fishbowl.active": { $ne: false },
-	}).lean();
+	};
+
+	if (!includeUnpublished) {
+		productFilter.isPublished = true;
+	}
+
+	const products = await Product.find(productFilter).lean();
 
 	const productMap = new Map(products.map((p) => [String(p._id), p]));
 
@@ -747,19 +810,16 @@ export async function getCatalogBuilderSubcategory(
 		)
 	).filter(Boolean);
 
-	const filteredVariants = shouldApplyBuilderReadyFilter(
+	const builderReadyFilter = getBuilderReadyFilter(
 		normalizedCategoryId,
 		normalizedSubcategoryId,
-	)
-		? rawVariants.filter(isBuilderReadyHexCapScrew)
+	);
+
+	const filteredVariants = builderReadyFilter
+		? rawVariants.filter(builderReadyFilter)
 		: rawVariants;
 
-	const workingVariants = shouldApplyBuilderReadyFilter(
-		normalizedCategoryId,
-		normalizedSubcategoryId,
-	)
-		? filteredVariants
-		: rawVariants;
+	const workingVariants = builderReadyFilter ? filteredVariants : rawVariants;
 
 	const omittedVariantCount = rawVariants.length - workingVariants.length;
 

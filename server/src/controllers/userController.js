@@ -1,7 +1,54 @@
 import crypto from "crypto";
 import User from "../models/User.js";
 import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { s3, S3_BUCKET, S3_PUBLIC_BASE_URL } from "../utils/s3.js";
+import {
+  s3,
+  AWS_REGION,
+  S3_BUCKET,
+  S3_PUBLIC_BASE_URL,
+  getS3ConfigStatus,
+  maskAwsAccessKeyId,
+} from "../utils/s3.js";
+
+
+function getS3UploadErrorMessage(err) {
+  const code = err?.Code || err?.name || "";
+
+  if (code === "InvalidAccessKeyId") {
+    return "Avatar storage credentials were rejected by AWS. Please update AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in the server environment.";
+  }
+
+  if (code === "SignatureDoesNotMatch") {
+    return "Avatar storage secret key does not match the AWS access key. Please update the AWS credentials in the server environment.";
+  }
+
+  if (code === "AccessDenied") {
+    return "Avatar storage credentials do not have permission to write to the configured S3 bucket.";
+  }
+
+  if (code === "NoSuchBucket") {
+    return "Avatar storage bucket was not found. Please check S3_BUCKET_NAME.";
+  }
+
+  if (code === "PermanentRedirect" || code === "AuthorizationHeaderMalformed") {
+    return "Avatar storage region appears to be incorrect. Please check AWS_REGION for the configured S3 bucket.";
+  }
+
+  return "Failed to upload avatar";
+}
+
+function logS3UploadError(err) {
+  const status = getS3ConfigStatus();
+  console.error("AVATAR UPLOAD ERROR:", {
+    message: err?.message || String(err),
+    code: err?.Code || err?.name || "Unknown",
+    httpStatusCode: err?.$metadata?.httpStatusCode,
+    requestId: err?.$metadata?.requestId || err?.RequestId,
+    bucket: status.bucket,
+    region: status.region,
+    accessKeyId: maskAwsAccessKeyId(),
+  });
+}
 
 /**
  * Keep a single “public user” serializer so every route returns the same shape
@@ -137,10 +184,19 @@ export async function uploadMyAvatar(req, res) {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
+    const s3Status = getS3ConfigStatus();
+    if (!s3Status.ready) {
+      console.error("AVATAR UPLOAD ERROR: Missing S3 environment config", s3Status);
+      return res.status(500).json({
+        error: `Avatar storage is not configured. Missing: ${s3Status.missing.join(", ")}`,
+      });
+    }
+
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Optional: delete old avatar from S3 if it exists
+    // Optional: delete old avatar from S3 if it exists.
+    // If deletion fails, continue so the user can still update their avatar.
     if (user.avatarKey) {
       try {
         await s3.send(
@@ -150,28 +206,42 @@ export async function uploadMyAvatar(req, res) {
           })
         );
       } catch (e) {
-        console.warn("Could not delete old avatar (continuing):", e?.message || e);
+        console.warn("Could not delete old avatar (continuing):", {
+          message: e?.message || String(e),
+          code: e?.Code || e?.name || "Unknown",
+          bucket: S3_BUCKET,
+          region: AWS_REGION,
+          accessKeyId: maskAwsAccessKeyId(),
+        });
       }
     }
 
-    // Create a unique key
-    const ext = req.file.mimetype.split("/")[1] || "jpg";
+    const extensionByMimeType = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/gif": "gif"
+    };
+
+    const ext = extensionByMimeType[req.file.mimetype] || "jpg";
     const nonce = crypto.randomBytes(8).toString("hex");
     const key = `avatars/${user._id}-${Date.now()}-${nonce}.${ext}`;
 
-    // Upload to S3
     await s3.send(
       new PutObjectCommand({
         Bucket: S3_BUCKET,
         Key: key,
         Body: req.file.buffer,
-        ContentType: req.file.mimetype
-        // Do NOT set ACL unless your bucket supports ACLs.
-        // ACL: "public-read",
+        ContentType: req.file.mimetype,
+        CacheControl: "public, max-age=31536000, immutable",
+        ContentDisposition: "inline"
       })
     );
 
-    const avatarUrl = `${S3_PUBLIC_BASE_URL}/${key}`;
+    const publicBaseUrl = String(S3_PUBLIC_BASE_URL || "").replace(/\/$/, "");
+    const avatarUrl = publicBaseUrl
+      ? `${publicBaseUrl}/${key}`
+      : `https://${S3_BUCKET}.s3.${AWS_REGION || "us-west-2"}.amazonaws.com/${key}`;
 
     user.avatarKey = key;
     user.avatarUrl = avatarUrl;
@@ -180,7 +250,8 @@ export async function uploadMyAvatar(req, res) {
 
     return res.json({ user: toPublicUser(user) });
   } catch (err) {
-    console.error("AVATAR UPLOAD ERROR:", err);
-    return res.status(500).json({ error: "Failed to upload avatar" });
+    logS3UploadError(err);
+    return res.status(500).json({ error: getS3UploadErrorMessage(err) });
   }
 }
+

@@ -79,6 +79,8 @@ function buildFamilyKey({ attributes = {}, enrichment = null }) {
 		parts.push(measurementSystem, washerType, diameter);
 	} else if (familyType.includes("washer")) {
 		parts.push(measurementSystem, diameter);
+	} else if (familyType.includes("nut")) {
+		parts.push(finish, grade, material, measurementSystem);
 	} else if (familyType.includes("cotter pin")) {
 		parts.push(finish, material, measurementSystem);
 	} else if (
@@ -122,6 +124,13 @@ function buildFamilyTitle({ attributes = {}, enrichment = null }) {
 		parts = [washerType, diameter, familyType].filter(Boolean);
 	} else if (familyType.toLowerCase().includes("washer")) {
 		parts = [diameter, familyType].filter(Boolean);
+	} else if (familyType.toLowerCase().includes("nut")) {
+		parts = [
+			clean(attributes.finish),
+			clean(attributes.grade),
+			clean(attributes.material),
+			familyType,
+		].filter(Boolean);
 	} else {
 		parts = [
 			clean(attributes.finish),
@@ -252,6 +261,19 @@ export default async function runProductEnrichmentPass({
 			addToOptions(family.options, "materialFinish", attrs.materialFinish);
 		} else if (familyType.includes("washer")) {
 			addToOptions(family.options, "materialFinish", attrs.materialFinish);
+		} else if (familyType.includes("nut")) {
+			addToOptions(family.options, "threadPitch", attrs.threadPitch);
+			addToOptions(
+				family.options,
+				"threadSeries",
+				attrs.threadSeries || attrs.thread_series,
+			);
+			addToOptions(family.options, "materialFinish", attrs.materialFinish);
+			addToOptions(
+				family.options,
+				"fastenerType",
+				attrs.familyType || attrs.fastenerTypeCanonical || attrs.fastenerType,
+			);
 		} else {
 			addToOptions(
 				family.options,

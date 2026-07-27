@@ -66,6 +66,10 @@ function buildVariantTitle({
 	const finishLabel = buildBoltFinishLabel(family);
 	const specString = buildBoltSpecString(family);
 
+	if (familyType.toLowerCase().includes("nut")) {
+		return buildHexNutTitle(family);
+	}
+
 	if (familyType.toLowerCase() === "hex cap screw") {
 		const parts = [
 			grade ? toDisplayCase(grade) : "",
@@ -95,6 +99,56 @@ function toDisplayCase(value = "") {
 		.replace(/\s+/g, " ")
 		.trim()
 		.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+
+function formatGradeForTitle(value = "") {
+	const grade = cleanText(value);
+	if (!grade) return "";
+	if (/^grade\s+/i.test(grade)) return toDisplayCase(grade);
+	if (/^\d+(?:\.\d+)?$/.test(grade)) return `Grade ${grade}`;
+	if (/^a\d+/i.test(grade)) return grade.toUpperCase();
+	return toDisplayCase(grade);
+}
+
+function formatNutMaterialFinishForTitle(family = {}) {
+	const material = cleanText(family.material || "");
+	const finish = cleanText(family.finish || "");
+
+	if (material.toLowerCase() === "stainless steel") return "Stainless Steel";
+	return toDisplayCase(finish || material);
+}
+
+function buildNutSpecString(family = {}) {
+	const measurementSystem = cleanText(family.measurementSystem || "").toLowerCase();
+	const diameter = cleanText(family.diameter || "");
+	const threadPitch = cleanText(family.threadPitch || "");
+
+	if (!diameter) return "";
+	if (measurementSystem === "metric") {
+		return threadPitch ? `${diameter.toUpperCase()} - ${threadPitch}` : diameter.toUpperCase();
+	}
+	return threadPitch ? `${diameter}-${threadPitch}` : diameter;
+}
+
+function buildHexNutTitle(family = {}) {
+	const grade = formatGradeForTitle(family.grade || "");
+	const materialFinish = formatNutMaterialFinishForTitle(family);
+	const specString = buildNutSpecString(family);
+
+	const familyLabel =
+		cleanText(family.familyType || "").toLowerCase() === "heavy hex nut"
+			? "Heavy Hex Nut"
+			: "Hex Nut";
+
+	const parts = [
+		grade,
+		materialFinish,
+		familyLabel,
+		specString ? `- ${specString}` : "",
+	].filter(Boolean);
+
+	return cleanText(parts.join(" ")) || familyLabel;
 }
 
 function buildBoltSpecString(family = {}) {
@@ -235,9 +289,10 @@ function buildAttributes({ family = {}, parsed = {}, product = null }) {
 			"",
 		washerType: family.washerType || parsed.washerType || parsed.type || "",
 		threadPitch: family.threadPitch || parsed.threadPitch || "",
-		length: family.familyType?.includes("washer")
-			? ""
-			: family.length || parsed.length || "",
+		length:
+			family.familyType?.includes("washer") || family.familyType?.includes("nut")
+				? ""
+				: family.length || parsed.length || "",
 		measurementSystem:
 			family.measurementSystem || parsed.measurementSystem || "",
 		material: family.material || parsed.material || "",

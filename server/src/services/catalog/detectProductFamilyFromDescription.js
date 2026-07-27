@@ -1019,6 +1019,441 @@ function inferImperialSeriesFromPitch(diameter = "", threadPitch = "") {
 	return inferImperialThreadSeries(diameter, threadPitch);
 }
 
+
+function stripLeadingZeros(value = "") {
+	const digits = String(value || "").replace(/\D/g, "");
+	if (!digits) return "";
+	return String(Number(digits));
+}
+
+const IMPERIAL_NUT_DIAMETER_BY_CODE = {
+	"003": "3/16",
+	"004": "1/4",
+	"005": "5/16",
+	"006": "3/8",
+	"007": "7/16",
+	"008": "1/2",
+	"009": "9/16",
+	"010": "5/8",
+	"012": "3/4",
+	"014": "7/8",
+	"016": "1",
+	"018": "1-1/8",
+	"020": "1-1/4",
+	"022": "1-3/8",
+	"024": "1-1/2",
+	"026": "1-5/8",
+	"028": "1-3/4",
+	"032": "2",
+};
+
+function imperialNutDiameterFromCode(code = "") {
+	const raw = String(code || "").trim().toUpperCase();
+	if (!raw) return "";
+
+	const padded = raw.replace(/\D/g, "").padStart(3, "0");
+	if (IMPERIAL_NUT_DIAMETER_BY_CODE[padded]) {
+		return IMPERIAL_NUT_DIAMETER_BY_CODE[padded];
+	}
+
+	// Some older imports may use the cap-screw diameter table rather than the
+	// three-digit nut code. Keep that as a fallback, but prefer the nut table
+	// above because HN2C006 means 3/8, not the cap-screw code family.
+	return imperialDiameterFromCode(raw) || "";
+}
+
+function metricNutDiameterFromCode(code = "") {
+	const numeric = stripLeadingZeros(code);
+	return numeric ? `M${numeric}` : "";
+}
+
+function metricThreadPitchFromCode(code = "") {
+	const digits = String(code || "").replace(/\D/g, "");
+	if (!digits) return "";
+
+	if (digits.length <= 2) return String(Number(digits));
+
+	const whole = digits.slice(0, -2).replace(/^0+/, "") || "0";
+	const decimal = digits.slice(-2).replace(/0+$/, "");
+	return decimal ? `${whole}.${decimal}` : whole;
+}
+
+function detectNutMaterial(text = "", partNum = "", parsed = {}) {
+	const rawText = String(text || "");
+	const rawPart = String(partNum || "").trim().toUpperCase();
+
+	if (rawPart.startsWith("SSHN")) return "stainless steel";
+	if (/^MMHN\d{5}SS$/i.test(rawPart)) return "stainless steel";
+	if (/\bs\/?s\b/i.test(rawText)) return "stainless steel";
+	if (/\bstainless\b/i.test(rawText)) return "stainless steel";
+	if (/[\s/(-]ss[\s/)-]?/i.test(` ${rawText} `)) return "stainless steel";
+
+	if (clean(parsed.material)) return clean(parsed.material);
+
+	const detected = detectMaterial(text);
+	return detected || "steel";
+}
+
+function isHeavyHexNutPartNumber(partNum = "") {
+	return /^HHN\d{3}[CF]?/i.test(String(partNum || "").trim());
+}
+
+function heavyHexNutDiameterFromCode(code = "") {
+	const raw = String(code || "").replace(/\D/g, "");
+	if (!raw) return "";
+
+	const direct = imperialNutDiameterFromCode(raw);
+	if (direct) return direct;
+
+	// Heavy hex nut imports have appeared as both HHN012C and HHN120C.
+	// The second pattern aligns with older cap-screw style diameter coding.
+	return imperialDiameterFromCode(raw) || "";
+}
+
+function detectNutFinish(text = "", partNum = "", material = "", parsed = {}) {
+	const rawText = String(text || "");
+	const rawPart = String(partNum || "").trim().toUpperCase();
+	const mat = normalize(material);
+
+	// Stainless signals must override older parsed finish values from previous
+	// imports, because stainless nuts should not inherit zinc/plain finishes.
+	if (mat === "stainless steel") return "";
+
+	if (isHeavyHexNutPartNumber(rawPart)) {
+		if (/\bhdg\b|\bhot\s*dip(?:ped)?\s*galvanized\b|\bhot-dip(?:ped)?\s*galvanized\b/i.test(rawText)) {
+			return "hot dip galvanized";
+		}
+		if (/\ba563\b.*\boiled\b|\boiled\b.*\ba563\b/i.test(rawText)) return "plain";
+		if (/\bplain\b|\bpl\b/i.test(rawText)) return "plain";
+		if (clean(parsed.finish)) return clean(parsed.finish);
+		return "plain";
+	}
+
+	if (clean(parsed.finish)) return clean(parsed.finish);
+
+	if (/(?:P|PL)$/i.test(rawPart)) return "plain";
+	if (/\bplain\b|\bpl\b/i.test(rawText)) return "plain";
+	if (/\bhdg\b|\bhot\s*dip(?:ped)?\s*galvanized\b|\bhot-dip(?:ped)?\s*galvanized\b/i.test(rawText)) {
+		return "hot dip galvanized";
+	}
+	if (/\bgalv\b|\bgalvanized\b/i.test(rawText)) return "galvanized";
+	if (/\byellow\s+zinc\b|\bzinc\s+yellow\b/i.test(rawText)) return "yellow zinc";
+	if (/\bzinc\b|\bzp\b/i.test(rawText)) return "zinc";
+
+	if (/^HN8[CF]\d{3}/i.test(rawPart)) return "yellow zinc";
+	return mat === "steel" ? "zinc" : "";
+}
+
+function detectNutGrade(text = "", partNum = "", material = "", measurementSystem = "", parsed = {}) {
+	const explicit = clean(parsed.grade || "");
+	const rawText = String(text || "");
+	const rawPart = String(partNum || "").trim().toUpperCase();
+	const mat = normalize(material);
+	const system = normalize(measurementSystem);
+
+	if (mat === "stainless steel") {
+		const stainlessGrade = detectStainlessGradeFromText(rawText);
+		return stainlessGrade || explicit || "304";
+	}
+
+	if (isHeavyHexNutPartNumber(rawPart)) {
+		if (/\ba563\b/i.test(rawText)) return "A563";
+		if (/\ba194\b/i.test(rawText)) return "A194";
+		return explicit || "A194";
+	}
+
+	if (explicit) return explicit;
+
+	const imperialMatch = rawPart.match(/^HN([258])([CF])(\d{3})(?:P|PL)?$/i);
+	if (imperialMatch?.[1] === "8") return "grade 8";
+	if (imperialMatch?.[1] === "5") return "grade 5";
+	if (imperialMatch?.[1] === "2") return "grade 2";
+
+	if (/\bgrade\s*8\b|\bgr\s*8\b/i.test(rawText)) return "grade 8";
+	if (/\bgrade\s*5\b|\bgr\s*5\b/i.test(rawText)) return "grade 5";
+	if (/\bgrade\s*2\b|\bgr\s*2\b/i.test(rawText)) return "grade 2";
+
+	if (system === "metric") {
+		if (/\b10\.9\b|\bclass\s*10\b/i.test(rawText)) return "10.9";
+		if (/\b8\.8\b|\bclass\s*8\b/i.test(rawText)) return "8.8";
+		return "8.8";
+	}
+
+	return mat === "steel" ? "grade 2" : "";
+}
+
+function decodeImperialHexNutPartNumber(partNum = "", text = "") {
+	const raw = String(partNum || "").trim().toUpperCase();
+	if (!raw) return null;
+
+	const stainlessMatch = raw.match(/^SSHN(\d{3})([CF])?$/i);
+	if (stainlessMatch) {
+		const [, diaCode = "", seriesCode = "C"] = stainlessMatch;
+		const diameter = imperialNutDiameterFromCode(diaCode);
+		const threadSeries = String(seriesCode || "C").toUpperCase() === "F" ? "fine" : "coarse";
+		const threadPitch =
+			threadSeries === "fine"
+				? IMPERIAL_FINE_THREAD_PITCH_BY_DIAMETER[normalizeImperialDiameterForThreadMap(diameter)] || ""
+				: inferImperialCoarsePitchFromDiameter(diameter);
+
+		return {
+			familyType: "hex nut",
+			measurementSystem: "imperial",
+			diameter,
+			threadPitch,
+			threadSeries,
+			materialHint: "stainless steel",
+			finishHint: "",
+			grade: detectStainlessGradeFromText(text) || "304",
+		};
+	}
+
+	const heavyMatch = raw.match(/^HHN(\d{3})([CF])?$/i);
+	if (heavyMatch) {
+		const [, diaCode = "", seriesCode = "C"] = heavyMatch;
+		const diameter = heavyHexNutDiameterFromCode(diaCode);
+		const threadSeries = String(seriesCode || "C").toUpperCase() === "F" ? "fine" : "coarse";
+		const threadPitch =
+			threadSeries === "fine"
+				? IMPERIAL_FINE_THREAD_PITCH_BY_DIAMETER[normalizeImperialDiameterForThreadMap(diameter)] || ""
+				: inferImperialCoarsePitchFromDiameter(diameter);
+		return {
+			familyType: "heavy hex nut",
+			measurementSystem: "imperial",
+			diameter,
+			threadPitch,
+			threadSeries,
+			materialHint: "steel",
+			finishHint: detectNutFinish(text, raw, "steel", {}),
+			grade: detectNutGrade(text, raw, "steel", "imperial", {}),
+		};
+	}
+
+	const match = raw.match(/^HN([258])([CF])(\d{3})(P|PL)?$/i);
+	if (!match) return null;
+
+	const [, gradeDigit = "", seriesCode = "C", diaCode = "", suffix = ""] = match;
+	const diameter = imperialNutDiameterFromCode(diaCode);
+	const threadSeries = seriesCode.toUpperCase() === "F" ? "fine" : "coarse";
+	const threadPitch =
+		threadSeries === "fine"
+			? IMPERIAL_FINE_THREAD_PITCH_BY_DIAMETER[normalizeImperialDiameterForThreadMap(diameter)] || ""
+			: inferImperialCoarsePitchFromDiameter(diameter);
+
+	return {
+		familyType: "hex nut",
+		measurementSystem: "imperial",
+		diameter,
+		threadPitch,
+		threadSeries,
+		materialHint: "steel",
+		finishHint: suffix ? "plain" : gradeDigit === "8" ? "yellow zinc" : "zinc",
+		grade: gradeDigit === "8" ? "grade 8" : gradeDigit === "5" ? "grade 5" : "grade 2",
+	};
+}
+
+function decodeMetricHexNutPartNumber(partNum = "", text = "") {
+	const raw = String(partNum || "").trim().toUpperCase();
+	if (!raw) return null;
+
+	const match = raw.match(/^MMHN(\d{2,3})(\d{3})(SS|P)?$/i);
+	if (!match) return null;
+
+	const [, diaCode = "", pitchCode = "", suffix = ""] = match;
+	const diameter = metricNutDiameterFromCode(diaCode);
+	const isStainless =
+		suffix === "SS" || /\bs\/?s\b/i.test(text) || /\bstainless\b/i.test(text);
+
+	return {
+		familyType: "hex nut",
+		measurementSystem: "metric",
+		diameter,
+		threadPitch: metricThreadPitchFromCode(pitchCode),
+		threadSeries: "",
+		materialHint: isStainless ? "stainless steel" : "steel",
+		finishHint: isStainless ? "" : suffix === "P" ? "plain" : "zinc",
+		grade: isStainless ? detectStainlessGradeFromText(text) || "304" : "8.8",
+	};
+}
+
+function decodeHexNutPartNumber(product = null, parsed = {}, text = "") {
+	const partNum = getPartNumberText(product, parsed).toUpperCase();
+	if (partNum.startsWith("MMHN")) return decodeMetricHexNutPartNumber(partNum, text);
+	if (partNum.startsWith("SSHN") || /^HN[258][CF]\d{3}/i.test(partNum) || /^HHN\d{3}[CF]?/i.test(partNum)) {
+		return decodeImperialHexNutPartNumber(partNum, text);
+	}
+	return null;
+}
+
+function detectHexNutDescriptionSize(text = "") {
+	const raw = String(text || "");
+
+	const metricMatch = raw.match(/\b(M\d+(?:\.\d+)?)\s*(?:x|-)?\s*(\d+(?:\.\d+)?)?\b/i);
+	if (metricMatch) {
+		const diameter = clean(metricMatch[1]).toUpperCase();
+		return {
+			diameter,
+			threadPitch: clean(metricMatch[2] || "") || metricThreadPitchFromDiameter(diameter),
+			threadSeries: "",
+			measurementSystem: "metric",
+		};
+	}
+
+	const imperialMatch = raw.match(
+		/\b((?:\d+-)?\d+\/\d+|#?\d+)\s*(?:-|x|X)\s*(\d+(?:\.\d+)?)\b/,
+	);
+	if (imperialMatch) {
+		const diameter = clean(imperialMatch[1]);
+		const threadPitch = clean(imperialMatch[2]);
+		return {
+			diameter,
+			threadPitch,
+			threadSeries: inferImperialSeriesFromPitch(diameter, threadPitch),
+			measurementSystem: "imperial",
+		};
+	}
+
+	const diameterOnlyMatch = raw.match(
+		/\b((?:\d+-)?\d+\/\d+|#?\d+)\s+(?:finished\s+)?(?:hex\s+)?nut(?:s)?\b/i,
+	);
+	if (diameterOnlyMatch) {
+		const diameter = clean(diameterOnlyMatch[1]);
+		const wantsFine = /\bfine\b|\bsae\b/i.test(raw);
+		const threadPitch = wantsFine
+			? IMPERIAL_FINE_THREAD_PITCH_BY_DIAMETER[normalizeImperialDiameterForThreadMap(diameter)] || ""
+			: inferImperialCoarsePitchFromDiameter(diameter);
+
+		return {
+			diameter,
+			threadPitch,
+			threadSeries: wantsFine ? "fine" : threadPitch ? "coarse" : "",
+			measurementSystem: "imperial",
+		};
+	}
+
+	return null;
+}
+
+function isNonHexNutText(text = "") {
+	const value = normalize(text);
+	return (
+		value.includes("lock nut") ||
+		value.includes("locknut") ||
+		value.includes("nylock") ||
+		value.includes("nylon insert") ||
+		value.includes("coupling nut") ||
+		value.includes("wing nut") ||
+		value.includes("acorn nut") ||
+		value.includes("cap nut") ||
+		value.includes("flange nut") ||
+		value.includes("castle nut") ||
+		value.includes("square nut") ||
+		value.includes("t-nut") ||
+		value.includes("tee nut") ||
+		value.includes("weld nut") ||
+		value.includes("rivet nut") ||
+		value.includes("push nut") ||
+		value.includes("assortment") ||
+		value.includes("kit") ||
+		value.includes("assembly") ||
+		value.includes(" assy")
+	);
+}
+
+function detectHexNutFamily(text = "", parsed = {}, product = null) {
+	const partNum = getPartNumberText(product, parsed).toUpperCase();
+	const decoded = decodeHexNutPartNumber(product, parsed, text);
+	const value = normalize(text);
+
+	if (!decoded && isNonHexNutText(text)) return null;
+
+	const looksLikeHexNut =
+		Boolean(decoded) ||
+		value.includes("heavy hex nut") ||
+		value.includes("heavy hex nuts") ||
+		value.includes("hex nut") ||
+		value.includes("hex nuts") ||
+		value.includes("finished hex nut") ||
+		value.includes("finish hex nut") ||
+		(/\bnut\b/i.test(text) && /\bhex\b/i.test(text));
+
+	if (!looksLikeHexNut) return null;
+
+	const descriptionSize = detectHexNutDescriptionSize(text) || {};
+	const measurementSystem =
+		decoded?.measurementSystem ||
+		descriptionSize.measurementSystem ||
+		parsed.measurementSystem ||
+		detectMeasurementSystem(text);
+
+	const diameter =
+		clean(parsed.diameter || "") ||
+		clean(decoded?.diameter || "") ||
+		clean(descriptionSize.diameter || "");
+
+	let threadPitch =
+		clean(parsed.threadPitch || "") ||
+		clean(decoded?.threadPitch || "") ||
+		clean(descriptionSize.threadPitch || "");
+
+	if (!threadPitch && normalize(measurementSystem) === "imperial" && diameter) {
+		threadPitch = inferImperialCoarsePitchFromDiameter(diameter);
+	}
+
+	const threadSeries =
+		clean(parsed.threadSeries || parsed.thread_series || "") ||
+		clean(decoded?.threadSeries || "") ||
+		clean(descriptionSize.threadSeries || "") ||
+		(normalize(measurementSystem) === "imperial"
+			? inferImperialSeriesFromPitch(diameter, threadPitch)
+			: "");
+
+	const material = detectNutMaterial(text, partNum, parsed) || decoded?.materialHint || "steel";
+	const finish =
+		clean(decoded?.finishHint || "") ||
+		detectNutFinish(text, partNum, material, parsed);
+
+	let normalizedMF = normalizeMaterialAndFinish({ material, finish });
+	if ((decoded?.familyType || "") === "heavy hex nut" && normalize(finish) === "hot dip galvanized") {
+		normalizedMF = {
+			...normalizedMF,
+			finish: "hot dip galvanized",
+			displayFinish: "hot dip galvanized",
+			materialFinish: `${normalizedMF.material || material} / hot dip galvanized`,
+		};
+	}
+	const grade = detectNutGrade(text, partNum, normalizedMF.material, measurementSystem, parsed) || clean(decoded?.grade || "");
+
+	const size =
+		clean(parsed.size || "") ||
+		(diameter && threadPitch ? `${diameter}-${threadPitch}` : diameter);
+
+	const familyType = decoded?.familyType || "hex nut";
+
+	return {
+		familyType,
+		category: "nuts",
+		subcategory: "hex nuts",
+		fastenerType: familyType,
+		fastenerTypeCanonical: familyType,
+		size,
+		diameter,
+		length: "",
+		threadPitch,
+		threadSeries,
+		threadCoverage: "",
+		measurementSystem,
+		material: normalizedMF.material,
+		finish: normalizedMF.finish,
+		displayMaterial: normalizedMF.displayMaterial,
+		displayFinish: normalizedMF.displayFinish,
+		materialFinish: normalizedMF.materialFinish,
+		grade,
+		headType: "",
+		driveType: "",
+	};
+}
+
 function detectImperialShorthandCapScrew(text = "") {
 	const raw = String(text || "");
 
@@ -2179,6 +2614,8 @@ function buildFamilyIdentity(detected = {}) {
 		familyKeyParts.push(measurementSystem, washerType, diameter);
 	} else if (familyType.includes("washer")) {
 		familyKeyParts.push(measurementSystem, diameter);
+	} else if (familyType.includes("nut")) {
+		familyKeyParts.push(finish, grade, material, measurementSystem);
 	} else if (familyType.includes("cotter pin")) {
 		familyKeyParts.push(finish, material, measurementSystem);
 	} else if (
@@ -2255,6 +2692,7 @@ export default function detectProductFamilyFromDescription({
 	const detected =
 		detectBoltLikeFamily(sourceText, parsed, product) ||
 		detectWasherFamily(sourceText, parsed) ||
+		detectHexNutFamily(sourceText, parsed, product) ||
 		detectCotterPinFamily(sourceText, parsed) ||
 		detectAbrasiveFamily(sourceText, parsed) ||
 		detectAuvecoFamily(sourceText, parsed, product) ||

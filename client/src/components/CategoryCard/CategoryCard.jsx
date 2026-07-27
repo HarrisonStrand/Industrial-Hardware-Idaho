@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext.jsx";
 import "./CategoryCard.css";
 
 const CATEGORY_FALLBACK_IMAGE =
@@ -19,7 +20,9 @@ export default function CategoryCard({
 	isSubcategory = false,
 	isGroup = false,
 }) {
-	const locked = isLockedCategory(category);
+	const { isAdmin, loadingAuth } = useAuth();
+	const adminCanOpenLockedCategory = !loadingAuth && isAdmin;
+	const locked = isLockedCategory(category) && !adminCanOpenLockedCategory;
 
 	let linkTo = category.directPath || category.path || category.href || "";
 

@@ -43,6 +43,10 @@ function isAllowedHexCapFamily(fastenerType = "") {
 	);
 }
 
+function isAllowedHexNutFamily(fastenerType = "") {
+	return ["hex nut", "heavy hex nut"].includes(normalize(fastenerType));
+}
+
 function pushIssue(
 	issues,
 	{ code, severity = "warning", field = "", message = "" },
@@ -344,6 +348,10 @@ export async function evaluateProductPublishReadiness(productId, options = {}) {
 		normalize(category) === "bolts" &&
 		normalize(subcategory) === "hex cap screws";
 
+	const isHexNut =
+		normalize(category) === "nuts" &&
+		normalize(subcategory) === "hex nuts";
+
 	if (normalize(measurementSystem) === "imperial" && !threadSeries) {
 		missingRecommendedAttributes.push("threadSeries");
 	}
@@ -370,6 +378,27 @@ export async function evaluateProductPublishReadiness(productId, options = {}) {
 				severity: "error",
 				field: "attributes.fastenerTypeCanonical",
 				message: "Fastener type does not match hex cap screw builder rules.",
+			});
+		}
+	} else if (isHexNut) {
+		if (!diameter) missingRequiredAttributes.push("diameter");
+		if (!threadPitch && !size) missingRequiredAttributes.push("threadPitch");
+		if (!fastenerType) missingRequiredAttributes.push("fastenerType");
+
+		if (!measurementSystem)
+			missingRecommendedAttributes.push("measurementSystem");
+		if (!material) missingRecommendedAttributes.push("material");
+		if (!grade) missingRecommendedAttributes.push("grade");
+
+		const requiresFinish = !isNonCoatedBaseMaterial(material);
+		if (requiresFinish && !finish) missingRecommendedAttributes.push("finish");
+
+		if (fastenerType && !isAllowedHexNutFamily(fastenerType)) {
+			pushIssue(issues, {
+				code: "FASTENER_TYPE_MISMATCH",
+				severity: "error",
+				field: "attributes.fastenerTypeCanonical",
+				message: "Fastener type does not match hex nut builder rules.",
 			});
 		}
 	} else {
