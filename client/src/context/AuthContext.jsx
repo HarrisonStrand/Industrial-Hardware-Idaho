@@ -87,33 +87,32 @@ export function AuthProvider({ children }) {
   );
 
   /**
-   * ✅ Logout with optional redirect.
-   * We redirect FIRST (window.location.replace) to get off protected routes immediately,
-   * then clear local user state.
+   * Logout in a deterministic order:
+   * 1. Clear the React user immediately so the header resets on the first click.
+   * 2. Wait for the API to clear the authentication cookie.
+   * 3. Redirect only after the server request has completed.
    */
   const logout = useCallback(async ({ redirectTo = "/signed-out" } = {}) => {
     setLoggingOut(true);
-
-    // 🚑 Get off protected routes immediately (no race with ProtectedRoute)
-    try {
-      const path = window.location?.pathname || "";
-      if (redirectTo && path !== redirectTo) {
-        window.location.replace(redirectTo);
-      }
-    } catch {
-      // ignore
-    }
+    setUser(null);
 
     try {
-      await fetch("/api/auth/logout", {
+      await apiFetch("/api/auth/logout", {
         method: "POST",
-        credentials: "include"
       });
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Logout request failed:", err);
     } finally {
-      setUser(null);
       setLoggingOut(false);
+
+      try {
+        const path = window.location?.pathname || "";
+        if (redirectTo && path !== redirectTo) {
+          window.location.replace(redirectTo);
+        }
+      } catch {
+        // ignore navigation errors
+      }
     }
   }, []);
 
