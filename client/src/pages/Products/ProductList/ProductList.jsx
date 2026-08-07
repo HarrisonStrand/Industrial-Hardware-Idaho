@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import categoriesUI from "../../../data/categories.json";
 import CategoryCard from "../../../components/CategoryCard/CategoryCard.jsx";
 import { fetchGlobalSearch } from "../../../services/searchApi.js";
+import { fetchCatalogLayouts } from "../../../services/catalogLayoutApi.js";
 import "./ProductList.css";
 import FeatureBanner from "../../../components/FeatureBanner/FeatureBanner.jsx";
 import ContactBanner from "../../../components/ContactBanner/ContactBanner.jsx";
@@ -12,6 +13,15 @@ function formatTitle(value = "") {
 	return String(value)
 		.replace(/-/g, " ")
 		.replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function normalizeCatalogId(value = "") {
+	return String(value || "")
+		.trim()
+		.toLowerCase()
+		.replace(/&/g, "and")
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "");
 }
 
 function normalizeCategoryCardFromBuilder(item = {}) {
@@ -77,12 +87,33 @@ export default function ProductList() {
 	});
 	const [loadingSearch, setLoadingSearch] = useState(false);
 	const [searchError, setSearchError] = useState("");
+	const [catalogLayouts, setCatalogLayouts] = useState([]);
 
 	useEffect(() => {
 		const p = new URLSearchParams(location.search);
 		setQuery((p.get("search") || "").trim());
 		setCategory((p.get("category") || "").trim().toLowerCase());
 	}, [location.search]);
+
+	useEffect(() => {
+		let alive = true;
+
+		async function loadCatalogLayouts() {
+			try {
+				const data = await fetchCatalogLayouts();
+				if (alive) {
+					setCatalogLayouts(Array.isArray(data?.items) ? data.items : []);
+				}
+			} catch (error) {
+				console.error("Failed to load catalog layout visibility:", error);
+			}
+		}
+
+		loadCatalogLayouts();
+		return () => {
+			alive = false;
+		};
+	}, []);
 
 	useEffect(() => {
 		if (!query || query.length < 2) {
@@ -128,38 +159,75 @@ export default function ProductList() {
 		return () => controller.abort();
 	}, [query]);
 
+	const catalogLayoutMap = useMemo(() => {
+		return new Map(
+			catalogLayouts.map((item) => [
+				`${String(item.categoryId || "").toLowerCase()}/${String(
+					item.subcategoryId || "",
+				).toLowerCase()}`,
+				item,
+			]),
+		);
+	}, [catalogLayouts]);
+
+	const displayCategories = useMemo(() => {
+		return categoriesUI.categories.map((cat) => ({
+			...cat,
+			subcategories: (cat.subcategories || []).map((sub) => {
+				const setting = catalogLayoutMap.get(
+					`${String(cat.id || "").toLowerCase()}/${String(
+						sub.id || "",
+					).toLowerCase()}`,
+				);
+
+				if (!setting) return sub;
+
+				return {
+					...sub,
+					locked:
+						setting.isVisible === false || setting.effectiveMode === "hidden",
+					catalogMode: setting.effectiveMode,
+				};
+			}),
+		}));
+	}, [catalogLayoutMap]);
+
 	const selectedCategory = useMemo(() => {
 		if (!category) return null;
 
 		return (
-			categoriesUI.categories.find(
+			displayCategories.find(
 				(cat) => String(cat.id).toLowerCase() === category,
 			) || null
 		);
-	}, [category]);
+	}, [category, displayCategories]);
 
 	const localCategorySearchResults = useMemo(() => {
 		if (!query) return [];
 
 		const q = query.toLowerCase();
 
-		return categoriesUI.categories
+		return displayCategories
 			.map((cat) => {
 				const catName = String(cat.name || "").toLowerCase();
 				const catId = String(cat.id || "").toLowerCase();
 
 				const categoryMatches = catName.includes(q) || catId.includes(q);
 
-				const matchingSubs = (cat.subcategories || []).filter((sub) => {
+				const visibleSubcategories = (cat.subcategories || []).filter(
+					(sub) => !sub.locked,
+				);
+
+				const matchingSubs = visibleSubcategories.filter((sub) => {
 					const subName = String(sub.name || "").toLowerCase();
 					const subId = String(sub.id || "").toLowerCase();
 					return subName.includes(q) || subId.includes(q);
 				});
 
-				if (categoryMatches) {
+				if (categoryMatches && visibleSubcategories.length) {
 					return {
 						...cat,
-						subcategories: cat.subcategories || [],
+						subcategories: visibleSubcategories,
 					};
 				}
 
@@ -173,10 +241,34 @@ export default function ProductList() {
 				return null;
 			})
 			.filter(Boolean);
-	}, [query]);
+	}, [query, displayCategories]);
+
+	const visibleProductResults = useMemo(() => {
+		return globalResults.products.filter((item) => {
+			const categoryId = normalizeCatalogId(item.category);
+			const subcategoryId = normalizeCatalogId(item.subcategory);
+			if (!categoryId || !subcategoryId) return true;
+
+			const setting = catalogLayoutMap.get(`${categoryId}/${subcategoryId}`);
+			return (
+				!setting ||
+				(setting.isVisible !== false &&
+					["builder", "product-grid"].includes(setting.effectiveMode))
+			);
+		});
+	}, [globalResults.products, catalogLayoutMap]);
 
 	const builderResults = useMemo(() => {
-		if (globalResults.builders.length > 0) return globalResults.builders;
+		if (globalResults.builders.length > 0) {
+			return globalResults.builders.filter((item) => {
+				const setting = catalogLayoutMap.get(
+					`${String(item.categoryId || "").toLowerCase()}/${String(
+						item.subcategoryId || "",
+					).toLowerCase()}`,
+				);
+				return !setting || (setting.isVisible !== false && setting.effectiveMode !== "hidden");
+			});
+		}
 
 		return localCategorySearchResults.flatMap((cat) =>
 			(cat.subcategories || []).map((sub) => ({
@@ -189,7 +281,7 @@ export default function ProductList() {
 				path: `/products/${cat.id}/${sub.id}`,
 			})),
 		);
-	}, [globalResults.builders, localCategorySearchResults]);
+	}, [globalResults.builders, localCategorySearchResults, catalogLayoutMap]);
 
 	const showUICategories = !query && !category;
 	const showSubcategories = !query && !!category;
@@ -205,7 +297,7 @@ export default function ProductList() {
 						</h4>
 
 						<div className='row g-4 justify-content-evenly'>
-							{categoriesUI.categories.map((cat) => (
+							{displayCategories.map((cat) => (
 								<div key={cat.id} className='col-sm-6 col-md-6 col-lg-3'>
 									<CategoryCard category={cat} />
 								</div>
@@ -254,18 +346,18 @@ export default function ProductList() {
 							<div className='alert alert-warning rounded-4'>{searchError}</div>
 						)}
 
-						{!loadingSearch && !searchError && globalResults.products.length > 0 && (
+						{!loadingSearch && !searchError && visibleProductResults.length > 0 && (
 							<div className='mb-5'>
 								<div className='d-flex justify-content-between align-items-end gap-3 mb-3'>
 									<h4 className='fw-bold text-main mb-0'>Matching Products</h4>
 									<div className='small text-muted'>
-										{globalResults.products.length} result
-										{globalResults.products.length === 1 ? "" : "s"}
+										{visibleProductResults.length} result
+										{visibleProductResults.length === 1 ? "" : "s"}
 									</div>
 								</div>
 
 								<div className='row g-4'>
-									{globalResults.products.map((item) => (
+									{visibleProductResults.map((item) => (
 										<div key={item.productId} className='col-sm-6 col-lg-4 col-xxl-3'>
 											<ProductSearchCard item={item} />
 										</div>
@@ -276,7 +368,7 @@ export default function ProductList() {
 
 						{!loadingSearch && !searchError && builderResults.length > 0 && (
 							<div className='mb-5'>
-								<h4 className='fw-bold text-main'>Matching Builders / Categories</h4>
+								<h4 className='fw-bold text-main'>Matching Product Sections / Categories</h4>
 
 								<div className='row g-4 mt-3 mb-4'>
 									{builderResults.map((item) => (
@@ -290,7 +382,7 @@ export default function ProductList() {
 
 						{!loadingSearch &&
 							!searchError &&
-							globalResults.products.length === 0 &&
+							visibleProductResults.length === 0 &&
 							builderResults.length === 0 && (
 								<p className='text-muted text-center'>
 									No products or categories match your search.

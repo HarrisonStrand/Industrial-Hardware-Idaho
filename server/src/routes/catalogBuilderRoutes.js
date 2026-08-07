@@ -1,14 +1,41 @@
 import express from "express";
 import User from "../models/User.js";
-import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { optionalAuth } from "../middleware/auth.js";
 import getCatalogBuilderSubcategory from "../services/catalog/getCatalogBuilderSubcategory.js";
 import { buildPricingContextFromUser } from "../utils/resolveProductPrice.js";
+import {
+  getCatalogGlobalSetting,
+  getCatalogSubcategorySetting,
+  resolveEffectiveCatalogMode,
+} from "../services/catalog/catalogLayoutDefaults.js";
 
 const router = express.Router();
 
-router.get("/:categoryId/:subcategoryId", requireAuth, requireAdmin, async (req, res) => {
+router.get("/:categoryId/:subcategoryId", optionalAuth, async (req, res) => {
   try {
     const { categoryId, subcategoryId } = req.params;
+    const wantsUnpublishedPreview = req.query?.includeUnpublished === "true";
+    const isAdmin = req.user?.role === "admin";
+
+    const [layoutSetting, globalSetting] = await Promise.all([
+      getCatalogSubcategorySetting(categoryId, subcategoryId),
+      getCatalogGlobalSetting(),
+    ]);
+
+    const effectiveMode = layoutSetting
+      ? resolveEffectiveCatalogMode(layoutSetting, globalSetting)
+      : "hidden";
+
+    if (
+      !isAdmin &&
+      (!layoutSetting || layoutSetting.isVisible === false || effectiveMode !== "builder")
+    ) {
+      return res.status(404).json({ message: "Product builder is not available" });
+    }
+
+    if (wantsUnpublishedPreview && !isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
 
     let pricingContext = {
       approvedType: "RETAIL",
@@ -27,8 +54,8 @@ router.get("/:categoryId/:subcategoryId", requireAuth, requireAdmin, async (req,
       subcategoryId,
       {
         pricingContext,
-        includeUnpublished: true,
-        isAdmin: true,
+        includeUnpublished: wantsUnpublishedPreview && isAdmin,
+        isAdmin,
       }
     );
 

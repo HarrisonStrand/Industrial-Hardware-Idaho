@@ -7,12 +7,26 @@ const router = express.Router();
 // GET /api/catalog
 router.get("/", async (req, res) => {
   try {
-    const { category, subcategory, search, limit, skip } = req.query;
+    const {
+      category,
+      subcategory,
+      search,
+      productType,
+      grade,
+      materialFinish,
+      measurementSystem,
+      limit,
+      skip,
+    } = req.query;
 
     const result = await getPublishedCatalog({
       category,
       subcategory,
       search,
+      productType,
+      grade,
+      materialFinish,
+      measurementSystem,
       limit,
       skip,
     });

@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { BrandContext } from "../../context/BrandContext";
 import ContactBanner from "../../components/ContactBanner/ContactBanner";
 import FAQAccordion from "../../components/FAQ/FAQAccordion.jsx";
+import { Link } from "react-router-dom";
 import "../../components/FAQ/FAQAccordion.css";
 import "./Legal.css";
 
@@ -32,7 +33,7 @@ export default function ShippingInformation() {
 									from <span className='fw-semibold'>{BRAND}</span>.
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>
 									Processing time
 								</h5>
 								<p className='mb-3'>
@@ -41,7 +42,7 @@ export default function ShippingInformation() {
 									orders may require additional handling time.
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4'>Backorders</h5>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>Backorders</h5>
 								<p className='mb-2'>
 									If an item is out of stock, it may be backordered.{" "}
 									<span className='fw-semibold'>
@@ -55,7 +56,7 @@ export default function ShippingInformation() {
 									may apply).
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>
 									Delivery methods
 								</h5>
 								<ul className='legal-list'>
@@ -85,7 +86,7 @@ export default function ShippingInformation() {
 
 								{(ADDR1 || CITY) && (
 									<>
-										<h5 className='legal-title text-uppercase mt-4'>
+										<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>
 											Local pickup
 										</h5>
 										<p className='mb-2'>
@@ -114,13 +115,13 @@ export default function ShippingInformation() {
 									</>
 								)}
 
-								<h5 className='legal-title text-uppercase mt-4'>Tracking</h5>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>Tracking</h5>
 								<p className='mb-3'>
 									When your order ships, tracking details may be provided by
 									email (if an email was supplied at checkout).
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>
 									Delivery estimates
 								</h5>
 								<p className='mb-3'>
@@ -128,19 +129,20 @@ export default function ShippingInformation() {
 									delays, weather, or other factors outside our control.
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4'>Questions?</h5>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>Questions?</h5>
 								<p className='mb-0'>
 									For shipping questions, contact us
 									{EMAIL ? (
 										<>
 											{" "}
-											at <span className='fw-semibold'>{EMAIL}</span>
+											at 
+											<Link to={`mailto:${EMAIL}`} className="text-decoration-none text-secondary"><span className='fw-semibold'> {EMAIL}</span></Link>
 										</>
 									) : null}
 									{PHONE ? (
 										<>
 											{" "}
-											or <span className='fw-semibold'>{PHONE}</span>
+											or <Link to={`tel:${PHONE}`} className="text-decoration-none text-secondary"><span className='fw-semibold'> {PHONE}</span></Link>
 										</>
 									) : null}
 									.

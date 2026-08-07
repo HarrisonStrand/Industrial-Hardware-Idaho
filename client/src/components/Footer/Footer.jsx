@@ -11,7 +11,10 @@ export default function Footer() {
 	const sections = footerData(brand);
 	const currentYear = new Date().getFullYear();
 	const [newsletterEmail, setNewsletterEmail] = useState("");
-	const [newsletterStatus, setNewsletterStatus] = useState({ type: "", message: "" });
+	const [newsletterStatus, setNewsletterStatus] = useState({
+		type: "",
+		message: "",
+	});
 	const [newsletterSubmitting, setNewsletterSubmitting] = useState(false);
 
 	async function handleNewsletterSubmit(event) {
@@ -19,7 +22,10 @@ export default function Footer() {
 		const email = newsletterEmail.trim();
 
 		if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-			setNewsletterStatus({ type: "error", message: "Enter a valid email address." });
+			setNewsletterStatus({
+				type: "error",
+				message: "Enter a valid email address.",
+			});
 			return;
 		}
 
@@ -32,7 +38,10 @@ export default function Footer() {
 				body: JSON.stringify({ email, source: "footer" }),
 			});
 			setNewsletterEmail("");
-			setNewsletterStatus({ type: "success", message: "Thanks — you’re on the list." });
+			setNewsletterStatus({
+				type: "success",
+				message: "Thanks — you’re on the list.",
+			});
 		} catch (error) {
 			setNewsletterStatus({
 				type: "error",
@@ -97,8 +106,8 @@ export default function Footer() {
 					const section = sections[key];
 					return (
 						<div
-						key={key}
-						className={`order-1 order-lg-0 col-sm col-md col-lg-3 px-3 pb-3 ${section.textAlign}`}>
+							key={key}
+							className={`order-1 order-lg-0 col-sm col-md col-lg-3 px-3 pb-3 ${section.textAlign}`}>
 							<div className='section-header fw-bold text-main-light mb-2'>
 								{section.title}
 							</div>
@@ -107,7 +116,9 @@ export default function Footer() {
 								<div key={i} className='section-item mb-2 mb-md-4'>
 									<Link
 										to={item.path}
-										onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+										onClick={() =>
+											window.scrollTo({ top: 0, behavior: "smooth" })
+										}
 										className='text-decoration-none fw-light text-main-light'>
 										{item.text}
 									</Link>
@@ -117,56 +128,69 @@ export default function Footer() {
 					);
 				})}
 
-			{/* Newsletter */}
-			{sections.section1.showNewsletter && (
-				<div className='order-0 row justify-content-between px-2'>
-					<div className='newsletter-container col-12 col-sm-8 col-md col-lg-3 mt-0 mb-3 pe-1'>
-						<label htmlFor='newsletter-bar' className='text-main-light ps-2'>
-							Join Our Newsletter
-						</label>
-						<form className='d-flex position-relative w-100' onSubmit={handleNewsletterSubmit}>
-							<input
-								id='newsletter-bar'
-								type='email'
-								className='newsletter-bar d-flex w-100 fw-lighter ps-3 pe-5 align-items-center'
-								placeholder='Email Address'
-								value={newsletterEmail}
-								onChange={(event) => setNewsletterEmail(event.target.value)}
-								disabled={newsletterSubmitting}
-							/>
-							<button
-								type='submit'
-								disabled={newsletterSubmitting}
-								aria-label='Join newsletter'
-								className='newsletter-arrow btn position-absolute end-0 top-0 pt-0 pe-1 me-1 border-0 bg-transparent'>
-								<i className={`bi ${newsletterSubmitting ? "bi-hourglass-split" : "bi-arrow-right"} fs-5`}></i>
-							</button>
-						</form>
-						{newsletterStatus.message ? (
-							<div className={`newsletter-status small ps-2 pt-1 ${newsletterStatus.type === "error" ? "newsletter-status-error" : "newsletter-status-success"}`}>
-								{newsletterStatus.message}
+				{/* Newsletter */}
+				{sections.section1.showNewsletter && (
+					<div className='order-0 row justify-content-between px-2'>
+						<div className='newsletter-container col-12 col-sm-8 col-md col-lg-3 mt-0 mb-3 pe-1'>
+							<label htmlFor='newsletter-bar' className='text-main-light ps-2'>
+								Join Our Newsletter
+							</label>
+							<form
+								className='d-flex position-relative w-100'
+								onSubmit={handleNewsletterSubmit}>
+								<input
+									id='newsletter-bar'
+									type='email'
+									className='newsletter-bar d-flex w-100 fw-lighter ps-3 pe-5 align-items-center'
+									placeholder='Email Address'
+									value={newsletterEmail}
+									onChange={(event) => setNewsletterEmail(event.target.value)}
+									disabled={newsletterSubmitting}
+								/>
+								<button
+									type='submit'
+									disabled={newsletterSubmitting}
+									aria-label='Join newsletter'
+									className='newsletter-arrow btn position-absolute end-0 top-0 pt-0 pe-1 me-1 border-0 bg-transparent'>
+									<i
+										className={`bi ${newsletterSubmitting ? "bi-hourglass-split" : "bi-arrow-right"} fs-5`}></i>
+								</button>
+							</form>
+							{newsletterStatus.message ? (
+								<div
+									className={`newsletter-status small ps-2 pt-1 ${newsletterStatus.type === "error" ? "newsletter-status-error" : "newsletter-status-success"}`}>
+									{newsletterStatus.message}
+								</div>
+							) : null}
+						</div>
+						<div className='col-12 col-sm-2 col-md col-md-3 mt-0 mb-3 text-center align-self-end'>
+							<div className='small copyright-text'>
+								All rights reserved &#xA9; Wollum Ventures LLC {currentYear}
 							</div>
-						) : null}
+							<div className='site-by small copyright-text text-center'>
+								Site by{" "}
+								<Link
+									to={`mailto:${brand.STRANDemail}`}
+									className='text-decoration-none copyright-text'>
+									<span>Strand Creations</span>
+								</Link>
+							</div>
+						</div>
+						<div className='social-icon-container col-12 col-sm-2 align-items-center d-flex justify-content-center justify-content-sm-end text-end px-0 pb-3 pb-sm-0 pt-0 pt-sm-3'>
+							<div className='social-icon'>
+								<i className='bi bi-facebook fs-2 text-main-light ps-3'></i>
+							</div>
+							<div className='social-icon'>
+								<i className='bi bi-instagram fs-2 text-main-light ps-3'></i>
+							</div>
+							<div className='social-icon'>
+								<i className='bi bi-twitter fs-2 text-main-light ps-3'></i>
+							</div>
+						</div>
+
+						<div className='divider-line w-100 d-flex d-lg-none mb-4'></div>
 					</div>
-					<div className="col-12 col-sm-2 col-md col-md-3 mt-0 mb-3 text-center align-self-end">
-						<div className="small copyright-text">
-							All rights reserved &#xA9; Wollum Ventures LLC {currentYear}
-						</div>
-					</div>
-					<div className="social-icon-container col-12 col-sm-2 align-items-center d-flex justify-content-center justify-content-sm-end text-end px-0 pb-3 pb-sm-0 pt-0 pt-sm-3">
-						<div className="social-icon">
-							<i className="bi bi-facebook fs-2 text-main-light ps-3"></i>
-						</div>
-						<div className="social-icon">
-							<i className="bi bi-instagram fs-2 text-main-light ps-3"></i>
-						</div>
-						<div className="social-icon">
-							<i className="bi bi-twitter fs-2 text-main-light ps-3"></i>
-						</div>
-					</div>
-					<div className="divider-line w-100 d-flex d-lg-none mb-4"></div>
-				</div>
-			)}
+				)}
 			</div>
 		</footer>
 	);

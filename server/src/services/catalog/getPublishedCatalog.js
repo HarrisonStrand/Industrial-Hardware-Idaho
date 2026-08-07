@@ -2,14 +2,119 @@ import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
 import VendorOffering from "../../models/VendorOffering.js";
 
+function escapeRegex(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function catalogValueRegex(value = "") {
+  const normalized = String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ");
+
+  if (normalized === "bits drivers" || normalized === "bits and drivers") {
+    return /^bits\s*(?:(?:&|and)\s*)?drivers$/i;
+  }
+
+  return new RegExp(`^${escapeRegex(normalized)}$`, "i");
+}
+
+function clean(value = "") {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalize(value = "") {
+  return clean(value).toLowerCase();
+}
+
+function firstAttribute(attributes = {}, keys = []) {
+  for (const key of keys) {
+    const value = clean(attributes?.[key] || "");
+    if (value) return value;
+  }
+  return "";
+}
+
+function getProductType(enrichment = {}) {
+  return firstAttribute(enrichment?.attributes || {}, [
+    "productType",
+    "familyType",
+    "fastenerTypeCanonical",
+    "fastenerType",
+    "washerType",
+  ]);
+}
+
+function getMaterialFinish(enrichment = {}) {
+  const attrs = enrichment?.attributes || {};
+  const direct = firstAttribute(attrs, [
+    "materialFinish",
+    "displayMaterial",
+    "displayFinish",
+  ]);
+
+  if (direct) return direct;
+
+  return [clean(attrs.material), clean(attrs.finish)].filter(Boolean).join(" / ");
+}
+
+function getFacetValues(enrichment = {}) {
+  const attrs = enrichment?.attributes || {};
+
+  return {
+    productType: getProductType(enrichment),
+    grade: clean(attrs.grade || ""),
+    materialFinish: getMaterialFinish(enrichment),
+    measurementSystem: clean(attrs.measurementSystem || ""),
+  };
+}
+
+function matchesFacet(enrichment, key, selectedValue) {
+  if (!selectedValue) return true;
+  const values = getFacetValues(enrichment);
+  return normalize(values[key]) === normalize(selectedValue);
+}
+
+function sortedUnique(values = []) {
+  return [...new Set(values.map(clean).filter(Boolean))].sort((a, b) =>
+    String(a).localeCompare(String(b), undefined, {
+      numeric: true,
+      sensitivity: "base",
+    })
+  );
+}
+
+function buildFacets(enrichments = []) {
+  const values = enrichments.map(getFacetValues);
+
+  return {
+    productTypes: sortedUnique(values.map((item) => item.productType)),
+    grades: sortedUnique(values.map((item) => item.grade)),
+    materialFinishes: sortedUnique(values.map((item) => item.materialFinish)),
+    measurementSystems: sortedUnique(
+      values.map((item) => item.measurementSystem)
+    ),
+  };
+}
+
 export async function getPublishedCatalog(filters = {}) {
   const {
     category,
     subcategory,
     search,
-    limit = 50,
+    productType,
+    grade,
+    materialFinish,
+    measurementSystem,
+    limit = 24,
     skip = 0,
   } = filters;
+
+  const safeLimit = Math.min(100, Math.max(1, Number(limit) || 24));
+  const safeSkip = Math.max(0, Number(skip) || 0);
 
   const productQuery = {
     isPublished: true,
@@ -20,53 +125,93 @@ export async function getPublishedCatalog(filters = {}) {
   const enrichmentQuery = {};
 
   if (category) {
-    enrichmentQuery.category = category;
+    enrichmentQuery.category = catalogValueRegex(category);
   }
 
   if (subcategory) {
-    enrichmentQuery.subcategory = subcategory;
+    enrichmentQuery.subcategory = catalogValueRegex(subcategory);
   }
 
   if (search && search.trim()) {
-    const regex = new RegExp(search.trim(), "i");
+    const regex = new RegExp(escapeRegex(search.trim()), "i");
     enrichmentQuery.$or = [
       { title: regex },
       { shortTitle: regex },
       { description: regex },
+      { shortDescription: regex },
       { tags: regex },
       { "seo.keywords": regex },
+      { "attributes.fishbowlPartNum": regex },
+      { "attributes.sku": regex },
     ];
   }
 
-  const enrichments = await ProductEnrichment.find(enrichmentQuery)
-    .sort({ "merchandising.sortOrder": 1, createdAt: -1 })
-    .skip(Number(skip))
-    .limit(Number(limit))
+  // Fetch matching enrichment records first, then apply the public Product
+  // visibility rule before pagination. This prevents pages from appearing
+  // partially empty when an enrichment belongs to an unpublished product.
+  const candidateEnrichments = await ProductEnrichment.find(enrichmentQuery)
+    .sort({ "merchandising.sortOrder": 1, title: 1, createdAt: -1 })
     .lean();
 
-  if (!enrichments.length) {
+  if (!candidateEnrichments.length) {
     return {
       items: [],
       total: 0,
+      limit: safeLimit,
+      skip: safeSkip,
+      page: 1,
+      totalPages: 0,
+      facets: {
+        productTypes: [],
+        grades: [],
+        materialFinishes: [],
+        measurementSystems: [],
+      },
     };
   }
 
-  const productIds = enrichments.map((e) => e.productId);
+  const candidateProductIds = candidateEnrichments.map((item) => item.productId);
 
-  const products = await Product.find({
+  const publishedProducts = await Product.find({
     ...productQuery,
-    _id: { $in: productIds },
+    _id: { $in: candidateProductIds },
   }).lean();
 
-  const productMap = new Map(products.map((p) => [String(p._id), p]));
+  const productMap = new Map(
+    publishedProducts.map((product) => [String(product._id), product])
+  );
 
-  const publishedProductIds = products.map((p) => p._id);
+  const publicEnrichments = candidateEnrichments.filter((enrichment) =>
+    productMap.has(String(enrichment.productId))
+  );
 
-  const offerings = await VendorOffering.find({
-    productId: { $in: publishedProductIds },
-    isActive: true,
-    approvalStatus: "approved",
-  }).lean();
+  // Facets are calculated before the selected facet filters are applied so
+  // customers can switch between every available type in the subcategory.
+  const facets = buildFacets(publicEnrichments);
+
+  const filteredEnrichments = publicEnrichments.filter((enrichment) => {
+    return (
+      matchesFacet(enrichment, "productType", productType) &&
+      matchesFacet(enrichment, "grade", grade) &&
+      matchesFacet(enrichment, "materialFinish", materialFinish) &&
+      matchesFacet(enrichment, "measurementSystem", measurementSystem)
+    );
+  });
+
+  const total = filteredEnrichments.length;
+  const pageEnrichments = filteredEnrichments.slice(
+    safeSkip,
+    safeSkip + safeLimit
+  );
+  const pageProductIds = pageEnrichments.map((item) => item.productId);
+
+  const offerings = pageProductIds.length
+    ? await VendorOffering.find({
+        productId: { $in: pageProductIds },
+        isActive: true,
+        approvalStatus: "approved",
+      }).lean()
+    : [];
 
   const offeringsByProductId = new Map();
 
@@ -78,7 +223,7 @@ export async function getPublishedCatalog(filters = {}) {
     offeringsByProductId.get(key).push(offering);
   }
 
-  const items = enrichments
+  const items = pageEnrichments
     .map((enrichment) => {
       const product = productMap.get(String(enrichment.productId));
       if (!product) return null;
@@ -87,7 +232,11 @@ export async function getPublishedCatalog(filters = {}) {
         offeringsByProductId.get(String(enrichment.productId)) || [];
 
       const preferredOffering =
-        productOfferings.find((o) => o.isPreferred) || productOfferings[0] || null;
+        productOfferings.find((offering) => offering.isPreferred) ||
+        productOfferings[0] ||
+        null;
+
+      const facetValues = getFacetValues(enrichment);
 
       return {
         productId: product._id,
@@ -102,25 +251,36 @@ export async function getPublishedCatalog(filters = {}) {
         subcategory: enrichment.subcategory,
         tags: enrichment.tags || [],
         image:
-          enrichment.images?.find((img) => img.isPrimary)?.url ||
+          enrichment.images?.find((image) => image.isPrimary)?.url ||
           enrichment.images?.[0]?.url ||
           "",
-        price: preferredOffering?.pricing?.price ?? product?.pricing?.basePrice ?? null,
+        price:
+          preferredOffering?.pricing?.price ??
+          product?.pricing?.basePrice ??
+          null,
         currency:
           preferredOffering?.pricing?.currency ||
           product?.pricing?.currency ||
           "USD",
         vendorName: preferredOffering?.vendorName || "",
-        inStock:
-          (preferredOffering?.inventory?.qtyAvailable || 0) > 0,
+        inStock: (preferredOffering?.inventory?.qtyAvailable || 0) > 0,
         qtyAvailable: preferredOffering?.inventory?.qtyAvailable || 0,
+        productType: facetValues.productType,
+        grade: facetValues.grade,
+        materialFinish: facetValues.materialFinish,
+        measurementSystem: facetValues.measurementSystem,
       };
     })
     .filter(Boolean);
 
   return {
     items,
-    total: items.length,
+    total,
+    limit: safeLimit,
+    skip: safeSkip,
+    page: total ? Math.floor(safeSkip / safeLimit) + 1 : 1,
+    totalPages: total ? Math.ceil(total / safeLimit) : 0,
+    facets,
   };
 }
 

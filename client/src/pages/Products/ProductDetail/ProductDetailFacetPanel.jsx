@@ -1387,7 +1387,7 @@ function scrollElementToContainerTop(element, offset = 138) {
 	});
 }
 
-export default function ProductDetailFacetPanel() {
+export default function ProductDetailFacetPanel({ includeUnpublished = false }) {
 	const { categoryId, subcategoryId } = useParams();
 	const { addToCart, cartItemCount } = useCart();
 	const [showViewCartCta, setShowViewCartCta] = useState(false);
@@ -1419,6 +1419,7 @@ export default function ProductDetailFacetPanel() {
 				const data = await fetchCatalogBuilderSubcategory(
 					categoryId,
 					subcategoryId,
+					{ includeUnpublished },
 				);
 
 				if (!alive) return;
@@ -1445,7 +1446,7 @@ export default function ProductDetailFacetPanel() {
 				clearTimeout(highlightTimeoutRef.current);
 			}
 		};
-	}, [categoryId, subcategoryId]);
+	}, [categoryId, subcategoryId, includeUnpublished]);
 
 	const variants = useMemo(() => {
 		return Array.isArray(builderData?.variants) ? builderData.variants : [];
@@ -1778,7 +1779,7 @@ const handleAddToCart = () => {
 										Builder Panel
 									</div>
 									<div className='small text-muted'>
-										Process-of-elimination product finder
+										Choose from the options below
 									</div>
 								</div>
 

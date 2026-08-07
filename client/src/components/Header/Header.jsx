@@ -571,7 +571,7 @@ export default function Header({ onCartOpen }) {
 									<div className='modal-hover-bridge'></div>
 
 									{featuredItems.length > 0 && (
-										<div className='px-3 pt-3 pb-2'>
+										<div className='px-3 pt-3 pb-2 d-none'>
 											<div className='text-uppercase fs-6 fw-bold text-main mb-2'>
 												Featured
 											</div>

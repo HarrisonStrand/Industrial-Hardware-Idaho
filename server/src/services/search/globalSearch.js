@@ -4,6 +4,13 @@ import { fileURLToPath } from "url";
 
 import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
+import CatalogSubcategorySetting from "../../models/CatalogSubcategorySetting.js";
+import {
+	ensureCatalogLayoutRecords,
+	getCatalogGlobalSetting,
+	normalizeCatalogId,
+	resolveEffectiveCatalogMode,
+} from "../catalog/catalogLayoutDefaults.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -373,14 +380,42 @@ function scoreBuilder({ category, subcategory = null, query, terms }) {
 	return Math.max(categoryScore, subcategoryScore);
 }
 
-function searchBuilders(query = "", limit = 8) {
+function isLayoutVisible(layoutMap, categoryId, subcategoryId) {
+	if (!subcategoryId) {
+		const prefix = `${normalizeCatalogId(categoryId)}/`;
+		return Array.from(layoutMap.entries()).some(
+			([key, setting]) =>
+				key.startsWith(prefix) &&
+				setting.isVisible !== false &&
+				setting.effectiveMode !== "hidden",
+		);
+	}
+
+	const key = `${normalizeCatalogId(categoryId)}/${normalizeCatalogId(subcategoryId)}`;
+	const setting = layoutMap.get(key);
+	return !setting || (setting.isVisible !== false && setting.effectiveMode !== "hidden");
+}
+
+function isProductLayoutSearchable(layoutMap, categoryId, subcategoryId) {
+	const key = `${normalizeCatalogId(categoryId)}/${normalizeCatalogId(subcategoryId)}`;
+	const setting = layoutMap.get(key);
+	if (!setting) return true;
+
+	return (
+		setting.isVisible !== false &&
+		["builder", "product-grid"].includes(setting.effectiveMode)
+	);
+}
+
+function searchBuilders(query = "", limit = 8, layoutMap = new Map()) {
 	const data = loadCategoryData();
 	const terms = getQueryTerms(query);
 	const results = [];
 
 	for (const category of data.categories || []) {
+		const categoryVisible = isLayoutVisible(layoutMap, category.id, "");
 		const categoryScore = scoreBuilder({ category, query, terms });
-		if (categoryScore > 0) {
+		if (categoryVisible && categoryScore > 0) {
 			results.push({
 				type: "builder",
 				resultType: "category",
@@ -395,6 +430,7 @@ function searchBuilders(query = "", limit = 8) {
 		}
 
 		for (const subcategory of category.subcategories || []) {
+			if (!isLayoutVisible(layoutMap, category.id, subcategory.id)) continue;
 			const subcategoryScore = scoreBuilder({ category, subcategory, query, terms });
 			if (subcategoryScore <= 0) continue;
 
@@ -427,6 +463,7 @@ function searchBuilders(query = "", limit = 8) {
 
 async function searchProducts(query = "", options = {}) {
 	const limit = Math.min(50, Math.max(1, Number(options.limit || 8)));
+	const layoutMap = options.layoutMap || new Map();
 	const candidateLimit = Math.min(500, Math.max(limit * 8, 80));
 	const regexes = buildRegexes(query);
 	const terms = getQueryTerms(query);
@@ -524,6 +561,15 @@ async function searchProducts(query = "", options = {}) {
 			const product = productMap.get(productId);
 			const enrichment = enrichmentMap.get(productId);
 			if (!product || !enrichment) return null;
+			if (
+				!isProductLayoutSearchable(
+					layoutMap,
+					enrichment?.category || enrichment?.attributes?.categoryCanonical,
+					enrichment?.subcategory || enrichment?.attributes?.subcategoryCanonical,
+				)
+			) {
+				return null;
+			}
 			return mapProductResult({ product, enrichment, query, terms });
 		})
 		.filter((result) => result && result.score > 0)
@@ -555,9 +601,24 @@ export async function globalSearch(options = {}) {
 		};
 	}
 
+	await ensureCatalogLayoutRecords();
+	const [globalSetting, layoutSettings] = await Promise.all([
+		getCatalogGlobalSetting(),
+		CatalogSubcategorySetting.find({}).lean(),
+	]);
+	const layoutMap = new Map(
+		layoutSettings.map((setting) => [
+			`${normalizeCatalogId(setting.categoryId)}/${normalizeCatalogId(setting.subcategoryId)}`,
+			{
+				...setting,
+				effectiveMode: resolveEffectiveCatalogMode(setting, globalSetting),
+			},
+		]),
+	);
+
 	const [products, builders] = await Promise.all([
-		productLimit > 0 ? searchProducts(query, { limit: productLimit }) : [],
-		builderLimit > 0 ? searchBuilders(query, builderLimit) : [],
+		productLimit > 0 ? searchProducts(query, { limit: productLimit, layoutMap }) : [],
+		builderLimit > 0 ? searchBuilders(query, builderLimit, layoutMap) : [],
 	]);
 
 	return {

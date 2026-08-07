@@ -189,7 +189,7 @@ export default function ContactForm() {
 					</div>
 				)}
 
-				<div className='col-12 text-end'>
+				<div className='col-12 text-center text-sm-end'>
 					<button
 						type='submit'
 						className='btn-main-cta rounded-3 text-uppercase fw-regular fs-5 py-3 text-main-light'

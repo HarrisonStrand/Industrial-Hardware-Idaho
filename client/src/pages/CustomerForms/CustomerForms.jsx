@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { BrandContext } from "../../context/BrandContext";
 import ContactBanner from "../../components/ContactBanner/ContactBanner";
 import "./CustomerForms.css";
+import { Link } from "react-router-dom";
 
 const FORM_DOWNLOADS = [
   {
@@ -46,13 +47,8 @@ export default function CustomerForms() {
               <div className='col-12 col-lg-8'>
                 <div className='text-main fs-5 mb-2'>Download commonly requested forms.</div>
                 <div className='text-muted'>
-                  Fill out the PDF you need, then email it back or bring it with you to the store.
+                  Fill out the PDF you need, then email it to <Link to={`mailto:${brand.email}`} className="text-decoration-none text-secondary">{brand.email}</Link> back or bring it with you to the store.
                 </div>
-              </div>
-              <div className='col-12 col-lg-4 text-lg-end'>
-                <a className='customer-forms-email text-main fw-semibold text-decoration-none' href={`mailto:${brand.email}`}>
-                  {brand.email}
-                </a>
               </div>
             </div>
 

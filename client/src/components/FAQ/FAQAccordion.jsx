@@ -42,7 +42,7 @@ export default function FAQAccordion({
 	if (!sections.length) return null;
 
 	return (
-		<section className='faq-section container py-5'>
+		<section className='faq-section container py-4 py-md-5'>
 			<div className='text-center mb-4'>
 				<h2 className='faq-title'>{title}</h2>
 				<p className='faq-subtitle mb-0'>{subtitle}</p>

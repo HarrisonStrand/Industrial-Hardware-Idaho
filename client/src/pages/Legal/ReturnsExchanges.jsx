@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { BrandContext } from "../../context/BrandContext";
 import ContactBanner from "../../components/ContactBanner/ContactBanner";
 import FAQAccordion from "../../components/FAQ/FAQAccordion.jsx";
+import { Link } from "react-router-dom";
 import "../../components/FAQ/FAQAccordion.css";
 import "./Legal.css";
 
@@ -33,7 +34,7 @@ export default function ReturnsExchanges() {
 									<span className='fw-semibold'>{BRAND}</span>.
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>
 									Return window
 								</h5>
 								<p className='mb-3'>
@@ -43,7 +44,7 @@ export default function ReturnsExchanges() {
 									resalable condition with original packaging.
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>
 									Restocking fee
 								</h5>
 								<p className='mb-3'>
@@ -52,7 +53,7 @@ export default function ReturnsExchanges() {
 									(unless required by law or the return is due to our error).
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>
 									Non-returnable items
 								</h5>
 								<ul className='legal-list'>
@@ -62,7 +63,7 @@ export default function ReturnsExchanges() {
 									<li>Used items</li>
 								</ul>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>
 									Return eligibility
 								</h5>
 								<ul className='legal-list'>
@@ -77,7 +78,7 @@ export default function ReturnsExchanges() {
 									<li>Proof of purchase may be required.</li>
 								</ul>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>
 									How to start a return
 								</h5>
 								<p className='mb-2'>
@@ -87,17 +88,17 @@ export default function ReturnsExchanges() {
 								<ul className='legal-list'>
 									{EMAIL && (
 										<li>
-											Email: <span className='fw-semibold'>{EMAIL}</span>
+											Email: <Link to={`mailto:${EMAIL}`} className="text-decoration-none text-secondary"><span className='fw-semibold'>{EMAIL}</span></Link>
 										</li>
 									)}
 									{PHONE && (
 										<li>
-											Phone: <span className='fw-semibold'>{PHONE}</span>
+											Phone: <Link to={`tel:${PHONE}`} className="text-decoration-none text-secondary"><span className='fw-semibold'>{PHONE}</span></Link>
 										</li>
 									)}
 								</ul>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>
 									Return methods
 								</h5>
 								<ul className='legal-list'>
@@ -116,7 +117,7 @@ export default function ReturnsExchanges() {
 
 								{(ADDR1 || CITY) && (
 									<>
-										<h5 className='legal-title text-uppercase mt-4'>
+										<h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>
 											Return address / local pickup
 										</h5>
 										<p className='mb-2'>
@@ -145,7 +146,7 @@ export default function ReturnsExchanges() {
 									</>
 								)}
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>
 									Refund timing
 								</h5>
 								<p className='mb-3'>
@@ -156,7 +157,7 @@ export default function ReturnsExchanges() {
 									possible.
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4'>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>
 									Damaged, missing, or incorrect items
 								</h5>
 								<p className='mb-0'>

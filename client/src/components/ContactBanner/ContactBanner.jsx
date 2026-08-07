@@ -9,7 +9,7 @@ export default function ContactBanner() {
 		const variables = useContext(VariableContext);
 
 	return (
-<div className='contact-banner-container m-5 align-items-center d-flex row justify-content-center m-auto pb-5 py-0 pb-xl-5 px-0 px-lg-5'>
+<div className='contact-banner-container m-5 align-items-center d-flex row justify-content-center m-auto pb-4 pb-md-5 py-0 pb-xl-5 px-0 px-lg-5'>
 				<div className='main-linebreak border-0 border-top border-main py-2'></div>
 				<div className='contact-banner-title text-main text-center text-uppercase mb-3'>
 					{variables.contactBannerTitle}

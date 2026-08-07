@@ -30,9 +30,9 @@ import AdminOrders from "./pages/AdminDashboard/AdminOrders.jsx";
 import AdminProducts from "./pages/AdminDashboard/AdminProducts.jsx";
 import AdminPricing from "./pages/AdminDashboard/AdminPricing.jsx";
 import AdminReviews from "./pages/AdminDashboard/AdminReviews.jsx";
+import AdminCatalogLayouts from "./pages/AdminDashboard/AdminCatalogLayouts.jsx";
 import ProductList from "./pages/Products/ProductList/ProductList.jsx";
-import ProductDetail from "./pages/Products/ProductDetail/ProductDetail.jsx";
-import ProductDetailFacetPanel from "./pages/Products/ProductDetail/ProductDetailFacetPanel.jsx";
+import CatalogSubcategoryPage from "./pages/Products/CatalogSubcategory/CatalogSubcategoryPage.jsx";
 import CatalogProductRedirect from "./pages/Catalog/CatalogProductRedirect.jsx";
 import Cart from "./pages/Cart/Cart.jsx";
 import Checkout from "./pages/Checkout/Checkout.jsx";
@@ -125,11 +125,7 @@ export default function App() {
 							<Route path='/products' element={<ProductList />} />
 							<Route
 								path='/products/:categoryId/:subcategoryId'
-								element={
-									<ProtectedRoute requireAdmin>
-										<ProductDetailFacetPanel />
-									</ProtectedRoute>
-								}
+								element={<CatalogSubcategoryPage />}
 							/>
 							<Route
 								path='/catalog/product/:slug'
@@ -228,6 +224,7 @@ export default function App() {
 								<Route path='orders' element={<AdminOrders />} />
 								<Route path='products' element={<AdminProducts />} />
 								<Route path='reviews' element={<AdminReviews />} />
+								<Route path='catalog' element={<AdminCatalogLayouts />} />
 								<Route path='pricing' element={<AdminPricing />} />
 							</Route>
 
@@ -246,6 +243,10 @@ export default function App() {
 							<Route
 								path='/admin/pricing'
 								element={<Navigate to='/admin/dashboard/pricing' replace />}
+							/>
+							<Route
+								path='/admin/catalog'
+								element={<Navigate to='/admin/dashboard/catalog' replace />}
 							/>
 						</Routes>
 					</motion.main>

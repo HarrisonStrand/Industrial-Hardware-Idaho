@@ -347,6 +347,7 @@ function collectAttributeOptions(variants = [], subcategoryId = "") {
 
 		for (const [key, value] of Object.entries(attrs)) {
 			if (value === undefined || value === null || value === "") continue;
+			if (typeof value === "object") continue;
 
 			if (!map.has(key)) {
 				map.set(key, new Set());
@@ -685,11 +686,15 @@ export async function getCatalogBuilderSubcategory(
 		throw new Error("categoryId and subcategoryId are required");
 	}
 
-	const pricingSettings = await getPricingSettings();
-	const pricingContext = await getPricingContext(
-		options?.pricingContext || {},
-		pricingSettings,
-	);
+	const includePricing = options?.includePricing !== false;
+	const pricingSettings = includePricing ? await getPricingSettings() : null;
+	const pricingContext = includePricing
+		? await getPricingContext(options?.pricingContext || {}, pricingSettings)
+		: {
+			approvedType: "RETAIL",
+			label: "Retail",
+			multiplier: 1,
+		};
 
 	const categoryPattern =
 		normalizedCategoryId === "bits drivers"
@@ -734,7 +739,16 @@ export async function getCatalogBuilderSubcategory(
 		"fishbowl.active": { $ne: false },
 	};
 
-	if (!includeUnpublished) {
+	const allowedReviewStatuses = Array.isArray(options?.allowedReviewStatuses)
+		? options.allowedReviewStatuses.filter(Boolean)
+		: null;
+
+	if (allowedReviewStatuses?.length) {
+		productFilter.$or = [
+			{ isPublished: true },
+			{ "review.status": { $in: allowedReviewStatuses } },
+		];
+	} else if (!includeUnpublished) {
 		productFilter.isPublished = true;
 	}
 
@@ -748,11 +762,20 @@ export async function getCatalogBuilderSubcategory(
 				const product = productMap.get(String(enrichment.productId));
 				if (!product) return null;
 
-				const resolvedPricing = await resolveProductPrice(
-					product,
-					pricingContext,
-					pricingSettings,
-				);
+				const resolvedPricing = includePricing
+					? await resolveProductPrice(
+						product,
+						pricingContext,
+						pricingSettings,
+					)
+					: {
+						resolvedPrice: null,
+						baseCatalogPrice: null,
+						currency: product?.pricing?.currency || "USD",
+						source: "hidden",
+						approvedType: "RETAIL",
+						label: "Retail",
+					};
 				const qtyAvailable = asNumber(product?.inventory?.qtyAvailable, 0);
 
 				return {
@@ -810,10 +833,13 @@ export async function getCatalogBuilderSubcategory(
 		)
 	).filter(Boolean);
 
-	const builderReadyFilter = getBuilderReadyFilter(
-		normalizedCategoryId,
-		normalizedSubcategoryId,
-	);
+	const builderReadyFilter =
+		options?.applyBuilderReadyFilter === false
+			? null
+			: getBuilderReadyFilter(
+				normalizedCategoryId,
+				normalizedSubcategoryId,
+			);
 
 	const filteredVariants = builderReadyFilter
 		? rawVariants.filter(builderReadyFilter)
@@ -877,10 +903,10 @@ export async function getCatalogBuilderSubcategory(
 			familySlug: family.familySlug,
 			familyTitle: family.familyTitle,
 			familyDescription: family.familyDescription,
-			familyAttributeOptions:
-				Object.keys(family.familyAttributeOptions || {}).length > 0
-					? family.familyAttributeOptions
-					: collectAttributeOptions(dedupedVariants, normalizedSubcategoryId),
+			familyAttributeOptions: collectAttributeOptions(
+				dedupedVariants,
+				normalizedSubcategoryId,
+			),
 			image: family.image,
 			imageAlt: family.imageAlt,
 			variants: dedupedVariants,

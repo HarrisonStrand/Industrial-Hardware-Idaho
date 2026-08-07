@@ -1,0 +1,20 @@
+.admin-catalog-layouts .form-label {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  color: var(--bs-secondary-color);
+  font-weight: 600;
+}
+
+.admin-catalog-item .card-header {
+  background: transparent;
+}
+
+.admin-catalog-toggles {
+  background: rgba(127, 127, 127, 0.08);
+  border: 1px solid rgba(127, 127, 127, 0.16);
+}
+
+.admin-catalog-global .form-switch .form-check-input {
+  min-width: 3.4rem;
+  min-height: 1.75rem;
+}

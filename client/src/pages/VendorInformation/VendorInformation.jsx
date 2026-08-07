@@ -117,8 +117,8 @@ export default function VendorInformation() {
 				categories={["vendor"]}
 				title='Vendor FAQs'
 				subtitle='Quick answers for companies interested in working with us.'
-				itemColumnClassName='col-6'
-				listColumnClassName='faq-list d-flex flex-row'
+				itemColumnClassName='col-12 col-md-6'
+				listColumnClassName='faq-list d-flex flex-md-row'
 				groupColumnClassName='faq-group col-12 py-2 pt-2 pt-md-4'
 			/>
 		</>

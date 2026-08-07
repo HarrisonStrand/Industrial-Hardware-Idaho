@@ -54,6 +54,12 @@ export default function AdminDashboard() {
 					</NavLink>
 
 					<NavLink
+						to='/admin/dashboard/catalog'
+						className={({ isActive }) => navButtonClass(isActive)}>
+						Catalog Layout
+					</NavLink>
+
+					<NavLink
 						to='/admin/dashboard/reviews'
 						className={({ isActive }) => navButtonClass(isActive)}>
 						Reviews
