@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import Product from "../models/Product.js";
 import runProductEnrichmentPass from "../services/catalog/runProductEnrichmentPass.js";
 
-const HEX_NUT_PART_PATTERN = /^\s*(?:HN[258][CF]\d{3}(?:P|PL)?|SSHN\d{3}(?:[CF])?|MMHN\d{5}(?:SS|P)?|HHN\d{3}(?:[CF])?)\s*$/i;
+const HEX_NUT_PART_PATTERN = /^\s*(?:HN[258][CF]\d{2,3}(?:P|PL)?|SSHN\d{3}(?:[CF])?|MMHN\d{5}(?:SS|P)?|HHN\d{3}(?:[CF])?)\s*$/i;
 
 function argValue(name, fallback = "") {
 	const prefix = `--${name}=`;

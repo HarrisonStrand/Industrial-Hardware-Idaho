@@ -1088,6 +1088,14 @@ function detectNutMaterial(text = "", partNum = "", parsed = {}) {
 	if (/\bstainless\b/i.test(rawText)) return "stainless steel";
 	if (/[\s/(-]ss[\s/)-]?/i.test(` ${rawText} `)) return "stainless steel";
 
+	// Recognized hex-nut part numbers define the base material unless the
+	// description explicitly identifies stainless steel above. This prevents
+	// stale parsed Fishbowl attributes from turning an HN/MMHN/HHN code into
+	// the wrong material.
+	if (/^HN[258][CF]\d{2,3}/i.test(rawPart)) return "steel";
+	if (/^HHN\d{3}[CF]?/i.test(rawPart)) return "steel";
+	if (/^MMHN\d{5}(?:P)?$/i.test(rawPart)) return "steel";
+
 	if (clean(parsed.material)) return clean(parsed.material);
 
 	const detected = detectMaterial(text);
@@ -1140,7 +1148,7 @@ function detectNutFinish(text = "", partNum = "", material = "", parsed = {}) {
 	if (/\byellow\s+zinc\b|\bzinc\s+yellow\b/i.test(rawText)) return "yellow zinc";
 	if (/\bzinc\b|\bzp\b/i.test(rawText)) return "zinc";
 
-	if (/^HN8[CF]\d{3}/i.test(rawPart)) return "yellow zinc";
+	if (/^HN8[CF]\d{2,3}/i.test(rawPart)) return "yellow zinc";
 	return mat === "steel" ? "zinc" : "";
 }
 
@@ -1162,9 +1170,9 @@ function detectNutGrade(text = "", partNum = "", material = "", measurementSyste
 		return explicit || "A194";
 	}
 
-	if (explicit) return explicit;
-
-	const imperialMatch = rawPart.match(/^HN([258])([CF])(\d{3})(?:P|PL)?$/i);
+	// HN2/HN5/HN8 encode the grade directly in the part number. Let that
+	// authoritative code win over older parsed grade values.
+	const imperialMatch = rawPart.match(/^HN([258])([CF])(\d{2,3})(?:P|PL)?$/i);
 	if (imperialMatch?.[1] === "8") return "grade 8";
 	if (imperialMatch?.[1] === "5") return "grade 5";
 	if (imperialMatch?.[1] === "2") return "grade 2";
@@ -1176,8 +1184,11 @@ function detectNutGrade(text = "", partNum = "", material = "", measurementSyste
 	if (system === "metric") {
 		if (/\b10\.9\b|\bclass\s*10\b/i.test(rawText)) return "10.9";
 		if (/\b8\.8\b|\bclass\s*8\b/i.test(rawText)) return "8.8";
+		if (explicit) return explicit;
 		return "8.8";
 	}
+
+	if (explicit) return explicit;
 
 	return mat === "steel" ? "grade 2" : "";
 }
@@ -1229,7 +1240,7 @@ function decodeImperialHexNutPartNumber(partNum = "", text = "") {
 		};
 	}
 
-	const match = raw.match(/^HN([258])([CF])(\d{3})(P|PL)?$/i);
+	const match = raw.match(/^HN([258])([CF])(\d{2,3})(P|PL)?$/i);
 	if (!match) return null;
 
 	const [, gradeDigit = "", seriesCode = "C", diaCode = "", suffix = ""] = match;
@@ -1279,7 +1290,7 @@ function decodeMetricHexNutPartNumber(partNum = "", text = "") {
 function decodeHexNutPartNumber(product = null, parsed = {}, text = "") {
 	const partNum = getPartNumberText(product, parsed).toUpperCase();
 	if (partNum.startsWith("MMHN")) return decodeMetricHexNutPartNumber(partNum, text);
-	if (partNum.startsWith("SSHN") || /^HN[258][CF]\d{3}/i.test(partNum) || /^HHN\d{3}[CF]?/i.test(partNum)) {
+	if (partNum.startsWith("SSHN") || /^HN[258][CF]\d{2,3}/i.test(partNum) || /^HHN\d{3}[CF]?/i.test(partNum)) {
 		return decodeImperialHexNutPartNumber(partNum, text);
 	}
 	return null;
@@ -1387,13 +1398,13 @@ function detectHexNutFamily(text = "", parsed = {}, product = null) {
 		detectMeasurementSystem(text);
 
 	const diameter =
-		clean(parsed.diameter || "") ||
 		clean(decoded?.diameter || "") ||
+		clean(parsed.diameter || "") ||
 		clean(descriptionSize.diameter || "");
 
 	let threadPitch =
-		clean(parsed.threadPitch || "") ||
 		clean(decoded?.threadPitch || "") ||
+		clean(parsed.threadPitch || "") ||
 		clean(descriptionSize.threadPitch || "");
 
 	if (!threadPitch && normalize(measurementSystem) === "imperial" && diameter) {
@@ -1401,8 +1412,8 @@ function detectHexNutFamily(text = "", parsed = {}, product = null) {
 	}
 
 	const threadSeries =
-		clean(parsed.threadSeries || parsed.thread_series || "") ||
 		clean(decoded?.threadSeries || "") ||
+		clean(parsed.threadSeries || parsed.thread_series || "") ||
 		clean(descriptionSize.threadSeries || "") ||
 		(normalize(measurementSystem) === "imperial"
 			? inferImperialSeriesFromPitch(diameter, threadPitch)

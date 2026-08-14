@@ -69,7 +69,7 @@ function getDisplayQuantityValue(value) {
 		: String(value);
 }
 
-const NUMBERED_DIAMETER_SIZES = new Set(["2", "3", "4", "5", "6", "8", "10", "12"]);
+const NUMBERED_DIAMETER_SIZES = new Set(["0", "2", "3", "4", "5", "6", "8", "10", "12"]);
 
 function parseSizeSortValue(value = "", key = "") {
 	const lowerKey = String(key || "").toLowerCase();

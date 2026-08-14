@@ -5,7 +5,7 @@ import Product from "../models/Product.js";
 import ProductEnrichment from "../models/ProductEnrichment.js";
 import detectProductFamilyFromDescription from "../services/catalog/detectProductFamilyFromDescription.js";
 
-const HEX_NUT_PART_PATTERN = /^\s*(?:HN[258][CF]\d{3}(?:P|PL)?|SSHN\d{3}(?:[CF])?|MMHN\d{5}(?:SS|P)?|HHN\d{3}(?:[CF])?)\s*$/i;
+const HEX_NUT_PART_PATTERN = /^\s*(?:HN[258][CF]\d{2,3}(?:P|PL)?|SSHN\d{3}(?:[CF])?|MMHN\d{5}(?:SS|P)?|HHN\d{3}(?:[CF])?)\s*$/i;
 
 function clean(value = "") {
 	return String(value || "").replace(/\s+/g, " ").trim();

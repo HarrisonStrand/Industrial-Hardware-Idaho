@@ -1,20 +1,19 @@
 {
   "logos": [
-    { "src": "/vendor-logos/Brighton-Best-greyscale.png", "alt": "Brighton-Best" },
-    { "src": "/vendor-logos/Brighton-Best-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Intercorp-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Makita-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Diablo-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Big-timber-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Proferred-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Simpson-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Dewalt-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Norseman-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Crc-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Phd-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Cgw-greyscale.png", "alt": "Auveco" },
+    { "src": "/vendor-logos/Brighton-Best-greyscale.png", "alt": "Brighton Best" },
+    { "src": "/vendor-logos/Intercorp-greyscale.png", "alt": "Intercorp" },
+    { "src": "/vendor-logos/Makita-greyscale.png", "alt": "Makita" },
+    { "src": "/vendor-logos/Diablo-greyscale.png", "alt": "Diablo" },
+    { "src": "/vendor-logos/Big-timber-greyscale.png", "alt": "Big Timber" },
+    { "src": "/vendor-logos/Proferred-greyscale.png", "alt": "Proferred" },
+    { "src": "/vendor-logos/Simpson-greyscale.png", "alt": "Simpson" },
+    { "src": "/vendor-logos/Dewalt-greyscale.png", "alt": "Dewalt" },
+    { "src": "/vendor-logos/Norseman-greyscale.png", "alt": "Norseman" },
+    { "src": "/vendor-logos/Crc-greyscale.png", "alt": "CRC" },
+    { "src": "/vendor-logos/Phd-greyscale.png", "alt": "PHD" },
+    { "src": "/vendor-logos/Cgw-greyscale.png", "alt": "CGW" },
     { "src": "/vendor-logos/Auveco-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Huyett-greyscale.png", "alt": "Auveco" },
-    { "src": "/vendor-logos/Werner-greyscale.png", "alt": "Auveco" }
+    { "src": "/vendor-logos/Huyett-greyscale.png", "alt": "Huyett" },
+    { "src": "/vendor-logos/Werner-greyscale.png", "alt": "Werner" }
   ]
 }

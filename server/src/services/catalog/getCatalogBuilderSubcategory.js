@@ -142,11 +142,13 @@ function normalizeVariantAttributesForBuilder(
 	}
 
 	if (sub === "hex nuts") {
+		const threadPitch = attrs.threadPitch || attrs.thread_pitch || "";
+
 		return {
 			measurementSystem: formatMeasurementSystemForBuilder(attrs.measurementSystem || ""),
-			diameter: attrs.diameter || "",
+			diameter: normalizeNumberedDiameterForBuilder(attrs.diameter || "", threadPitch),
 			threadSeries: attrs.threadSeries || attrs.thread_series || "",
-			threadPitch: attrs.threadPitch || "",
+			threadPitch,
 			materialFinish: attrs.materialFinish || "",
 			grade: attrs.grade || "",
 			fastenerType: attrs.fastenerTypeCanonical || attrs.fastenerType || "",
@@ -229,7 +231,7 @@ function asNumber(value, fallback = 0) {
 }
 
 
-const NUMBERED_DIAMETER_SIZES = new Set(["2", "3", "4", "5", "6", "8", "10", "12"]);
+const NUMBERED_DIAMETER_SIZES = new Set(["0", "2", "3", "4", "5", "6", "8", "10", "12"]);
 
 function normalizeNumberedDiameterForBuilder(diameter = "", threadPitch = "") {
 	const raw = String(diameter || "").replace(/\s+/g, "").trim();
