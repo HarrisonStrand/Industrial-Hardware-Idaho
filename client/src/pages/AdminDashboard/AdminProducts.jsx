@@ -184,7 +184,10 @@ function getCandidateReasons(candidate) {
 				? String(candidate.reason).split(",")
 				: [];
 
-	return reasons.map((reason) => humanizeLabel(reason)).filter(Boolean);
+	// Different raw match fields can intentionally share the same display label
+	// (for example fastenerType and fastenerTypeCanonical -> "Fastener Type").
+	// Deduplicate after humanizing so React does not render duplicate reason rows.
+	return [...new Set(reasons.map((reason) => humanizeLabel(reason)).filter(Boolean))];
 }
 
 function formatCandidateScore(candidate) {
@@ -706,7 +709,7 @@ export default function AdminProducts() {
 			const data = await apiFetch("/api/fishbowl/inventory-sync/run", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ samples: true, category: "bolts" }),
+				body: JSON.stringify({ samples: true, category: filters.category || "all" }),
 			});
 
 			setInventorySyncMessage(data?.message || "Inventory quantities updated.");
@@ -1978,9 +1981,9 @@ export default function AdminProducts() {
 																		</div>
 																		{candidateReasons.length ? (
 																			<ul className='mb-0 ps-3 admin-products-candidate-reasons'>
-																				{candidateReasons.map((reason) => (
+																				{candidateReasons.map((reason, reasonIdx) => (
 																					<li
-																						key={`${candidate?.familyKey || "candidate"}-${reason}`}>
+																						key={`${candidate?.familyKey || "candidate"}-${reason}-${reasonIdx}`}>
 																						{reason}
 																					</li>
 																				))}

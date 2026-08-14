@@ -28,7 +28,7 @@ export default function AdminDashboard() {
 
 				<div className='main-linebreak border-0 border-top border-main py-2' />
 
-				<div className='d-flex flex-wrap gap-2 pb-3'>
+				<div className='d-flex flex-wrap gap-2 pb-3 text-center'>
 					<NavLink
 						to='/admin/dashboard/accounts'
 						className={({ isActive }) => navButtonClass(isActive)}>

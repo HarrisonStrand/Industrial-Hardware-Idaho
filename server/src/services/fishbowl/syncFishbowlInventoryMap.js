@@ -164,6 +164,138 @@ async function fetchFishbowlInventoryMap({
   return { inventoryByPartNumber, summary, sampleRows };
 }
 
+
+async function fetchFishbowlInventoryForProducts({
+  products = [],
+  inventoryPath = "/api/parts/inventory",
+  samples = false,
+  concurrency = 4,
+}) {
+  const inventoryByPartNumber = new Map();
+  const sampleRows = [];
+
+  const summary = {
+    mode: "per-part-fallback",
+    pagesRequested: 0,
+    pagesFailed: 0,
+    rowsFetched: 0,
+    rowsMapped: 0,
+    rowsWithoutPartNumber: 0,
+    rowsWithoutQuantity: 0,
+    duplicatePartRows: 0,
+    productsRequested: 0,
+    productsSucceeded: 0,
+    productsFailed: 0,
+  };
+
+  const targets = products
+    .map((product) => clean(
+      product?.fishbowl?.partNum || product?.sku || product?.internalPartNumber || "",
+    ))
+    .filter(Boolean);
+
+  let cursor = 0;
+  const workerCount = Math.max(1, Math.min(Number(concurrency) || 1, 8));
+
+  async function fetchOne(partNumber) {
+    const normalizedRequested = normalizePartNumber(partNumber);
+    summary.productsRequested += 1;
+
+    try {
+      for (let pageNumber = 1; ; pageNumber += 1) {
+        const path = appendQuery(inventoryPath, {
+          number: partNumber,
+          pageNumber,
+          pageSize: 100,
+        });
+
+        summary.pagesRequested += 1;
+        const resp = await fishbowlClient.request({ method: "GET", path });
+
+        if (!resp.ok) {
+          summary.pagesFailed += 1;
+          summary.productsFailed += 1;
+          return;
+        }
+
+        const rows = getResultsArray(resp.data);
+        summary.rowsFetched += rows.length;
+
+        for (const row of rows) {
+          const partNumberRaw = row?.partNumber ?? row?.number ?? partNumber;
+          const normalizedPart = normalizePartNumber(partNumberRaw);
+          if (!normalizedPart) {
+            summary.rowsWithoutPartNumber += 1;
+            continue;
+          }
+
+          const quantity = asNumber(row?.quantity, null);
+          if (quantity === null) {
+            summary.rowsWithoutQuantity += 1;
+            continue;
+          }
+
+          const key = normalizedPart || normalizedRequested;
+          const existing = inventoryByPartNumber.get(key);
+          if (existing) {
+            summary.duplicatePartRows += 1;
+            existing.quantity += quantity;
+            existing.rows.push(row);
+          } else {
+            inventoryByPartNumber.set(key, {
+              partNumber: key,
+              quantity,
+              rows: [row],
+            });
+            summary.rowsMapped += 1;
+          }
+
+          if (samples && sampleRows.length < 10) {
+            sampleRows.push({
+              partNumber: key,
+              quantity,
+              partDescription: row?.partDescription || row?.description || "",
+            });
+          }
+        }
+
+        if (!isLikelyMorePages({
+          data: resp.data,
+          rows,
+          pageNumber,
+          pageSize: 100,
+          pageLimit: 0,
+        })) {
+          break;
+        }
+      }
+
+      summary.productsSucceeded += 1;
+    } catch {
+      summary.productsFailed += 1;
+      summary.pagesFailed += 1;
+    }
+  }
+
+  async function worker() {
+    while (true) {
+      const index = cursor++;
+      if (index >= targets.length) return;
+      await fetchOne(targets[index]);
+    }
+  }
+
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+  if (summary.productsRequested > 0 && summary.productsSucceeded === 0 && summary.productsFailed > 0) {
+    throw new Error(
+      `Fishbowl per-part inventory fallback failed for all ${summary.productsRequested} requested products.`,
+    );
+  }
+
+  return { inventoryByPartNumber, summary, sampleRows };
+}
+
 async function getTargetProducts({ limit = 0, partNumber = "", category = "bolts" }) {
   if (partNumber) {
     const normalized = normalizePartNumber(partNumber);
@@ -175,22 +307,29 @@ async function getTargetProducts({ limit = 0, partNumber = "", category = "bolts
         { sku: exactRegex },
         { internalPartNumber: exactRegex },
       ],
-    }).sort({ "fishbowl.partNum": 1, sku: 1 });
+    });
   }
 
+  const normalizedCategory = clean(category).toLowerCase();
   const enrichmentQuery = {
-    category: new RegExp(`^${escapeRegex(category)}$`, "i"),
     "attributes.familyType": { $exists: true, $ne: "" },
   };
+
+  if (normalizedCategory && normalizedCategory !== "all") {
+    enrichmentQuery.category = new RegExp(`^${escapeRegex(category)}$`, "i");
+  }
 
   const enrichments = await ProductEnrichment.find(enrichmentQuery)
     .select({ productId: 1 })
     .lean();
 
   const ids = [...new Set(enrichments.map((item) => String(item.productId)).filter(Boolean))];
-  let query = Product.find({ _id: { $in: ids }, isActive: { $ne: false } }).sort({
-    "fishbowl.partNum": 1,
-    sku: 1,
+  // Inventory syncing does not depend on product order. Avoid sorting the full
+  // catalog here because MongoDB may need a blocking in-memory sort that can
+  // exceed its 32 MB sort limit on larger catalogs.
+  let query = Product.find({
+    _id: { $in: ids },
+    isActive: { $ne: false },
   });
   if (limit > 0) query = query.limit(limit);
   return query;
@@ -307,8 +446,13 @@ async function runFishbowlInventoryMapSyncInternal({
     : null;
 
   try {
-    const { inventoryByPartNumber, summary: inventorySummary, sampleRows: inventorySamples } =
-      await fetchFishbowlInventoryMap({
+    const products = await getTargetProducts({ limit, partNumber, category });
+
+    let inventoryResult;
+    let bulkFetchError = null;
+
+    try {
+      inventoryResult = await fetchFishbowlInventoryMap({
         inventoryPath,
         pageSize: inventoryPageSize,
         pageLimit: inventoryPageLimit,
@@ -316,8 +460,28 @@ async function runFishbowlInventoryMapSyncInternal({
         qtyField,
         samples,
       });
+      inventoryResult.summary.mode = "bulk-map";
+    } catch (error) {
+      bulkFetchError = error;
+      console.warn(
+        "⚠️ Fishbowl bulk inventory request failed; falling back to part-number queries:",
+        error?.message || error,
+      );
 
-    const products = await getTargetProducts({ limit, partNumber, category });
+      inventoryResult = await fetchFishbowlInventoryForProducts({
+        products,
+        inventoryPath,
+        samples,
+        concurrency: 4,
+      });
+      inventoryResult.summary.fallbackReason = error?.message || "Bulk inventory request failed";
+    }
+
+    const {
+      inventoryByPartNumber,
+      summary: inventorySummary,
+      sampleRows: inventorySamples,
+    } = inventoryResult;
 
     const syncSummary = {
       targetCategory: partNumber ? "single-part" : category,
@@ -423,6 +587,8 @@ async function runFishbowlInventoryMapSyncInternal({
       finishedAt,
       durationMs: finishedAt.getTime() - startedAt.getTime(),
       inventoryPath,
+      inventoryStrategy: inventorySummary?.mode || "bulk-map",
+      bulkFetchError: bulkFetchError?.message || null,
       inventorySummary,
       uniqueMappedPartNumbers: inventoryByPartNumber.size,
       inventorySamples,
@@ -430,7 +596,8 @@ async function runFishbowlInventoryMapSyncInternal({
       syncSamples,
     };
 
-    await finishRunDocument(runDoc, { status: "success", result });
+    const runStatus = Number(inventorySummary?.pagesFailed || 0) > 0 ? "partial" : "success";
+    await finishRunDocument(runDoc, { status: runStatus, result });
     return result;
   } catch (error) {
     await finishRunDocument(runDoc, { status: "failed", error });
