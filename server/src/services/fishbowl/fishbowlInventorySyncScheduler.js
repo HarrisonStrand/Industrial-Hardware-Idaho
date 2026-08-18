@@ -34,7 +34,7 @@ export function getFishbowlInventorySyncScheduleConfig() {
     startupDelaySeconds: numberEnv("FISHBOWL_INVENTORY_SYNC_STARTUP_DELAY_SECONDS", 60),
     intervalMinutes,
     category: process.env.FISHBOWL_INVENTORY_SYNC_CATEGORY || "bolts",
-    inventoryPageSize: numberEnv("FISHBOWL_INVENTORY_SYNC_PAGE_SIZE", 100),
+    inventoryPageSize: numberEnv("FISHBOWL_INVENTORY_SYNC_PAGE_SIZE", 1000),
   };
 }
 

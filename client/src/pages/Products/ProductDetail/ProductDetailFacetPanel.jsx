@@ -1757,7 +1757,53 @@ const handleAddToCart = () => {
 	};
 
 	if (loading) {
-		return <h2 className='text-center mt-5'>Loading product…</h2>;
+		return (
+			<div className='theme-detail container-fluid px-3 px-sm-5 py-4 py-md-5'>
+				<div className='theme-detail-container py-4 theme-detail fade-in rounded-4 px-3 px-sm-5'>
+					<div className='row g-4 align-items-start'>
+						<div className='col-12 col-xl-4'>
+							<div className='theme-section-container rounded-4 p-3 p-md-4 bg-main-light'>
+								<div className='text-main text-uppercase fs-5'>Builder Panel</div>
+								<div className='small text-muted mb-4'>Loading available options…</div>
+
+								{[1, 2, 3, 4].map((item) => (
+									<div
+										key={item}
+										className='border rounded-4 bg-light p-3 mb-3 placeholder-glow'>
+										<span className='placeholder col-5 mb-2' />
+										<span className='placeholder col-8 d-block' />
+									</div>
+								))}
+							</div>
+						</div>
+
+						<div className='col-12 col-xl-8'>
+							<div className='rounded-4 p-3 p-md-4 theme-section-container bg-main-light mb-4'>
+								<div className='d-flex justify-content-between align-items-center gap-3 mb-4'>
+									<div>
+										<div className='text-main text-uppercase fs-4'>Matching Products</div>
+										<div className='small text-muted'>Loading catalog products in the background…</div>
+									</div>
+									<div className='spinner-border spinner-border-sm text-main' role='status' aria-label='Loading products' />
+								</div>
+
+								<div className='row g-3'>
+									{[1, 2, 3, 4, 5, 6].map((item) => (
+										<div key={item} className='col-12 col-md-6 col-xxl-4'>
+											<div className='bg-light border rounded-4 p-3 placeholder-glow' style={{ minHeight: "180px" }}>
+												<span className='placeholder col-12 mb-3' style={{ height: "80px" }} />
+												<span className='placeholder col-8 d-block mb-2' />
+												<span className='placeholder col-5 d-block' />
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		);
 	}
 
 	if (!builderData || !variants.length) {

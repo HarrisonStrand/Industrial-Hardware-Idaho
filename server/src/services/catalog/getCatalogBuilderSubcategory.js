@@ -2,10 +2,109 @@ import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
 import CatalogFamilyAsset from "../../models/CatalogFamilyAsset.js";
 import {
-	resolveProductPrice,
 	getPricingContext,
 	getPricingSettings,
 } from "../../utils/resolveProductPrice.js";
+
+
+
+function roundCurrency(value = 0) {
+	return Number(Number(value || 0).toFixed(2));
+}
+
+function resolveBuilderPriceFast(product = {}, pricingContext = {}, includePricing = true) {
+	if (!includePricing) {
+		return {
+			resolvedPrice: null,
+			baseCatalogPrice: null,
+			currency: product?.pricing?.currency || "USD",
+			source: "hidden",
+			approvedType: "RETAIL",
+			label: "Retail",
+		};
+	}
+
+	const rawBasePrice = product?.pricing?.basePrice;
+	const rawSalePrice = product?.pricing?.salePrice;
+	const baseCatalogPrice = roundCurrency(
+		rawBasePrice !== null && rawBasePrice !== undefined
+			? rawBasePrice
+			: rawSalePrice !== null && rawSalePrice !== undefined
+				? rawSalePrice
+				: 0,
+	);
+
+	return {
+		resolvedPrice: roundCurrency(
+			baseCatalogPrice * Number(pricingContext?.multiplier || 1),
+		),
+		baseCatalogPrice,
+		currency: product?.pricing?.currency || "USD",
+		source: product?.pricing?.priceSource || "fishbowl",
+		approvedType: pricingContext?.approvedType || "RETAIL",
+		label: pricingContext?.label || "Retail",
+	};
+}
+
+function shouldUseFastBuilderProjection(categoryId = "", subcategoryId = "") {
+	const category = normalizeSlug(categoryId);
+	const subcategory = normalizeSlug(subcategoryId);
+
+	return (
+		(category === "bolts" && subcategory === "hex cap screws") ||
+		(category === "nuts" && subcategory === "hex nuts")
+	);
+}
+
+const FAST_BUILDER_ENRICHMENT_PROJECTION = {
+	_id: 1,
+	productId: 1,
+	title: 1,
+	shortTitle: 1,
+	shortDescription: 1,
+	description: 1,
+	category: 1,
+	subcategory: 1,
+	"seo.slug": 1,
+	"images.url": 1,
+	"images.alt": 1,
+	"images.isPrimary": 1,
+	"attributes.measurementSystem": 1,
+	"attributes.diameter": 1,
+	"attributes.threadSeries": 1,
+	"attributes.thread_series": 1,
+	"attributes.threadPitch": 1,
+	"attributes.thread_pitch": 1,
+	"attributes.length": 1,
+	"attributes.driveType": 1,
+	"attributes.drive_type": 1,
+	"attributes.materialFinish": 1,
+	"attributes.grade": 1,
+	"attributes.headType": 1,
+	"attributes.fastenerType": 1,
+	"attributes.fastenerTypeCanonical": 1,
+	"attributes.familyKey": 1,
+	"attributes.familySlug": 1,
+	"attributes.familyTitle": 1,
+	"attributes.fishbowlPartNum": 1,
+	"attributes.fishbowlDescription": 1,
+};
+
+const FAST_BUILDER_PRODUCT_PROJECTION = {
+	_id: 1,
+	sku: 1,
+	internalPartNumber: 1,
+	"fishbowl.partNum": 1,
+	"fishbowl.description": 1,
+	"inventory.qtyAvailable": 1,
+	"inventory.qtyOnHand": 1,
+	"inventory.qtyAllocated": 1,
+	"inventory.qtyOnOrder": 1,
+	"pricing.basePrice": 1,
+	"pricing.salePrice": 1,
+	"pricing.currency": 1,
+	"pricing.priceSource": 1,
+};
 
 function toTitle(value = "") {
 	return String(value || "")
@@ -703,10 +802,45 @@ export async function getCatalogBuilderSubcategory(
 			? "^bits\\s*(?:(?:&|and)\\s*)?drivers$"
 			: `^${escapeRegex(normalizedCategoryId)}$`;
 
-	const enrichments = await ProductEnrichment.find({
-		category: new RegExp(categoryPattern, "i"),
-		subcategory: new RegExp(`^${escapeRegex(normalizedSubcategoryId)}$`, "i"),
-	}).lean();
+	const useFastProjection = shouldUseFastBuilderProjection(
+		normalizedCategoryId,
+		normalizedSubcategoryId,
+	);
+
+	// High-volume builders use normalized lowercase category/subcategory values,
+	// so exact equality can use the existing { category, subcategory } index.
+	// Other catalog areas keep the legacy tolerant regex behavior.
+	const enrichmentFilter = useFastProjection
+		? {
+				category: {
+					$in: [
+						normalizedCategoryId,
+						toTitle(normalizedCategoryId),
+						normalizedCategoryId.toUpperCase(),
+					],
+				},
+				subcategory: {
+					$in: [
+						normalizedSubcategoryId,
+						toTitle(normalizedSubcategoryId),
+						normalizedSubcategoryId.toUpperCase(),
+					],
+				},
+			}
+		: {
+				category: new RegExp(categoryPattern, "i"),
+				subcategory: new RegExp(
+					`^${escapeRegex(normalizedSubcategoryId)}$`,
+					"i",
+				),
+			};
+
+	let enrichmentQuery = ProductEnrichment.find(enrichmentFilter);
+	if (useFastProjection) {
+		enrichmentQuery = enrichmentQuery.select(FAST_BUILDER_ENRICHMENT_PROJECTION);
+	}
+
+	const enrichments = await enrichmentQuery.lean();
 
 	if (!enrichments.length) {
 		return {
@@ -754,30 +888,27 @@ export async function getCatalogBuilderSubcategory(
 		productFilter.isPublished = true;
 	}
 
-	const products = await Product.find(productFilter).lean();
+	let productQuery = Product.find(productFilter);
+	if (useFastProjection) {
+		productQuery = productQuery.select(FAST_BUILDER_PRODUCT_PROJECTION);
+	}
+
+	const products = await productQuery.lean();
 
 	const productMap = new Map(products.map((p) => [String(p._id), p]));
 
-	const rawVariants = (
-		await Promise.all(
-			enrichments.map(async (enrichment) => {
+	const rawVariants = enrichments
+		.map((enrichment) => {
 				const product = productMap.get(String(enrichment.productId));
 				if (!product) return null;
 
-				const resolvedPricing = includePricing
-					? await resolveProductPrice(
-						product,
-						pricingContext,
-						pricingSettings,
-					)
-					: {
-						resolvedPrice: null,
-						baseCatalogPrice: null,
-						currency: product?.pricing?.currency || "USD",
-						source: "hidden",
-						approvedType: "RETAIL",
-						label: "Retail",
-					};
+				// Pricing settings/context are already resolved once above. Avoid
+				// thousands of async helper calls while building a large category.
+				const resolvedPricing = resolveBuilderPriceFast(
+					product,
+					pricingContext,
+					includePricing,
+				);
 				const qtyAvailable = asNumber(product?.inventory?.qtyAvailable, 0);
 
 				return {
@@ -831,9 +962,8 @@ export async function getCatalogBuilderSubcategory(
 					familyAttributeOptions:
 						enrichment?.attributes?.familyAttributeOptions || {},
 				};
-			}),
-		)
-	).filter(Boolean);
+		})
+		.filter(Boolean);
 
 	const builderReadyFilter =
 		options?.applyBuilderReadyFilter === false

@@ -280,6 +280,145 @@ function buildStatusProductFilter(status = "") {
 	};
 }
 
+
+function buildAdminReviewListItem(product = {}, enrichment = null) {
+	return {
+		productId: product?._id,
+		enrichmentId: enrichment?._id || null,
+		sku: product?.sku || "",
+		partNumber: product?.fishbowl?.partNum || product?.sku || "",
+		title:
+			enrichment?.title ||
+			product?.fishbowl?.description ||
+			product?.fishbowl?.partNum ||
+			product?.sku ||
+			"Untitled Product",
+		reviewStatus: product?.review?.status || "needs-review",
+		qualityScore: Number(product?.review?.qualityScore || 0),
+		renderable: !!product?.review?.renderable,
+		publishReady: !!product?.review?.publishReady,
+		isPublished: !!product?.isPublished,
+		isActive: product?.isActive !== false,
+		fishbowlActive: product?.fishbowl?.active !== false,
+		fishbowlStatus: product?.fishbowl?.status || "",
+		category: enrichment?.category || "",
+		subcategory: enrichment?.subcategory || "",
+		familyType: enrichment?.attributes?.familyType || "",
+		issueCodes: Array.isArray(product?.review?.issues)
+			? product.review.issues.map((issue) => issue?.code).filter(Boolean)
+			: [],
+		intakeStatus: product?.fishbowlIntake?.status || "none",
+		intakeChangeType: product?.fishbowlIntake?.changeType || "",
+		intakeLastDetectedAt: product?.fishbowlIntake?.lastDetectedAt || null,
+	};
+}
+
+function enrichmentMatchesAdminFilters(
+	enrichment = null,
+	{ category = "", subcategory = "", familyType = "" } = {},
+) {
+	if (category && normalizeQueryValue(enrichment?.category) !== category) return false;
+	if (
+		subcategory &&
+		normalizeQueryValue(enrichment?.subcategory) !== subcategory
+	) {
+		return false;
+	}
+	if (
+		familyType &&
+		normalizeQueryValue(enrichment?.attributes?.familyType) !== familyType
+	) {
+		return false;
+	}
+	return true;
+}
+
+async function tryFastExactAdminProductSearch({
+	search = "",
+	productMatch = {},
+	category = "",
+	subcategory = "",
+	familyType = "",
+}) {
+	const raw = normalizeQueryValue(search);
+	if (!raw) return null;
+
+	const exactValues = [...new Set([raw, raw.toUpperCase(), raw.toLowerCase()])];
+	const exactIdentifierMatch = {
+		$or: [
+			{ "fishbowl.partNum": { $in: exactValues } },
+			{ sku: { $in: exactValues } },
+			{ internalPartNumber: { $in: exactValues } },
+		],
+	};
+
+	// These fields all have indexes on Product. This lets an exact part-number
+	// search bypass the expensive Product -> ProductEnrichment aggregation.
+	const products = await Product.find({
+		$and: [productMatch, exactIdentifierMatch],
+	})
+		.select({
+			_id: 1,
+			sku: 1,
+			internalPartNumber: 1,
+			"fishbowl.partNum": 1,
+			"fishbowl.description": 1,
+			"fishbowl.active": 1,
+			"fishbowl.status": 1,
+			isPublished: 1,
+			isActive: 1,
+			"review.status": 1,
+			"review.qualityScore": 1,
+			"review.renderable": 1,
+			"review.publishReady": 1,
+			"review.issues": 1,
+			"fishbowlIntake.status": 1,
+			"fishbowlIntake.changeType": 1,
+			"fishbowlIntake.lastDetectedAt": 1,
+			updatedAt: 1,
+			createdAt: 1,
+		})
+		.limit(10)
+		.lean();
+
+	if (!products.length) return null;
+
+	const productIds = products.map((product) => product._id);
+	const enrichments = await ProductEnrichment.find({
+		productId: { $in: productIds },
+	})
+		.select({
+			_id: 1,
+			productId: 1,
+			title: 1,
+			category: 1,
+			subcategory: 1,
+			"attributes.familyType": 1,
+		})
+		.lean();
+	const enrichmentMap = new Map(
+		enrichments.map((item) => [String(item.productId), item]),
+	);
+
+	const matching = products
+		.map((product) => ({
+			product,
+			enrichment: enrichmentMap.get(String(product._id)) || null,
+		}))
+		.filter(({ enrichment }) =>
+			enrichmentMatchesAdminFilters(enrichment, {
+				category,
+				subcategory,
+				familyType,
+			}),
+		)
+		.map(({ product, enrichment }) =>
+			buildAdminReviewListItem(product, enrichment),
+		);
+
+	return matching.length ? matching : null;
+}
+
 async function buildFilteredAdminRows({
 	status = "needs-review",
 	search = "",
@@ -507,104 +646,113 @@ export const deleteProduct = async (req, res) => {
 
 export const getAdminReviewSummary = async (req, res) => {
 	try {
-		const summary = {
-			totalProducts: await Product.countDocuments({}),
+		const [
+			totalProducts,
+			active,
+			inactive,
+			needsReview,
+			ready,
+			approved,
+			published,
+			fishbowlNew,
+			fishbowlChanged,
+			enrichmentFacets,
+			issueRows,
+		] = await Promise.all([
+			Product.countDocuments({}),
+			Product.countDocuments({ isActive: { $ne: false } }),
+			Product.countDocuments({ isActive: false }),
+			Product.countDocuments({
+				isPublished: false,
+				$or: [
+					{ "review.status": "needs-review" },
+					{ "review.status": { $exists: false } },
+					{ review: { $exists: false } },
+				],
+			}),
+			Product.countDocuments({
+				isPublished: false,
+				"review.status": "ready",
+			}),
+			Product.countDocuments({
+				isPublished: false,
+				"review.status": "approved",
+			}),
+			Product.countDocuments({ isPublished: true }),
+			Product.countDocuments({ "fishbowlIntake.status": "new" }),
+			Product.countDocuments({ "fishbowlIntake.status": "changed" }),
+			ProductEnrichment.aggregate([
+				{
+					$facet: {
+						categories: [
+							{ $match: { category: { $exists: true, $nin: ["", null] } } },
+							{ $group: { _id: "$category", count: { $sum: 1 } } },
+							{ $sort: { count: -1, _id: 1 } },
+						],
+						subcategories: [
+							{ $match: { subcategory: { $exists: true, $nin: ["", null] } } },
+							{ $group: { _id: "$subcategory", count: { $sum: 1 } } },
+							{ $sort: { count: -1, _id: 1 } },
+						],
+						familyTypes: [
+							{
+								$match: {
+									"attributes.familyType": { $exists: true, $nin: ["", null] },
+								},
+							},
+							{
+								$group: {
+									_id: "$attributes.familyType",
+									count: { $sum: 1 },
+								},
+							},
+							{ $sort: { count: -1, _id: 1 } },
+						],
+					},
+				},
+			]),
+			Product.aggregate([
+				{ $unwind: "$review.issues" },
+				{
+					$match: {
+						"review.issues.code": { $exists: true, $nin: ["", null] },
+					},
+				},
+				{
+					$group: {
+						_id: "$review.issues.code",
+						count: { $sum: 1 },
+					},
+				},
+				{ $sort: { count: -1, _id: 1 } },
+			]),
+		]);
+
+		const facets = enrichmentFacets?.[0] || {};
+		const mapFacetRows = (rows = []) =>
+			rows.map((row) => ({
+				value: normalizeQueryValue(row?._id),
+				count: Number(row?.count || 0),
+			}));
+
+		return res.json({
+			totalProducts,
 			byStatus: {
-				all: await Product.countDocuments({}),
-				active: await Product.countDocuments({ isActive: { $ne: false } }),
-				inactive: await Product.countDocuments({ isActive: false }),
-				needsReview: await Product.countDocuments({
-					isPublished: false,
-					$or: [
-						{ "review.status": "needs-review" },
-						{ "review.status": { $exists: false } },
-						{ review: { $exists: false } },
-					],
-				}),
-				ready: await Product.countDocuments({
-					isPublished: false,
-					"review.status": "ready",
-				}),
-				approved: await Product.countDocuments({
-					isPublished: false,
-					"review.status": "approved",
-				}),
-				published: await Product.countDocuments({
-					isPublished: true,
-				}),
-				fishbowlNew: await Product.countDocuments({
-					"fishbowlIntake.status": "new",
-				}),
-				fishbowlChanged: await Product.countDocuments({
-					"fishbowlIntake.status": "changed",
-				}),
+				all: totalProducts,
+				active,
+				inactive,
+				needsReview,
+				ready,
+				approved,
+				published,
+				fishbowlNew,
+				fishbowlChanged,
 			},
-			categories: [],
-			subcategories: [],
-			familyTypes: [],
-			issueCodes: [],
-		};
-
-		const enrichments = await ProductEnrichment.find(
-			{},
-			{
-				category: 1,
-				subcategory: 1,
-				"attributes.familyType": 1,
-			},
-		).lean();
-
-		const categoryMap = new Map();
-		const subcategoryMap = new Map();
-		const familyTypeMap = new Map();
-
-		for (const item of enrichments) {
-			const category = normalizeQueryValue(item?.category);
-			const subcategory = normalizeQueryValue(item?.subcategory);
-			const familyType = normalizeQueryValue(item?.attributes?.familyType);
-
-			if (category)
-				categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
-			if (subcategory)
-				subcategoryMap.set(
-					subcategory,
-					(subcategoryMap.get(subcategory) || 0) + 1,
-				);
-			if (familyType)
-				familyTypeMap.set(familyType, (familyTypeMap.get(familyType) || 0) + 1);
-		}
-
-		const issueRows = await Product.find(
-			{ "review.issues.0": { $exists: true } },
-			{ "review.issues": 1 },
-		).lean();
-
-		const issueCodeMap = new Map();
-		for (const row of issueRows) {
-			for (const issue of row?.review?.issues || []) {
-				const code = normalizeQueryValue(issue?.code);
-				if (!code) continue;
-				issueCodeMap.set(code, (issueCodeMap.get(code) || 0) + 1);
-			}
-		}
-
-		summary.categories = Array.from(categoryMap.entries())
-			.map(([value, count]) => ({ value, count }))
-			.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
-
-		summary.subcategories = Array.from(subcategoryMap.entries())
-			.map(([value, count]) => ({ value, count }))
-			.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
-
-		summary.familyTypes = Array.from(familyTypeMap.entries())
-			.map(([value, count]) => ({ value, count }))
-			.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
-
-		summary.issueCodes = Array.from(issueCodeMap.entries())
-			.map(([value, count]) => ({ value, count }))
-			.sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
-
-		res.json(summary);
+			categories: mapFacetRows(facets.categories),
+			subcategories: mapFacetRows(facets.subcategories),
+			familyTypes: mapFacetRows(facets.familyTypes),
+			issueCodes: mapFacetRows(issueRows),
+		});
 	} catch (err) {
 		console.error(err);
 		res.status(500).json({ message: "Failed to load admin review summary" });
@@ -641,6 +789,27 @@ export const listAdminReviewProducts = async (req, res) => {
 
 		if (issueCode) {
 			productMatch["review.issues.code"] = issueCode;
+		}
+
+		if (search && page === 1) {
+			const exactItems = await tryFastExactAdminProductSearch({
+				search,
+				productMatch,
+				category,
+				subcategory,
+				familyType,
+			});
+
+			if (exactItems?.length) {
+				return res.json({
+					items: exactItems.slice(0, limit),
+					totalItems: exactItems.length,
+					totalPages: 1,
+					page: 1,
+					limit,
+					searchMode: "exact-indexed",
+				});
+			}
 		}
 
 		const enrichmentMatchExpr = [];
@@ -983,17 +1152,72 @@ export const listAdminReviewProducts = async (req, res) => {
 	}
 };
 
+
+function buildPersistedReadinessSnapshot(product = {}, enrichment = {}) {
+	const review = product?.review || {};
+	const quality = enrichment?.quality || {};
+	const similarFamilies = Array.isArray(quality?.similarFamilies)
+		? quality.similarFamilies
+		: [];
+
+	return {
+		isReady: !!(review?.publishReady ?? quality?.publishReady),
+		renderable: !!(review?.renderable ?? quality?.renderable),
+		builderReady: !!quality?.builderReady,
+		publishReady: !!(review?.publishReady ?? quality?.publishReady),
+		status: review?.status || "needs-review",
+		qualityScore: Number(
+			review?.qualityScore ?? quality?.completenessScore ?? 0,
+		),
+		completenessScore: Number(
+			quality?.completenessScore ?? review?.qualityScore ?? 0,
+		),
+		missingRequiredAttributes:
+			review?.missingRequiredAttributes ||
+			quality?.missingRequiredAttributes ||
+			[],
+		missingRecommendedAttributes:
+			review?.missingRecommendedAttributes ||
+			quality?.missingRecommendedAttributes ||
+			[],
+		issues: review?.issues || quality?.issues || [],
+		suggestedFamilyKey:
+			review?.suggestedFamilyKey || quality?.suggestedFamilyKey || "",
+		suggestedFamilyConfidence: Number(
+			quality?.suggestedFamilyConfidence || 0,
+		),
+		similarFamilyCandidates: similarFamilies.map((candidate) => ({
+			familyKey: candidate?.familyKey || "",
+			familyTitle: candidate?.familyTitle || "",
+			confidence: Number(candidate?.confidence || 0),
+			reasons: Array.isArray(candidate?.reasons) ? candidate.reasons : [],
+		})),
+	};
+}
+
 export const getAdminProductDetail = async (req, res) => {
 	try {
 		const productId = req.params.id;
 
-		const product = await Product.findById(productId).lean();
+		const [product, enrichment] = await Promise.all([
+			Product.findById(productId).lean(),
+			ProductEnrichment.findOne({ productId }).lean(),
+		]);
+
 		if (!product) {
 			return res.status(404).json({ message: "Product not found" });
 		}
 
-		const enrichment = await ProductEnrichment.findOne({ productId }).lean();
-		const readiness = await evaluateProductPublishReadiness(productId);
+		const hasPersistedEvaluation = Boolean(
+			product?.review?.reviewedAt || enrichment?.quality?.lastEvaluatedAt,
+		);
+
+		// Product detail is a read operation. Use the persisted review snapshot so
+		// simply selecting a product does not rerun the expensive family/readiness
+		// analysis. The existing Recompute action remains the explicit refresh path.
+		const readiness = hasPersistedEvaluation
+			? buildPersistedReadinessSnapshot(product, enrichment)
+			: await evaluateProductPublishReadiness(productId);
 
 		return res.json({
 			product,

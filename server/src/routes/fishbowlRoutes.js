@@ -89,8 +89,17 @@ router.post("/inventory-sync/run", requireAuth, requireAdmin, async (req, res) =
     const samples = body.samples !== false;
     const setMissingZero = body.setMissingZero === true;
     const limit = Math.max(0, Number(body.limit || 0) || 0);
-    const category = String(body.category || "bolts").trim() || "bolts";
+    const category = String(body.category || "all").trim() || "all";
+    const subcategory = String(body.subcategory || "").trim();
+    const familyType = String(body.familyType || "").trim();
     const partNumber = String(body.partNumber || "").trim();
+    const inventoryPageSize = Math.max(100, Number(body.inventoryPageSize || 1000) || 1000);
+    const fallbackConcurrencyRaw = Number(body.fallbackConcurrency);
+    const fallbackConcurrency =
+      Number.isFinite(fallbackConcurrencyRaw) && fallbackConcurrencyRaw > 0
+        ? fallbackConcurrencyRaw
+        : null;
+    const writeBatchSize = Math.max(50, Number(body.writeBatchSize || 500) || 500);
 
     const result = await runFishbowlInventoryMapSync({
       dryRun,
@@ -98,7 +107,12 @@ router.post("/inventory-sync/run", requireAuth, requireAdmin, async (req, res) =
       setMissingZero,
       limit,
       category,
+      subcategory,
+      familyType,
       partNumber,
+      inventoryPageSize,
+      ...(fallbackConcurrency ? { fallbackConcurrency } : {}),
+      writeBatchSize,
       triggeredBy: req.user?.email || req.user?.id || "admin-button",
       persistRun: true,
     });

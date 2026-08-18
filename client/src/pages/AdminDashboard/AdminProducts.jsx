@@ -276,6 +276,7 @@ export default function AdminProducts() {
 	const [rows, setRows] = useState([]);
 	const [summary, setSummary] = useState(null);
 	const [filters, setFilters] = useState(DEFAULT_FILTERS);
+	const [searchInput, setSearchInput] = useState(DEFAULT_FILTERS.search);
 	const [loadingList, setLoadingList] = useState(true);
 	const [loadingSummary, setLoadingSummary] = useState(true);
 	const [inventorySyncStatus, setInventorySyncStatus] = useState(null);
@@ -431,6 +432,32 @@ export default function AdminProducts() {
 	}, []);
 
 	useEffect(() => {
+		if (!inventorySyncRunning) return undefined;
+
+		const intervalId = window.setInterval(() => {
+			loadInventorySyncStatus();
+		}, 800);
+
+		return () => window.clearInterval(intervalId);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [inventorySyncRunning]);
+
+	useEffect(() => {
+		const timerId = window.setTimeout(() => {
+			setFilters((prev) => {
+				if (prev.search === searchInput) return prev;
+				return {
+					...prev,
+					search: searchInput,
+					page: 1,
+				};
+			});
+		}, 300);
+
+		return () => window.clearTimeout(timerId);
+	}, [searchInput]);
+
+	useEffect(() => {
 		loadList(bucket, filters);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [bucket, filters]);
@@ -483,6 +510,7 @@ export default function AdminProducts() {
 
 	function resetFilters() {
 		setBucket("all");
+		setSearchInput("");
 		setFilters((prev) => ({
 			...DEFAULT_FILTERS,
 			limit: prev.limit || 25,
@@ -709,7 +737,12 @@ export default function AdminProducts() {
 			const data = await apiFetch("/api/fishbowl/inventory-sync/run", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ samples: true, category: filters.category || "all" }),
+				body: JSON.stringify({
+					samples: false,
+					category: filters.category || "all",
+					subcategory: filters.subcategory || "",
+					familyType: filters.familyType || "",
+				}),
 			});
 
 			setInventorySyncMessage(data?.message || "Inventory quantities updated.");
@@ -798,6 +831,27 @@ export default function AdminProducts() {
 	const latestQuantitySummary = latestInventoryMetadata?.syncSummary || {};
 	const inventorySchedule = inventorySyncStatus?.schedule || {};
 	const inventoryRuntime = inventorySyncStatus?.runtime || {};
+	const inventoryProgressProcessed = Math.max(
+		0,
+		Number(inventoryRuntime?.processed || 0),
+	);
+	const inventoryProgressTotal = Math.max(0, Number(inventoryRuntime?.total || 0));
+	const inventoryProgressPercent =
+		inventoryProgressTotal > 0
+			? Math.max(
+					0,
+					Math.min(
+						100,
+						Number(
+							inventoryRuntime?.percent ||
+								(inventoryProgressProcessed / inventoryProgressTotal) * 100,
+						),
+					),
+				)
+			: 0;
+	const inventoryProgressActive = Boolean(
+		inventoryRuntime?.running || inventorySyncRunning,
+	);
 	const latestProductIntakeRun = productIntakeStatus?.lastRun || null;
 	const latestProductIntakeMetadata = latestProductIntakeRun?.metadata || {};
 	const latestProductIntakeSummary =
@@ -866,6 +920,45 @@ export default function AdminProducts() {
 								</button>
 							</div>
 						</div>
+
+						{inventoryProgressActive ? (
+							<div className='mt-3'>
+								<div className='d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2'>
+									<div className='small fw-semibold text-main'>
+										{inventoryRuntime?.phaseLabel || "Checking Fishbowl quantities"}
+									</div>
+									<div className='small text-muted'>
+										{inventoryProgressTotal > 0
+											? `${formatNumber(inventoryProgressProcessed)} / ${formatNumber(inventoryProgressTotal)} (${Math.round(inventoryProgressPercent)}%)`
+											: "Preparing…"}
+									</div>
+								</div>
+
+								<div
+									className='progress'
+									role='progressbar'
+									aria-label='Fishbowl quantity sync progress'
+									aria-valuenow={Math.round(inventoryProgressPercent)}
+									aria-valuemin='0'
+									aria-valuemax='100'
+									style={{ height: "12px" }}>
+									<div
+										className='progress-bar progress-bar-striped progress-bar-animated bg-main'
+										style={{ width: `${inventoryProgressPercent}%` }}
+									/>
+								</div>
+
+								<div className='d-flex flex-wrap gap-3 mt-2 small text-muted'>
+									<div>Updated: {formatNumber(inventoryRuntime?.updated)}</div>
+									{Number(inventoryRuntime?.failed || 0) > 0 ? (
+										<div>Failed lookups: {formatNumber(inventoryRuntime?.failed)}</div>
+									) : null}
+									{inventoryRuntime?.strategy ? (
+										<div>Mode: {inventoryRuntime.strategy}</div>
+									) : null}
+								</div>
+							</div>
+						) : null}
 
 						<div className='row g-3 mt-1'>
 							<div className='col-6 col-lg-3'>
@@ -1164,8 +1257,16 @@ export default function AdminProducts() {
 								<input
 									className='form-input form-control bg-white product-filter-input'
 									placeholder='Title/Part #'
-									value={filters.search}
-									onChange={(e) => updateFilter("search", e.target.value)}
+									value={searchInput}
+									onChange={(e) => setSearchInput(e.target.value)}
+									onKeyDown={(e) => {
+										if (e.key !== "Enter") return;
+										setFilters((prev) => ({
+											...prev,
+											search: searchInput,
+											page: 1,
+										}));
+									}}
 								/>
 							</div>
 
@@ -1532,6 +1633,14 @@ export default function AdminProducts() {
 											</div>
 
 											<div className='admin-products-detail-action-grid'>
+												<button
+													type='button'
+													className='btn btn-primary admin-products-action-btn rounded-2'
+													disabled={saving}
+													onClick={handleSave}>
+													Save Changes
+												</button>
+
 												<button
 													type='button'
 													className='btn btn-outline-secondary admin-products-action-btn rounded-2'
@@ -1907,15 +2016,6 @@ export default function AdminProducts() {
 												</div>
 											</div>
 
-											<div className='d-flex flex-wrap gap-2 mt-4'>
-												<button
-													type='button'
-													className='btn btn-primary'
-													disabled={saving}
-													onClick={handleSave}>
-													Save Changes
-												</button>
-											</div>
 										</div>
 
 										<div className='theme-sub-card-container border rounded-4 p-3 mb-4'>

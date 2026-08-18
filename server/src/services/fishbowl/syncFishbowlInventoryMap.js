@@ -6,6 +6,21 @@ import { fishbowlClient } from "../../integrations/fishbowl/fishbowlClient.js";
 let activeSyncPromise = null;
 let activeSyncState = null;
 
+function setActiveSyncProgress(patch = {}) {
+  if (!activeSyncState) return;
+
+  activeSyncState = {
+    ...activeSyncState,
+    ...patch,
+  };
+
+  const processed = Math.max(0, Number(activeSyncState.processed || 0));
+  const total = Math.max(0, Number(activeSyncState.total || 0));
+
+  activeSyncState.percent =
+    total > 0 ? Math.max(0, Math.min(100, Math.round((processed / total) * 100))) : 0;
+}
+
 function clean(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
@@ -23,6 +38,12 @@ function asNumber(value, fallback = null) {
   const normalized = String(value).replace(/,/g, "").trim();
   const num = Number(normalized);
   return Number.isFinite(num) ? num : fallback;
+}
+
+function clampInt(value, fallback, min, max) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return fallback;
+  return Math.max(min, Math.min(max, Math.trunc(num)));
 }
 
 function getByPath(obj, path = "") {
@@ -85,7 +106,7 @@ function inventoryChanged(product, nextInventory) {
 
 async function fetchFishbowlInventoryMap({
   inventoryPath = "/api/parts/inventory",
-  pageSize = 100,
+  pageSize = 1000,
   pageLimit = 0,
   partField = "partNumber",
   qtyField = "quantity",
@@ -95,6 +116,7 @@ async function fetchFishbowlInventoryMap({
   const sampleRows = [];
 
   const summary = {
+    pageSizeUsed: pageSize,
     pagesRequested: 0,
     pagesFailed: 0,
     rowsFetched: 0,
@@ -111,11 +133,15 @@ async function fetchFishbowlInventoryMap({
     const resp = await fishbowlClient.request({ method: "GET", path });
     if (!resp.ok) {
       summary.pagesFailed += 1;
-      throw new Error(
+      const err = new Error(
         `Fishbowl inventory page request failed (${resp.status}) for ${path}: ${JSON.stringify(
           resp.data || resp.error || {},
         )}`,
       );
+      err.status = resp.status;
+      err.pageNumber = pageNumber;
+      err.pageSize = pageSize;
+      throw err;
     }
 
     const rows = getResultsArray(resp.data);
@@ -139,12 +165,12 @@ async function fetchFishbowlInventoryMap({
       if (existing) {
         summary.duplicatePartRows += 1;
         existing.quantity += quantity;
-        existing.rows.push(row);
+        existing.rowCount += 1;
       } else {
         inventoryByPartNumber.set(partNumber, {
           partNumber,
           quantity,
-          rows: [row],
+          rowCount: 1,
         });
         summary.rowsMapped += 1;
       }
@@ -164,12 +190,48 @@ async function fetchFishbowlInventoryMap({
   return { inventoryByPartNumber, summary, sampleRows };
 }
 
+async function fetchFishbowlInventoryMapAdaptive({
+  requestedPageSize = 1000,
+  ...options
+} = {}) {
+  const requested = clampInt(requestedPageSize, 1000, 100, 5000);
+  const candidateSizes = [...new Set([requested, 1000, 500, 250, 100])]
+    .filter((value) => value <= requested || value === requested)
+    .sort((a, b) => b - a);
+
+  let lastError = null;
+
+  for (const pageSize of candidateSizes) {
+    try {
+      const result = await fetchFishbowlInventoryMap({
+        ...options,
+        pageSize,
+      });
+      result.summary.pageSizeUsed = pageSize;
+      return result;
+    } catch (error) {
+      lastError = error;
+
+      // A failure after page 1 usually means the endpoint itself became unstable
+      // mid-scan; repeating all prior pages at smaller sizes would waste time.
+      if (Number(error?.pageNumber || 1) > 1) break;
+
+      console.warn(
+        `⚠️ Fishbowl inventory pageSize=${pageSize} failed on the first page; trying a smaller page size.`,
+      );
+    }
+  }
+
+  throw lastError || new Error("Fishbowl bulk inventory request failed");
+}
 
 async function fetchFishbowlInventoryForProducts({
   products = [],
   inventoryPath = "/api/parts/inventory",
   samples = false,
-  concurrency = 4,
+  concurrency = 10,
+  perPartPageSize = 250,
+  onProgress = null,
 }) {
   const inventoryByPartNumber = new Map();
   const sampleRows = [];
@@ -188,14 +250,23 @@ async function fetchFishbowlInventoryForProducts({
     productsFailed: 0,
   };
 
-  const targets = products
-    .map((product) => clean(
+  const targetMap = new Map();
+  for (const product of products) {
+    const partNumber = clean(
       product?.fishbowl?.partNum || product?.sku || product?.internalPartNumber || "",
-    ))
-    .filter(Boolean);
+    );
+    const normalized = normalizePartNumber(partNumber);
+    if (!normalized || targetMap.has(normalized)) continue;
+    targetMap.set(normalized, partNumber);
+  }
+
+  const targets = Array.from(targetMap.values());
+  const safePerPartPageSize = clampInt(perPartPageSize, 250, 50, 1000);
 
   let cursor = 0;
-  const workerCount = Math.max(1, Math.min(Number(concurrency) || 1, 8));
+  let completedTargets = 0;
+  const workerCount = clampInt(concurrency, 10, 1, 20);
+  summary.uniqueProductsRequested = targets.length;
 
   async function fetchOne(partNumber) {
     const normalizedRequested = normalizePartNumber(partNumber);
@@ -206,7 +277,7 @@ async function fetchFishbowlInventoryForProducts({
         const path = appendQuery(inventoryPath, {
           number: partNumber,
           pageNumber,
-          pageSize: 100,
+          pageSize: safePerPartPageSize,
         });
 
         summary.pagesRequested += 1;
@@ -240,12 +311,12 @@ async function fetchFishbowlInventoryForProducts({
           if (existing) {
             summary.duplicatePartRows += 1;
             existing.quantity += quantity;
-            existing.rows.push(row);
+            existing.rowCount += 1;
           } else {
             inventoryByPartNumber.set(key, {
               partNumber: key,
               quantity,
-              rows: [row],
+              rowCount: 1,
             });
             summary.rowsMapped += 1;
           }
@@ -263,7 +334,7 @@ async function fetchFishbowlInventoryForProducts({
           data: resp.data,
           rows,
           pageNumber,
-          pageSize: 100,
+          pageSize: safePerPartPageSize,
           pageLimit: 0,
         })) {
           break;
@@ -282,6 +353,16 @@ async function fetchFishbowlInventoryForProducts({
       const index = cursor++;
       if (index >= targets.length) return;
       await fetchOne(targets[index]);
+      completedTargets += 1;
+
+      if (typeof onProgress === "function") {
+        onProgress({
+          processed: completedTargets,
+          total: targets.length,
+          succeeded: summary.productsSucceeded,
+          failed: summary.productsFailed,
+        });
+      }
     }
   }
 
@@ -296,7 +377,21 @@ async function fetchFishbowlInventoryForProducts({
   return { inventoryByPartNumber, summary, sampleRows };
 }
 
-async function getTargetProducts({ limit = 0, partNumber = "", category = "bolts" }) {
+async function getTargetProducts({
+  limit = 0,
+  partNumber = "",
+  category = "all",
+  subcategory = "",
+  familyType = "",
+}) {
+  const projection = {
+    _id: 1,
+    sku: 1,
+    internalPartNumber: 1,
+    "fishbowl.partNum": 1,
+    inventory: 1,
+  };
+
   if (partNumber) {
     const normalized = normalizePartNumber(partNumber);
     const exactRegex = new RegExp(`^${escapeRegex(normalized)}$`, "i");
@@ -307,30 +402,47 @@ async function getTargetProducts({ limit = 0, partNumber = "", category = "bolts
         { sku: exactRegex },
         { internalPartNumber: exactRegex },
       ],
-    });
+    })
+      .select(projection)
+      .lean();
   }
 
   const normalizedCategory = clean(category).toLowerCase();
-  const enrichmentQuery = {
-    "attributes.familyType": { $exists: true, $ne: "" },
-  };
+  const normalizedSubcategory = clean(subcategory);
+  const normalizedFamilyType = clean(familyType);
 
-  if (normalizedCategory && normalizedCategory !== "all") {
-    enrichmentQuery.category = new RegExp(`^${escapeRegex(category)}$`, "i");
+  let query;
+
+  if ((!normalizedCategory || normalizedCategory === "all") && !normalizedSubcategory && !normalizedFamilyType) {
+    // Fast path for a whole-catalog sync: avoid reading ProductEnrichment at all.
+    query = Product.find({ isActive: { $ne: false } }).select(projection).lean();
+  } else {
+    const enrichmentQuery = {
+      "attributes.familyType": { $exists: true, $ne: "" },
+    };
+
+    if (normalizedCategory && normalizedCategory !== "all") {
+      enrichmentQuery.category = new RegExp(`^${escapeRegex(category)}$`, "i");
+    }
+    if (normalizedSubcategory) {
+      enrichmentQuery.subcategory = new RegExp(`^${escapeRegex(normalizedSubcategory)}$`, "i");
+    }
+    if (normalizedFamilyType) {
+      enrichmentQuery["attributes.familyType"] = new RegExp(
+        `^${escapeRegex(normalizedFamilyType)}$`,
+        "i",
+      );
+    }
+
+    const ids = await ProductEnrichment.distinct("productId", enrichmentQuery);
+    query = Product.find({
+      _id: { $in: ids },
+      isActive: { $ne: false },
+    })
+      .select(projection)
+      .lean();
   }
 
-  const enrichments = await ProductEnrichment.find(enrichmentQuery)
-    .select({ productId: 1 })
-    .lean();
-
-  const ids = [...new Set(enrichments.map((item) => String(item.productId)).filter(Boolean))];
-  // Inventory syncing does not depend on product order. Avoid sorting the full
-  // catalog here because MongoDB may need a blocking in-memory sort that can
-  // exceed its 32 MB sort limit on larger catalogs.
-  let query = Product.find({
-    _id: { $in: ids },
-    isActive: { $ne: false },
-  });
   if (limit > 0) query = query.limit(limit);
   return query;
 }
@@ -416,13 +528,18 @@ async function runFishbowlInventoryMapSyncInternal({
   samples = false,
   setMissingZero = false,
   limit = 0,
-  inventoryPageSize = 100,
+  inventoryPageSize = 1000,
   inventoryPageLimit = 0,
   inventoryPath = "/api/parts/inventory",
   partField = "partNumber",
   qtyField = "quantity",
-  category = "bolts",
+  category = "all",
+  subcategory = "",
+  familyType = "",
   partNumber = "",
+  fallbackConcurrency = Number(process.env.FISHBOWL_INVENTORY_CONCURRENCY || 10),
+  perPartPageSize = 250,
+  writeBatchSize = 500,
   triggeredBy = "manual",
   persistRun = true,
 } = {}) {
@@ -438,7 +555,12 @@ async function runFishbowlInventoryMapSyncInternal({
     partField,
     qtyField,
     category,
+    subcategory,
+    familyType,
     partNumber,
+    fallbackConcurrency,
+    perPartPageSize,
+    writeBatchSize,
   };
 
   const runDoc = persistRun
@@ -446,21 +568,48 @@ async function runFishbowlInventoryMapSyncInternal({
     : null;
 
   try {
-    const products = await getTargetProducts({ limit, partNumber, category });
+    setActiveSyncProgress({
+      phase: "loading-products",
+      phaseLabel: "Loading products to check",
+      processed: 0,
+      total: 0,
+      updated: 0,
+      failed: 0,
+      strategy: "",
+    });
+
+    const products = await getTargetProducts({
+      limit,
+      partNumber,
+      category,
+      subcategory,
+      familyType,
+    });
+
+    setActiveSyncProgress({
+      phase: "fetching-inventory",
+      phaseLabel: "Reading quantities from Fishbowl",
+      processed: 0,
+      total: products.length,
+    });
 
     let inventoryResult;
     let bulkFetchError = null;
 
     try {
-      inventoryResult = await fetchFishbowlInventoryMap({
+      inventoryResult = await fetchFishbowlInventoryMapAdaptive({
         inventoryPath,
-        pageSize: inventoryPageSize,
+        requestedPageSize: inventoryPageSize,
         pageLimit: inventoryPageLimit,
         partField,
         qtyField,
         samples,
       });
       inventoryResult.summary.mode = "bulk-map";
+      setActiveSyncProgress({
+        strategy: "bulk-map",
+        phaseLabel: "Fishbowl inventory loaded",
+      });
     } catch (error) {
       bulkFetchError = error;
       console.warn(
@@ -468,11 +617,30 @@ async function runFishbowlInventoryMapSyncInternal({
         error?.message || error,
       );
 
+      setActiveSyncProgress({
+        strategy: "per-part-fallback",
+        phase: "fetching-inventory",
+        phaseLabel: "Scanning Fishbowl quantities",
+        processed: 0,
+        total: products.length,
+        failed: 0,
+      });
+
       inventoryResult = await fetchFishbowlInventoryForProducts({
         products,
         inventoryPath,
         samples,
-        concurrency: 4,
+        concurrency: fallbackConcurrency,
+        perPartPageSize,
+        onProgress: ({ processed, total, failed }) => {
+          setActiveSyncProgress({
+            phase: "fetching-inventory",
+            phaseLabel: "Scanning Fishbowl quantities",
+            processed,
+            total,
+            failed,
+          });
+        },
       });
       inventoryResult.summary.fallbackReason = error?.message || "Bulk inventory request failed";
     }
@@ -485,6 +653,8 @@ async function runFishbowlInventoryMapSyncInternal({
 
     const syncSummary = {
       targetCategory: partNumber ? "single-part" : category,
+      targetSubcategory: partNumber ? null : subcategory || null,
+      targetFamilyType: partNumber ? null : familyType || null,
       requestedPart: partNumber || null,
       targetProducts: products.length,
       checked: 0,
@@ -498,6 +668,47 @@ async function runFishbowlInventoryMapSyncInternal({
 
     const syncSamples = [];
 
+    setActiveSyncProgress({
+      phase: "updating-products",
+      phaseLabel: dryRun ? "Comparing website quantities" : "Updating website quantities",
+      processed: 0,
+      total: products.length,
+      updated: 0,
+      failed: Number(inventorySummary?.productsFailed || inventorySummary?.pagesFailed || 0),
+    });
+
+    let processedProducts = 0;
+    const safeWriteBatchSize = clampInt(writeBatchSize, 500, 50, 2000);
+    let pendingWrites = [];
+
+    const flushPendingWrites = async () => {
+      if (dryRun || pendingWrites.length === 0) return;
+
+      const batch = pendingWrites;
+      pendingWrites = [];
+      await Product.bulkWrite(batch, { ordered: false });
+      syncSummary.updated += batch.length;
+
+      setActiveSyncProgress({
+        phase: "updating-products",
+        phaseLabel: "Updating website quantities",
+        processed: processedProducts,
+        total: products.length,
+        updated: syncSummary.updated,
+      });
+    };
+
+    const advanceProductProgress = () => {
+      processedProducts += 1;
+      setActiveSyncProgress({
+        phase: "updating-products",
+        phaseLabel: dryRun ? "Comparing website quantities" : "Updating website quantities",
+        processed: processedProducts,
+        total: products.length,
+        updated: dryRun ? syncSummary.wouldUpdate : syncSummary.updated,
+      });
+    };
+
     for (const product of products) {
       const productPartNumber = clean(
         product?.fishbowl?.partNum || product?.sku || product?.internalPartNumber || "",
@@ -506,6 +717,7 @@ async function runFishbowlInventoryMapSyncInternal({
 
       if (!normalizedPartNumber) {
         syncSummary.noPartIdentifier += 1;
+        advanceProductProgress();
         continue;
       }
 
@@ -524,6 +736,7 @@ async function runFishbowlInventoryMapSyncInternal({
             },
           });
         }
+        advanceProductProgress();
         continue;
       }
 
@@ -536,6 +749,7 @@ async function runFishbowlInventoryMapSyncInternal({
 
       if (!changed) {
         syncSummary.unchanged += 1;
+        advanceProductProgress();
         continue;
       }
 
@@ -557,7 +771,7 @@ async function runFishbowlInventoryMapSyncInternal({
           ? {
               partNumber: inventoryMatch.partNumber,
               quantity: inventoryMatch.quantity,
-              rowCount: inventoryMatch.rows.length,
+              rowCount: Number(inventoryMatch.rowCount || 1),
             }
           : { missingInventoryRow: true, quantity: 0 },
       };
@@ -567,15 +781,31 @@ async function runFishbowlInventoryMapSyncInternal({
       if (dryRun) {
         if (!inventoryMatch) syncSummary.setMissingZero += 1;
         syncSummary.wouldUpdate += 1;
+        advanceProductProgress();
         continue;
       }
 
-      product.inventory = nextInventory;
-      await product.save();
+      pendingWrites.push({
+        updateOne: {
+          filter: { _id: product._id },
+          update: {
+            $set: {
+              inventory: nextInventory,
+              updatedAt: new Date(),
+            },
+          },
+        },
+      });
 
       if (!inventoryMatch) syncSummary.setMissingZero += 1;
-      syncSummary.updated += 1;
+      advanceProductProgress();
+
+      if (pendingWrites.length >= safeWriteBatchSize) {
+        await flushPendingWrites();
+      }
     }
+
+    await flushPendingWrites();
 
     const finishedAt = new Date();
     const result = {
@@ -588,6 +818,12 @@ async function runFishbowlInventoryMapSyncInternal({
       durationMs: finishedAt.getTime() - startedAt.getTime(),
       inventoryPath,
       inventoryStrategy: inventorySummary?.mode || "bulk-map",
+      performance: {
+        inventoryPageSizeRequested: inventoryPageSize,
+        inventoryPageSizeUsed: inventorySummary?.pageSizeUsed || null,
+        fallbackConcurrency: clampInt(fallbackConcurrency, 10, 1, 20),
+        writeBatchSize: clampInt(writeBatchSize, 500, 50, 2000),
+      },
       bulkFetchError: bulkFetchError?.message || null,
       inventorySummary,
       uniqueMappedPartNumbers: inventoryByPartNumber.size,
@@ -595,6 +831,15 @@ async function runFishbowlInventoryMapSyncInternal({
       syncSummary,
       syncSamples,
     };
+
+    setActiveSyncProgress({
+      phase: "finishing",
+      phaseLabel: "Finishing quantity sync",
+      processed: products.length,
+      total: products.length,
+      updated: dryRun ? syncSummary.wouldUpdate : syncSummary.updated,
+      failed: Number(inventorySummary?.productsFailed || inventorySummary?.pagesFailed || 0),
+    });
 
     const runStatus = Number(inventorySummary?.pagesFailed || 0) > 0 ? "partial" : "success";
     await finishRunDocument(runDoc, { status: runStatus, result });
@@ -610,6 +855,14 @@ export function getFishbowlInventorySyncRuntimeState() {
     running: Boolean(activeSyncPromise),
     startedAt: activeSyncState?.startedAt || null,
     triggeredBy: activeSyncState?.triggeredBy || null,
+    phase: activeSyncState?.phase || (activeSyncPromise ? "starting" : "idle"),
+    phaseLabel: activeSyncState?.phaseLabel || (activeSyncPromise ? "Starting quantity sync" : ""),
+    processed: Math.max(0, Number(activeSyncState?.processed || 0)),
+    total: Math.max(0, Number(activeSyncState?.total || 0)),
+    percent: Math.max(0, Math.min(100, Number(activeSyncState?.percent || 0))),
+    updated: Math.max(0, Number(activeSyncState?.updated || 0)),
+    failed: Math.max(0, Number(activeSyncState?.failed || 0)),
+    strategy: activeSyncState?.strategy || "",
   };
 }
 
@@ -621,6 +874,14 @@ export async function runFishbowlInventoryMapSync(options = {}) {
   activeSyncState = {
     startedAt: new Date(),
     triggeredBy: options.triggeredBy || "manual",
+    phase: "starting",
+    phaseLabel: "Starting quantity sync",
+    processed: 0,
+    total: 0,
+    percent: 0,
+    updated: 0,
+    failed: 0,
+    strategy: "",
   };
 
   activeSyncPromise = runFishbowlInventoryMapSyncInternal(options);
