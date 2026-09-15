@@ -1,40 +1,144 @@
-# === Node ===
+# ============================================================
+# NODE / DEPENDENCIES
+# ============================================================
+
 node_modules/
+client/node_modules/
+server/node_modules/
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+pnpm-debug.log*
 
-# === Vite / React Build Output ===
+
+# ============================================================
+# ENVIRONMENT / SECRETS
+# ============================================================
+
+.env
+.env.*
+!.env.example
+
+client/.env
+client/.env.*
+server/.env
+server/.env.*
+
+# Keep example environment files if you create them
+!client/.env.example
+!server/.env.example
+
+
+# ============================================================
+# GENERATED / TEMPORARY FILES
+# ============================================================
+
+tmp/
+server/tmp/
+client/tmp/
+
+.temp/
+.cache/
+
+# MCN / manufacturer-matching generated files
+**/IHI_MCN_*.csv
+**/IHI_MCN_*.json
+**/mcn-review-*.csv
+**/mcn-review-*.json
+**/mcn-v*-*.csv
+**/mcn-v*-*.json
+
+# Generated manufacturer-matching exports
+**/manufacturer-matching-source-*.csv
+**/manufacturer-matching-source-*.json
+**/manufacturer-matching-import-ready-*.csv
+**/manufacturer-matching-mcn-review-*.csv
+
+# Generated previews / audits / backups
+**/*-preview.csv
+**/*-merge-audit.csv
+**/*-merge-summary.json
+**/*-backup.csv
+
+
+# ============================================================
+# LARGE GENERATED FILES / EXPORTS
+# ============================================================
+
+exports/
+reports/
+backups/
+dumps/
+
+*.dump
+*.bson
+*.sqlite
+*.sqlite3
+
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.bak
+
+
+# ============================================================
+# VITE / REACT BUILD OUTPUT
+# ============================================================
+
 client/dist/
 client/.vite/
-client/.env
+dist/
+build/
 
-# === Logs ===
-logs
+
+# ============================================================
+# SERVER BUILD OUTPUT
+# ============================================================
+
+server/build/
+server/dist/
+
+
+# ============================================================
+# LOGS
+# ============================================================
+
+logs/
 *.log
 *.log.*
 
-# === System files ===
+
+# ============================================================
+# TEST / COVERAGE OUTPUT
+# ============================================================
+
+coverage/
+.nyc_output/
+
+
+# ============================================================
+# SYSTEM FILES
+# ============================================================
+
 .DS_Store
 Thumbs.db
 
-# === Editor files ===
+
+# ============================================================
+# EDITOR FILES
+# ============================================================
+
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# === Docker ===
+
+# ============================================================
+# DOCKER / RUNTIME
+# ============================================================
+
 *.pid
 docker-compose.override.yml
-
-# === Build Artifacts ===
-server/build/
-coverage/
-*.zip
