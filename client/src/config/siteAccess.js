@@ -1,6 +1,6 @@
 export const SITE_ACCESS = {
 	previewBanner: {
-		enabled: true,
+		enabled: false,
 		label: "Customer Preview",
 		message:
 			"You're viewing a test version of the new IHI website. Some products and features are still being prepared for launch.",
@@ -8,7 +8,7 @@ export const SITE_ACCESS = {
 			"Test site — some products and features are still being prepared.",
 	},
 	productBuilder: {
-		enabled: false,
+		enabled: true,
 		title: "Coming Soon",
 		description:
 			"This section will be available after public launch...",
@@ -26,7 +26,7 @@ export const SITE_ACCESS = {
 			"This section will be available after public launch...",
 	},
 	orderStatus: {
-		enabled: false,
+		enabled: true,
 		title: "Coming Soon",
 		description:
 			"This section will be available after public launch...",
