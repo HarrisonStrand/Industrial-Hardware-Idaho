@@ -1,6 +1,7 @@
 // client/src/pages/AdminDashboard/AdminProducts.jsx
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch.js";
+import BulkPublishPanel from "./BulkPublishPanel.jsx";
 import "./AdminProducts.css";
 
 const REVIEW_BUCKETS = [
@@ -887,6 +888,8 @@ export default function AdminProducts() {
 						{error}
 					</div>
 				) : null}
+
+				<BulkPublishPanel />
 
 				<div className='theme-card-container card shadow-sm rounded-4 border-0'>
 					<div className='card-body'>

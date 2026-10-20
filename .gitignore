@@ -41,20 +41,6 @@ client/tmp/
 .temp/
 .cache/
 
-# MCN / manufacturer-matching generated files
-**/IHI_MCN_*.csv
-**/IHI_MCN_*.json
-**/mcn-review-*.csv
-**/mcn-review-*.json
-**/mcn-v*-*.csv
-**/mcn-v*-*.json
-
-# Generated manufacturer-matching exports
-**/manufacturer-matching-source-*.csv
-**/manufacturer-matching-source-*.json
-**/manufacturer-matching-import-ready-*.csv
-**/manufacturer-matching-mcn-review-*.csv
-
 # Generated previews / audits / backups
 **/*-preview.csv
 **/*-merge-audit.csv

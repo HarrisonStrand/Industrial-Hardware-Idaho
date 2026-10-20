@@ -3,7 +3,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
 import { fetchCatalogProductBySlug } from "../../../services/catalogApi.js";
+import SpecificationsTable from "../../../components/Specifications/SpecificationsTable.jsx";
 import "./ProductDetail.css";
+
+// How each kind of downloadable document is named on the page.
+const DOCUMENT_LABELS = {
+  spec_sheet: "Spec Sheet",
+  sds: "Safety Data Sheet (SDS)",
+  catalog_page: "Manufacturer Catalog Page",
+  instructions: "Instructions",
+  warranty: "Warranty",
+};
 
 export default function CatalogProductDetail() {
   const { slug } = useParams();
@@ -157,6 +167,29 @@ export default function CatalogProductDetail() {
                   <ul className="text-main mb-0">
                     {product.bulletPoints.map((point) => (
                       <li key={point}>{point}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <SpecificationsTable specs={product.specs} className="mt-4" />
+
+              {product.documents?.length > 0 && (
+                <div className="mt-4">
+                  <div className="text-main text-uppercase small fw-bold mb-2">
+                    Documents
+                  </div>
+                  <ul className="text-main mb-0 list-unstyled">
+                    {product.documents.map((doc) => (
+                      <li key={doc.url} className="mb-1">
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-main">
+                          {doc.title || DOCUMENT_LABELS[doc.type] || "Document"} (PDF)
+                        </a>
+                      </li>
                     ))}
                   </ul>
                 </div>

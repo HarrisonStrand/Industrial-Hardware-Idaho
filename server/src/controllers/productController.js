@@ -3,6 +3,7 @@ import Product from "../models/Product.js";
 import ProductEnrichment from "../models/ProductEnrichment.js";
 import evaluateProductPublishReadiness from "../services/catalog/evaluateProductPublishReadiness.js";
 import publishProduct from "../services/catalog/publishProduct.js";
+import bulkPublishProducts from "../services/catalog/bulkPublishProducts.js";
 import { markFishbowlIntakeReviewed } from "../services/fishbowl/syncFishbowlProductIntake.js";
 
 function safeObject(value) {
@@ -1425,5 +1426,26 @@ export const bulkAdminProducts = async (req, res) => {
 	} catch (err) {
 		console.error(err);
 		res.status(400).json({ message: err.message || "Failed to perform bulk action" });
+	}
+};
+
+// Bulk publish by part-number list, enrichment batch or category page. dryRun (the default)
+// only reports; publishing needs dryRun: false sent by the admin's own click.
+export const bulkPublishAdminProducts = async (req, res) => {
+	try {
+		const body = safeObject(req.body);
+		const result = await bulkPublishProducts(
+			{
+				partNumbers: body.partNumbers || [],
+				batchId: body.batchId || "",
+				category: body.category || "",
+				subcategory: body.subcategory || "",
+			},
+			{ dryRun: body.dryRun !== false, actor: req.user?.id || null },
+		);
+		return res.json({ success: true, ...result });
+	} catch (err) {
+		console.error(err);
+		res.status(400).json({ message: err.message || "Failed to run bulk publish" });
 	}
 };

@@ -69,6 +69,16 @@ const FAST_BUILDER_ENRICHMENT_PROJECTION = {
 	"images.url": 1,
 	"images.alt": 1,
 	"images.isPrimary": 1,
+	"documents.type": 1,
+	"documents.title": 1,
+	"documents.url": 1,
+	"specs.group": 1,
+	"specs.name": 1,
+	"specs.value": 1,
+	"specs.unit": 1,
+	"specs.basis": 1,
+	"specs.reference": 1,
+	"specs.sourceUrl": 1,
 	"attributes.measurementSystem": 1,
 	"attributes.diameter": 1,
 	"attributes.threadSeries": 1,
@@ -161,7 +171,52 @@ function formatScrewThreadForBuilder(attrs = {}, subcategoryId = "") {
 	return "";
 }
 
-function normalizeVariantAttributesForBuilder(
+// Display clean-up for builder filter values. Applied to both the filter options and each
+// variant's attributes, so a filter value still matches the products it came from.
+//   - a metric thread pitch shows at least one decimal: "1" -> "1.0", "1.00" -> "1.0", "0.50" -> "0.5"
+//   - inch thread series read one way: "coarse" / "UNC (Coarse)" -> "(UNC) Coarse", "fine" / "UNF (Fine)" -> "(UNF) Fine";
+//     a metric row's bare "coarse" / "fine" reads "Metric Coarse" / "Metric Fine"
+//   - metric hex nut classes: "Class 8" -> "Class 8 (for 8.8 bolts)", "Class 10" -> "Class 10 (for 10.9 bolts)"
+export function formatMetricPitchForBuilder(value = "") {
+	const text = String(value ?? "").trim();
+	if (!/^\d+(?:\.\d+)?$/.test(text)) return text;
+	const [whole, fraction = ""] = text.split(".");
+	const trimmed = fraction.replace(/0+$/, "");
+	return `${whole}.${trimmed || "0"}`;
+}
+
+export function formatThreadSeriesForBuilder(value = "", metric = false) {
+	const text = String(value ?? "").trim();
+	const lower = text.toLowerCase();
+	if (!text) return text;
+	if (metric) {
+		if (lower === "coarse") return "Metric Coarse";
+		if (lower === "fine") return "Metric Fine";
+		return text;
+	}
+	if (["coarse", "unc", "unc (coarse)", "(unc) coarse"].includes(lower)) return "(UNC) Coarse";
+	if (["fine", "unf", "unf (fine)", "(unf) fine"].includes(lower)) return "(UNF) Fine";
+	return text;
+}
+
+function polishBuilderValues(shaped = {}, attributes = {}) {
+	const out = { ...(shaped || {}) };
+	const system = String(attributes?.measurementSystem || out.measurementSystem || "").toLowerCase();
+	const metric = system === "metric" || /^m\d/i.test(String(attributes?.diameter || ""));
+	if (metric && out.threadPitch) out.threadPitch = formatMetricPitchForBuilder(out.threadPitch);
+	if (out.threadSeries) out.threadSeries = formatThreadSeriesForBuilder(out.threadSeries, metric);
+	// Metric nut classes stay as marked, with the bolt class they pair with.
+	const family = String(attributes?.familyType || attributes?.fastenerTypeCanonical || "").toLowerCase();
+	const nutClass = String(out.grade || "").match(/^Class (8|10)$/);
+	if (family === "hex nut" && nutClass) out.grade = `Class ${nutClass[1]} (for ${nutClass[1] === "8" ? "8.8" : "10.9"} bolts)`;
+	return out;
+}
+
+function normalizeVariantAttributesForBuilder(attributes = {}, subcategoryId = "") {
+	return polishBuilderValues(shapeVariantAttributesForBuilder(attributes, subcategoryId), attributes);
+}
+
+function shapeVariantAttributesForBuilder(
 	attributes = {},
 	subcategoryId = "",
 ) {
@@ -324,6 +379,19 @@ function escapeRegex(value = "") {
 	return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// A page id such as "bits drivers" or "chemicals paints sealants" must match the stored
+// names "bits & drivers" and "chemicals, paints & sealants". Words are matched in order;
+// anything between them may be spaces, dashes, commas, "&" or the word "and".
+export function catalogNamePattern(normalizedId = "") {
+	const words = String(normalizedId)
+		.toLowerCase()
+		.split(/[^a-z0-9]+/)
+		.filter((word) => word && word !== "and");
+	if (!words.length) return "^$";
+	const between = "(?:[\\s,&-]|\\band\\b)+";
+	return `^${words.map(escapeRegex).join(between)}$`;
+}
+
 function asNumber(value, fallback = 0) {
 	const num = Number(value);
 	return Number.isFinite(num) ? num : fallback;
@@ -338,9 +406,10 @@ function normalizeNumberedDiameterForBuilder(diameter = "", threadPitch = "") {
 
 	if (!raw) return "";
 
+	// Numbered sizes are filtered as "#10"; the pitch has its own filter.
 	const existing = raw.match(/^#?(\d+)\-(\d+(?:\.\d+)?)$/);
-	if (existing && NUMBERED_DIAMETER_SIZES.has(existing[1])) {
-		return `${existing[1]}-${existing[2]}`;
+	if (existing && NUMBERED_DIAMETER_SIZES.has(existing[1]) && (!pitch || pitch === existing[2])) {
+		return `#${existing[1]}`;
 	}
 
 	const sizeOnly = raw.match(/^#?(\d+)$/);
@@ -348,11 +417,7 @@ function normalizeNumberedDiameterForBuilder(diameter = "", threadPitch = "") {
 		return String(diameter || "").trim();
 	}
 
-	if (/^\d+(?:\.\d+)?$/.test(pitch)) {
-		return `${sizeOnly[1]}-${pitch}`;
-	}
-
-	return sizeOnly[1];
+	return `#${sizeOnly[1]}`;
 }
 
 function parseBuilderSizeSort(value = "", key = "") {
@@ -797,10 +862,7 @@ export async function getCatalogBuilderSubcategory(
 			multiplier: 1,
 		};
 
-	const categoryPattern =
-		normalizedCategoryId === "bits drivers"
-			? "^bits\\s*(?:(?:&|and)\\s*)?drivers$"
-			: `^${escapeRegex(normalizedCategoryId)}$`;
+	const categoryPattern = catalogNamePattern(normalizedCategoryId);
 
 	const useFastProjection = shouldUseFastBuilderProjection(
 		normalizedCategoryId,
@@ -830,7 +892,7 @@ export async function getCatalogBuilderSubcategory(
 		: {
 				category: new RegExp(categoryPattern, "i"),
 				subcategory: new RegExp(
-					`^${escapeRegex(normalizedSubcategoryId)}$`,
+					catalogNamePattern(normalizedSubcategoryId),
 					"i",
 				),
 			};
@@ -929,6 +991,22 @@ export async function getCatalogBuilderSubcategory(
 						enrichment?.attributes?.familyTitle || toTitle(subcategoryId),
 					shortDescription: enrichment.shortDescription || "",
 					description: enrichment.description || "",
+					// Downloadable PDFs for the product's detail view (spec sheet, SDS, ...).
+					documents: (enrichment.documents || [])
+						.filter((doc) => doc && doc.url)
+						.map((doc) => ({ type: doc.type || "", title: doc.title || "", url: doc.url })),
+					// Specifications with their basis and reference.
+					specs: (enrichment.specs || [])
+						.filter((spec) => spec && spec.name && spec.value)
+						.map((spec) => ({
+							group: spec.group || "",
+							name: spec.name,
+							value: spec.value,
+							unit: spec.unit || "",
+							basis: spec.basis || "",
+							reference: spec.reference || "",
+							sourceUrl: spec.sourceUrl || "",
+						})),
 					image:
 						enrichment.images?.find((img) => img.isPrimary)?.url ||
 						enrichment.images?.[0]?.url ||

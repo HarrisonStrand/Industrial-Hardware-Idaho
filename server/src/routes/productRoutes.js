@@ -16,6 +16,7 @@ import {
   recomputeAdminProduct,
   markFishbowlIntakeReviewedAdminProduct,
   bulkAdminProducts,
+  bulkPublishAdminProducts,
 } from "../controllers/productController.js";
 
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
@@ -32,6 +33,7 @@ router.post("/admin/:id/unpublish", requireAuth, requireAdmin, unpublishAdminPro
 router.post("/admin/:id/recompute", requireAuth, requireAdmin, recomputeAdminProduct);
 router.post("/admin/:id/fishbowl-intake-reviewed", requireAuth, requireAdmin, markFishbowlIntakeReviewedAdminProduct);
 router.post("/admin/bulk-action", requireAuth, requireAdmin, bulkAdminProducts);
+router.post("/admin/bulk-publish", requireAuth, requireAdmin, bulkPublishAdminProducts);
 
 router.get("/", listProducts);
 router.get("/:id", getProduct);

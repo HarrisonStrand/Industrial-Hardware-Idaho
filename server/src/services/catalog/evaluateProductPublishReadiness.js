@@ -16,14 +16,9 @@ function isLikelyAssemblyText(value = "") {
 	const text = normalize(value);
 	if (!text) return false;
 
-	return (
-		text.includes(" assy") ||
-		text.includes("assembly") ||
-		text.includes(" w /") ||
-		text.includes(" w/") ||
-		text.includes("with locknut") ||
-		text.includes("locknut assy")
-	);
+	// Only a real assembly is blocked. "W/" (an oil drain plug w/ gasket, a body bolt w/ washer)
+	// and "with locknut" describe one part sold with its gasket, washer or nut.
+	return text.includes(" assy") || text.includes("assembly");
 }
 
 function isNonCoatedBaseMaterial(material = "") {

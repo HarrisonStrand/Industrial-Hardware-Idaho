@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
 import { fetchCatalogBuilderSubcategory } from "../../../services/catalogBuilderApi.js";
+import SpecificationsTable from "../../../components/Specifications/SpecificationsTable.jsx";
 import "./ProductDetail.css";
 import "./ProductDetailBuilderGrid.css";
 
@@ -24,7 +25,30 @@ const HIDDEN_ATTRIBUTE_KEYS = new Set([
 	"size",
 	"material",
 	"finish",
+	// Internal bookkeeping fields: never a filter a shopper would use.
+	"categoryCanonical",
+	"subcategoryCanonical",
+	"fishbowlDescription",
 ]);
+
+// The import stored some fields twice under two names. When a product has the main
+// field, its old-name copy is not shown as a second filter with the same label.
+const DUPLICATE_ATTRIBUTE_KEYS = {
+	driveType: "drive_type",
+	thread_series: "threadSeries",
+	thread_coverage: "threadCoverage",
+	fastenerTypeCanonical: "fastenerType",
+	headStyle: "headType",
+};
+
+// How each kind of downloadable document is named in the detail view.
+const DOCUMENT_LABELS = {
+	spec_sheet: "Spec Sheet",
+	sds: "Safety Data Sheet (SDS)",
+	catalog_page: "Manufacturer Catalog Page",
+	instructions: "Instructions",
+	warranty: "Warranty",
+};
 
 const ATTRIBUTE_ORDER = [
 	"measurementSystem",
@@ -121,39 +145,26 @@ function parseSizeSortValue(value = "", key = "") {
 	return null;
 }
 
-function formatThreadedNumberedDiameterLabel(value = "", variants = [], selected = {}) {
+// Numbered (gauge) screw sizes read as "#10", the way they are written in titles.
+// The thread pitch has its own filter, so it is not joined onto the diameter.
+function formatThreadedNumberedDiameterLabel(value = "") {
 	const raw = String(value || "").trim();
 	if (!raw) return raw;
 
 	const existing = raw.match(/^#?(\d+)\s*-\s*(\d+(?:\.\d+)?)$/);
 	if (existing && NUMBERED_DIAMETER_SIZES.has(existing[1])) {
-		return `${existing[1]}-${existing[2]}`;
+		return `#${existing[1]}-${existing[2]}`;
 	}
 
 	const normalizedRaw = raw.replace(/^#/, "");
 	if (!NUMBERED_DIAMETER_SIZES.has(normalizedRaw)) return raw;
 
-	const compatible = getCompatibleVariants(variants, {
-		...selected,
-		diameter: value,
-	});
-
-	const pitches = Array.from(
-		new Set(
-			compatible
-				.map((variant) => String(variant?.attributes?.threadPitch || "").trim())
-				.filter(Boolean),
-		),
-	);
-
-	if (pitches.length !== 1) return normalizedRaw;
-
-	return `${normalizedRaw}-${pitches[0]}`;
+	return `#${normalizedRaw}`;
 }
 
 function formatFacetOptionLabel(key = "", value = "", variants = [], selected = {}) {
 	if (key === "diameter") {
-		return formatThreadedNumberedDiameterLabel(value, variants, selected);
+		return formatThreadedNumberedDiameterLabel(value);
 	}
 
 	return value;
@@ -293,6 +304,7 @@ function collectAttributesFromVariants(
 				value === null ||
 				value === "" ||
 				HIDDEN_ATTRIBUTE_KEYS.has(key) ||
+				(DUPLICATE_ATTRIBUTE_KEYS[key] && attrs[DUPLICATE_ATTRIBUTE_KEYS[key]]) ||
 				shouldHideAttributeForContext(key, context, subcategoryId, selected)
 			) {
 				continue;
@@ -616,7 +628,6 @@ function buildVariantSpecRows(variant = {}, subcategoryId = "", maxRows = 18) {
 	if (threadValue) {
 		seen.add("thread");
 		seen.add("threadSeries");
-		seen.add("thread_series");
 		seen.add("threadPitch");
 		rows.push({
 			key: "thread",
@@ -625,12 +636,16 @@ function buildVariantSpecRows(variant = {}, subcategoryId = "", maxRows = 18) {
 		});
 	}
 
+	// Live attributes can carry the same field under two spellings (driveType and drive_type, threadCoverage and
+	// thread_coverage); compare them in one spelling so each field gets one tile.
+	const canonicalKey = (key) => String(key).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+
 	const pushRow = (key) => {
-		if (!key || seen.has(key) || hiddenSpecKeys.has(key)) return;
+		if (!key || seen.has(canonicalKey(key)) || hiddenSpecKeys.has(key)) return;
 		const value = attrs[key];
 		if (value === undefined || value === null || value === "") return;
 
-		seen.add(key);
+		seen.add(canonicalKey(key));
 		rows.push({
 			key,
 			label: formatAttributeLabel(key === "driveType" ? "drive_type" : key),
@@ -1295,7 +1310,7 @@ function ProductDetailModal({
 									<div className='small text-muted text-uppercase mb-3'>Specs</div>
 									<div className='builder-detail-spec-grid'>
 										{rows.map((row) => (
-											<div key={row.key} className='builder-detail-spec theme-section-container bg-light rounded-4 border p-3'>
+											<div key={row.key} className='mb-3 builder-detail-spec theme-section-container bg-light rounded-3 border p-3'>
 												<div className='small text-muted text-uppercase'>{row.label}</div>
 												<div className='fw-semibold text-main'>{row.value}</div>
 											</div>
@@ -1303,9 +1318,31 @@ function ProductDetailModal({
 									</div>
 								</div>
 							) : null}
+
+							{variant?.specs?.length ? (
+								<SpecificationsTable
+									specs={variant.specs}
+									className='builder-detail-spec-section theme-detail-container bg-main-light rounded-4 border p-3 p-md-4 my-0 my-md-4 mt-4'
+								/>
+							) : null}
+
+							{variant?.documents?.length ? (
+								<div className='builder-detail-spec-section theme-detail-container bg-main-light rounded-4 border p-3 p-md-4 my-0 my-md-4 mt-4'>
+									<div className='small text-muted text-uppercase mb-3'>Documents</div>
+									<ul className='list-unstyled mb-0'>
+										{variant.documents.map((doc) => (
+											<li key={doc.url} className='mb-1'>
+												<a href={doc.url} target='_blank' rel='noopener noreferrer' className='text-main fw-semibold text-decoration-none'>
+													{doc.title || DOCUMENT_LABELS[doc.type] || "Document"} (PDF)
+												</a>
+											</li>
+										))}
+									</ul>
+								</div>
+							) : null}
 						</div>
 						<div className='modal-footer builder-detail-modal-footer border-0'>
-							<button type='button' className='back-to-builder-btn rounded-3 px-4' onClick={onClose}>
+							<button type='button' className='bg-main-light back-to-builder-btn rounded-3 px-4' onClick={onClose}>
 								Back to Builder
 							</button>
 
@@ -1314,7 +1351,7 @@ function ProductDetailModal({
 									<label className='form-label text-uppercase small fw-bold mb-0 text-main'>Qty</label>
 									<button
 										type='button'
-										className='btn btn-md bg-main-light builder-detail-qty-btn'
+										className='btn btn-md bexport type first = {second}g-main-light builder-detail-qty-btn'
 										onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) - 1))}>
 										−
 									</button>
@@ -1506,6 +1543,7 @@ export default function ProductDetailFacetPanel({ includeUnpublished = false }) 
 
 		for (const [key, values] of Object.entries(topLevel)) {
 			if (HIDDEN_ATTRIBUTE_KEYS.has(key)) continue;
+			if (DUPLICATE_ATTRIBUTE_KEYS[key] && topLevel[DUPLICATE_ATTRIBUTE_KEYS[key]]?.length) continue;
 			if (
 				shouldHideAttributeForContext(
 					key,

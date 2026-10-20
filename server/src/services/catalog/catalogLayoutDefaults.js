@@ -14,6 +14,19 @@ const DEFAULT_BUILDER_KEYS = new Set([
   "nuts/hex-nuts",
 ]);
 
+// Categories whose new pages start visible (as a range list) instead of hidden.
+// Auveco's pages were agreed in the site review and shown straight away (2026-10-13).
+const DEFAULT_VISIBLE_CATEGORIES = new Set(["auveco"]);
+// Single pages that start visible. The specialty washer pages were shown straight away
+// because promoted, published washers moved onto them.
+const DEFAULT_VISIBLE_KEYS = new Set([
+  "washers/sealing-washers",
+  "washers/square-plate-washers",
+  "washers/belleville-wave-washers",
+  "washers/specialty-washers",
+  "wire-hardware/cotter-pins",
+]);
+
 let cachedDefinitions = null;
 let ensurePromise = null;
 let layoutRecordsEnsured = false;
@@ -70,7 +83,7 @@ export function getDefaultSubcategorySetting(definition = {}) {
     displayMode: isInitialBuilder ? "builder" : "range-list",
     fallbackMode: "range-list",
     rangeDataSource: "ready",
-    isVisible: isInitialBuilder,
+    isVisible: isInitialBuilder || DEFAULT_VISIBLE_CATEGORIES.has(categoryId) || DEFAULT_VISIBLE_KEYS.has(key),
     showPricing: false,
     allowCart: isInitialBuilder,
     image: {

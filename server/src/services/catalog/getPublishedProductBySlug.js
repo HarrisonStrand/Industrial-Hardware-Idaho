@@ -72,6 +72,26 @@ export async function getPublishedProductBySlug(slug) {
 
     images: enrichment.images || [],
 
+    // Downloadable PDFs (spec sheet, SDS, catalog page, instructions, warranty) the product has.
+    // Only the fields a shopper needs; a document without a URL is left out.
+    documents: (enrichment.documents || [])
+      .filter((doc) => doc && doc.url)
+      .map((doc) => ({ type: doc.type || "", title: doc.title || "", url: doc.url })),
+
+    // Specifications: the maker's stated facts and the minimum properties of the part's grade from its
+    // published standard. Each keeps its basis and reference so the page can say where a value comes from.
+    specs: (enrichment.specs || [])
+      .filter((spec) => spec && spec.name && spec.value)
+      .map((spec) => ({
+        group: spec.group || "",
+        name: spec.name,
+        value: spec.value,
+        unit: spec.unit || "",
+        basis: spec.basis || "",
+        reference: spec.reference || "",
+        sourceUrl: spec.sourceUrl || "",
+      })),
+
     seo: enrichment.seo || {},
 
     pricing: {
