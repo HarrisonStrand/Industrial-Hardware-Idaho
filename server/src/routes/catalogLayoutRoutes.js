@@ -6,6 +6,7 @@ import {
   ensureCatalogLayoutRecords,
   getCatalogGlobalSetting,
   getCatalogSubcategorySetting,
+  getSiteSwitches,
   normalizeCatalogId,
   resolveEffectiveCatalogMode,
 } from "../services/catalog/catalogLayoutDefaults.js";
@@ -35,6 +36,17 @@ function toPublicSetting(setting, globalSetting) {
     sortOrder: Number(setting.sortOrder || 0),
   };
 }
+
+// Public cart/checkout switches. Not cached so admin changes apply on next page load.
+router.get("/site-switches", async (_req, res) => {
+  try {
+    res.set("Cache-Control", "no-store");
+    return res.json(await getSiteSwitches());
+  } catch (error) {
+    console.error("Public site switches error:", error);
+    return res.status(500).json({ message: "Failed to load site switches" });
+  }
+});
 
 router.get("/", async (_req, res) => {
   try {

@@ -231,7 +231,11 @@ export default function CatalogProductDetail() {
                   min="1"
                   className="form-control rounded-3 text-secondary option-select form-input"
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Number(e.target.value || 1)))}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === "" || /^\d+$/.test(raw)) setQuantity(raw);
+                  }}
+                  onBlur={() => setQuantity(Math.max(1, Number(quantity || 1)))}
                 />
               </div>
             </div>

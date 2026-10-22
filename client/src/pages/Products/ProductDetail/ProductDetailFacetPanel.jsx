@@ -1,4 +1,5 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import StockSplit from "../../../components/StockSplit/StockSplit.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "../../../context/CartContext.jsx";
@@ -1108,6 +1109,11 @@ function ProductPreviewPanel({
 							+
 						</button>
 					</div>
+					{exactVariant ? (
+						<div className='text-md-end mb-3'>
+							<StockSplit quantity={quantity} available={qtyAvailable} />
+						</div>
+					) : null}
 
 					<div className='d-flex flex-wrap justify-content-md-end gap-2'>
 						<button
@@ -1351,7 +1357,7 @@ function ProductDetailModal({
 									<label className='form-label text-uppercase small fw-bold mb-0 text-main'>Qty</label>
 									<button
 										type='button'
-										className='btn btn-md bexport type first = {second}g-main-light builder-detail-qty-btn'
+										className='btn btn-md bg-main-light builder-detail-qty-btn'
 										onClick={() => onQuantityChange?.(Math.max(1, Number(quantity || 1) - 1))}>
 										−
 									</button>
@@ -1373,6 +1379,11 @@ function ProductDetailModal({
 										+
 									</button>
 								</div>
+								{exactVariant ? (
+									<div className='text-end mb-3'>
+										<StockSplit quantity={quantity} available={qtyAvailable} />
+									</div>
+								) : null}
 
 								<button
 									type='button'
@@ -2031,7 +2042,7 @@ const handleAddToCart = () => {
 							unitPrice={unitPrice}
 							currency={currency}
 							qtyAvailable={qtyAvailable}
-							quantity={quantity}
+							quantity={selected.quantity}
 							totalPrice={totalPrice}
 							exactVariant={exactVariant}
 							onClose={() => setShowProductDetailModal(false)}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
@@ -15,6 +15,7 @@ import {
 } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 
+import StockSplit, { splitStock, useStockLevels } from "../../components/StockSplit/StockSplit.jsx";
 import "./Checkout.css";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -49,6 +50,10 @@ export default function Checkout() {
 	const { user, setUser } = useAuth();
 	const { showToast } = useToast();
 	const { items, cartTotal, clearCart } = useCart();
+	const { stock } = useStockLevels(items.map((it) => it.productId));
+	const anyBackordered = items.some(
+		(it) => stock[String(it.productId)] !== undefined && splitStock(it.quantity, stock[String(it.productId)]).backordered > 0,
+	);
 
 	const [loading, setLoading] = useState(true);
 	const [caps, setCaps] = useState(null);
@@ -430,12 +435,20 @@ export default function Checkout() {
 									<div className='text-muted small'>
 										Qty {it.quantity} • ${Number(it.price || 0).toFixed(2)} ea
 									</div>
+									<StockSplit quantity={it.quantity} available={stock[String(it.productId)]} />
 								</div>
 								<div className='text-main fw-semibold'>
 									${Number(it.lineTotal || 0).toFixed(2)}
 								</div>
 							</div>
 						))}
+
+						{anyBackordered && (
+							<div className='stock-split-notice mt-3'>
+								Some items are backordered. You're charged for the full order now; in-stock quantities ship right
+								away and backordered quantities ship as soon as they are restocked.
+							</div>
+						)}
 
 						<div className='d-flex justify-content-between pt-3'>
 							<div className='text-main text-uppercase'>Total</div>
@@ -794,73 +807,42 @@ function PayNowManualCard({
 	showToast,
 	shippingSameAsBilling,
 }) {
-	const [clientSecret, setClientSecret] = useState("");
-	const [orderId, setOrderId] = useState("");
-	const [loadingIntent, setLoadingIntent] = useState(false);
+	// The order and its Stripe payment are created once, when the customer presses Pay (not on every edit of the
+	// form, which made a new order each time). A retry after a declined card reuses the same order while nothing
+	// on the page has changed.
+	const pendingRef = useRef(null);
 
-	useEffect(() => {
-		let alive = true;
-
-		async function createIntent() {
-			setLoadingIntent(true);
-			try {
-				const data = await apiFetch("/api/checkout/pay-now/intent", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						amountCents,
-						currency: "usd",
-						companyName: billing?.companyName || "",
-						poNumber: billing?.poNumber || "",
-						saveThisCard,
-						items,
-						billingAddress: { ...billing?.address, name: billing?.companyName || "", companyName: billing?.companyName || "" },
-						shippingAddress: shippingSameAsBilling
-							? { ...billing?.address, name: billing?.companyName || "", companyName: billing?.companyName || "" }
-							: { ...shipping?.address, name: shipping?.companyName || "", companyName: shipping?.companyName || "" },
-						shippingSameAsBilling: Boolean(shippingSameAsBilling),
-					}),
-				});
-
-				if (!alive) return;
-				setClientSecret(data.clientSecret || "");
-				setOrderId(data.orderId || "");
-			} catch (e) {
-				showToast({ variant: "danger", message: e.message });
-			} finally {
-				if (alive) setLoadingIntent(false);
-			}
-		}
-
-		if (amountCents > 0) createIntent();
-
-		return () => {
-			alive = false;
+	async function preparePayment() {
+		const payload = {
+			amountCents,
+			currency: "usd",
+			companyName: billing?.companyName || "",
+			poNumber: billing?.poNumber || "",
+			saveThisCard,
+			items,
+			billingAddress: { ...billing?.address, name: billing?.companyName || "", companyName: billing?.companyName || "" },
+			shippingAddress: shippingSameAsBilling
+				? { ...billing?.address, name: billing?.companyName || "", companyName: billing?.companyName || "" }
+				: { ...shipping?.address, name: shipping?.companyName || "", companyName: shipping?.companyName || "" },
+			shippingSameAsBilling: Boolean(shippingSameAsBilling),
 		};
-	}, [
-		amountCents,
-		saveThisCard,
-		shippingSameAsBilling,
-		items,
-		billing,
-		shipping,
-		showToast,
-	]);
+		const signature = JSON.stringify(payload);
+		if (pendingRef.current?.signature === signature) return pendingRef.current;
 
-	if (loadingIntent) {
-		return <div className='text-muted small'>Preparing secure payment…</div>;
-	}
-
-	if (!clientSecret || !orderId) {
-		return (
-			<div className='text-muted small'>
-				Unable to prepare payment. Check server logs.
-			</div>
-		);
+		const data = await apiFetch("/api/checkout/pay-now/intent", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: signature,
+		});
+		if (!data?.clientSecret || !data?.orderId) {
+			throw new Error("Unable to prepare payment. Please try again.");
+		}
+		pendingRef.current = { signature, clientSecret: data.clientSecret, orderId: data.orderId };
+		return pendingRef.current;
 	}
 
 	return (
-		<Elements stripe={stripePromise} options={{ clientSecret }}>
+		<Elements stripe={stripePromise}>
 			<ManualCardInner
 				placing={placing}
 				setPlacing={setPlacing}
@@ -869,8 +851,8 @@ function PayNowManualCard({
 				clearCart={clearCart}
 				navigate={navigate}
 				showToast={showToast}
-				clientSecret={clientSecret}
-				orderId={orderId}
+				preparePayment={preparePayment}
+				canPay={amountCents > 0}
 			/>
 		</Elements>
 	);
@@ -884,8 +866,8 @@ function ManualCardInner({
 	clearCart,
 	navigate,
 	showToast,
-	clientSecret,
-	orderId,
+	preparePayment,
+	canPay,
 }) {
 	const stripe = useStripe();
 	const elements = useElements();
@@ -917,26 +899,26 @@ function ManualCardInner({
 			return;
 		}
 
-		if (!clientSecret || !orderId) {
+		if (!canPay) {
+			showToast({ variant: "danger", message: "Your cart is empty." });
+			return;
+		}
+
+		const cardEl = elements.getElement(CardNumberElement);
+		if (!cardEl) {
 			showToast({
 				variant: "danger",
-				message: "Payment is not ready yet. Please try again.",
+				message: "Card field is not ready yet.",
 			});
 			return;
 		}
 
+		if (placing) return;
 		setPlacing(true);
 		try {
 			await persistCheckoutInfoToProfile();
 
-			const cardEl = elements.getElement(CardNumberElement);
-			if (!cardEl) {
-				showToast({
-					variant: "danger",
-					message: "Card field is not ready yet.",
-				});
-				return;
-			}
+			const { clientSecret, orderId } = await preparePayment();
 
 			const result = await stripe.confirmCardPayment(clientSecret, {
 				payment_method: { card: cardEl },

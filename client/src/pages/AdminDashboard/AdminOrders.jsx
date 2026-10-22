@@ -127,6 +127,24 @@ function canPushFishbowl(order = {}) {
 	);
 }
 
+function canDelete(order = {}) {
+	const mode = order?.payment?.mode || "PAY_NOW";
+	const paymentStatus = order?.payment?.status || "PENDING";
+	return (
+		mode === "PAY_NOW" &&
+		(paymentStatus === "PENDING" || paymentStatus === "FAILED") &&
+		!order?.fishbowlId &&
+		!order?.fishbowlNumber &&
+		!order?.fishbowlPushedAt
+	);
+}
+
+const ARCHIVE_VIEWS = [
+	{ value: "", label: "Active" },
+	{ value: "only", label: "Archived" },
+	{ value: "all", label: "All" },
+];
+
 function StatusPill({ type = "admin", status, mode }) {
 	const config =
 		type === "payment"
@@ -206,6 +224,7 @@ export default function AdminOrders() {
 	const [adminStatus, setAdminStatus] = useState("");
 	const [paymentStatus, setPaymentStatus] = useState("");
 	const [fishbowlStatus, setFishbowlStatus] = useState("");
+	const [archivedView, setArchivedView] = useState("");
 	const [page, setPage] = useState(1);
 	const limit = 25;
 
@@ -227,10 +246,11 @@ export default function AdminOrders() {
 		if (adminStatus) params.set("adminStatus", adminStatus);
 		if (paymentStatus) params.set("paymentStatus", paymentStatus);
 		if (fishbowlStatus) params.set("fishbowlStatus", fishbowlStatus);
+		if (archivedView) params.set("archived", archivedView);
 		params.set("page", String(page));
 		params.set("limit", String(limit));
 		return params.toString();
-	}, [q, adminStatus, paymentStatus, fishbowlStatus, page]);
+	}, [q, adminStatus, paymentStatus, fishbowlStatus, archivedView, page]);
 
 	async function load() {
 		setLoading(true);
@@ -324,6 +344,63 @@ export default function AdminOrders() {
 		}
 	}
 
+	async function setArchived(order, archived) {
+		if (!order?._id) return;
+		setSaving(true);
+		try {
+			await apiFetch(`/api/admin/orders/${order._id}/archive`, {
+				method: "PATCH",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ archived }),
+			});
+			await load();
+			await refreshSelectedOrder(order._id);
+		} catch (e) {
+			console.error(e);
+			alert(formatErrorMessage(e, "Failed to update archive state"));
+		} finally {
+			setSaving(false);
+		}
+	}
+
+	async function deleteOrder(order) {
+		if (!order?._id || !canDelete(order)) return;
+		const ok = window.confirm(
+			`Permanently delete order ${order.orderNumber}? This cannot be undone. Any open Stripe payment for it will be canceled.`
+		);
+		if (!ok) return;
+		setSaving(true);
+		try {
+			await apiFetch(`/api/admin/orders/${order._id}`, { method: "DELETE" });
+			if (selectedOrder?._id === order._id) setDetailOpen(false);
+			await load();
+		} catch (e) {
+			console.error(e);
+			alert(formatErrorMessage(e, "Failed to delete order"));
+		} finally {
+			setSaving(false);
+		}
+	}
+
+	async function archiveCompleted() {
+		const ok = window.confirm("Archive every completed and denied order? They move to the Archived view and can be unarchived later.");
+		if (!ok) return;
+		setSaving(true);
+		try {
+			const res = await apiFetch("/api/admin/orders/archive-completed", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+			});
+			await load();
+			alert(`${res?.count ?? 0} order${res?.count === 1 ? "" : "s"} archived.`);
+		} catch (e) {
+			console.error(e);
+			alert(formatErrorMessage(e, "Failed to archive orders"));
+		} finally {
+			setSaving(false);
+		}
+	}
+
 	function openDeny(orderId) {
 		setDenyOrderId(orderId);
 		setDenyReason("");
@@ -352,6 +429,28 @@ export default function AdminOrders() {
 				</div>
 				<button className='btn btn-outline-dark rounded-3' onClick={resetFilters} disabled={saving || loading}>
 					Reset Filters
+				</button>
+			</div>
+
+			<div className='admin-orders-archive-bar mb-3'>
+				<div className='btn-group admin-orders-view-switch' role='group' aria-label='Order view'>
+					{ARCHIVE_VIEWS.map((v) => (
+						<button
+							key={v.value || "active"}
+							type='button'
+							className={`btn btn-sm ${archivedView === v.value ? "btn-dark" : "btn-outline-dark"}`}
+							disabled={loading}
+							onClick={() => {
+								setArchivedView(v.value);
+								setPage(1);
+							}}>
+							{v.label}
+							{v.value === "only" && data.summary?.archived ? ` (${data.summary.archived})` : ""}
+						</button>
+					))}
+				</div>
+				<button type='button' className='btn btn-outline-dark btn-sm rounded-3' disabled={saving || loading} onClick={archiveCompleted}>
+					Archive completed &amp; denied
 				</button>
 			</div>
 
@@ -472,6 +571,7 @@ export default function AdminOrders() {
 										<td>
 											<div className='fw-semibold text-main'>{o.orderNumber}</div>
 											<div className='text-muted small'>{(o.items || []).length} item{(o.items || []).length === 1 ? "" : "s"}</div>
+											{o.archivedAt ? <div className='text-muted small'>Archived {formatDate(o.archivedAt)}</div> : null}
 										</td>
 										<td>
 											<div>{customerName(o)}</div>
@@ -501,6 +601,8 @@ export default function AdminOrders() {
 												onComplete={() => setReview(o._id, "APPROVED_COMPLETED")}
 												onDeny={() => openDeny(o._id)}
 												onFishbowl={() => pushFishbowl(o._id)}
+												onArchive={() => setArchived(o, !o.archivedAt)}
+												onDelete={() => deleteOrder(o)}
 											/>
 										</td>
 									</tr>
@@ -527,6 +629,8 @@ export default function AdminOrders() {
 					onComplete={() => selectedOrder && setReview(selectedOrder._id, "APPROVED_COMPLETED")}
 					onDeny={() => selectedOrder && openDeny(selectedOrder._id)}
 					onFishbowl={() => selectedOrder && pushFishbowl(selectedOrder._id)}
+					onArchive={() => selectedOrder && setArchived(selectedOrder, !selectedOrder.archivedAt)}
+					onDelete={() => selectedOrder && deleteOrder(selectedOrder)}
 				/>
 			) : null}
 
@@ -553,7 +657,7 @@ export default function AdminOrders() {
 	);
 }
 
-function OrderActionGrid({ order, saving, onView, onProcess, onComplete, onDeny, onFishbowl, showView = true }) {
+function OrderActionGrid({ order, saving, onView, onProcess, onComplete, onDeny, onFishbowl, onArchive, onDelete, showView = true }) {
 	return (
 		<div className='admin-order-action-grid'>
 			{showView ? <button className='btn btn-outline-dark btn-sm admin-order-action-btn' disabled={saving} onClick={onView}>View Details</button> : null}
@@ -561,11 +665,19 @@ function OrderActionGrid({ order, saving, onView, onProcess, onComplete, onDeny,
 			<button className='btn btn-outline-dark btn-sm admin-order-action-btn' disabled={saving || !canComplete(order)} onClick={onComplete}>Mark Completed</button>
 			<button className='btn btn-outline-danger btn-sm admin-order-action-btn' disabled={saving} onClick={onDeny}>Deny</button>
 			<button className='btn btn-outline-dark btn-sm admin-order-action-btn' disabled={saving || !canPushFishbowl(order)} onClick={onFishbowl}>Push Fishbowl</button>
+			{onArchive ? (
+				<button className='btn btn-outline-dark btn-sm admin-order-action-btn' disabled={saving} onClick={onArchive}>
+					{order?.archivedAt ? "Unarchive" : "Archive"}
+				</button>
+			) : null}
+			{onDelete && canDelete(order) ? (
+				<button className='btn btn-outline-danger btn-sm admin-order-action-btn' disabled={saving} onClick={onDelete}>Delete</button>
+			) : null}
 		</div>
 	);
 }
 
-function OrderDetailModal({ order, loading, saving, onClose, onProcess, onComplete, onDeny, onFishbowl }) {
+function OrderDetailModal({ order, loading, saving, onClose, onProcess, onComplete, onDeny, onFishbowl, onArchive, onDelete }) {
 	const adminStatus = order?.adminReview?.status || "PENDING";
 	const paymentStatus = order?.payment?.status || "PENDING";
 	const fishbowlStatus = order?.fishbowlStatus || "";
@@ -642,7 +754,14 @@ function OrderDetailModal({ order, loading, saving, onClose, onProcess, onComple
 											<tr key={`${item.partNumber}-${index}`}>
 												<td className='fw-semibold'>{item.partNumber || "-"}</td>
 												<td><div>{item.name || "-"}</div>{item.detail ? <div className='text-muted small'>{item.detail}</div> : null}</td>
-												<td className='text-end'>{item.qty}</td>
+												<td className='text-end'>
+													{item.qty}
+													{Number(item.qtyBackordered || 0) > 0 ? (
+														<div className='small fw-semibold text-nowrap' style={{ color: "#8a5a00" }}>
+															{Number(item.qtyBackordered).toLocaleString()} backordered
+														</div>
+													) : null}
+												</td>
 												<td className='text-end'>{formatMoney(item.unitPrice)}</td>
 												<td className='text-end fw-semibold'>{formatMoney(item.lineTotal)}</td>
 											</tr>
@@ -659,7 +778,7 @@ function OrderDetailModal({ order, loading, saving, onClose, onProcess, onComple
 
 				{order ? (
 					<div className='admin-order-detail-footer'>
-						<OrderActionGrid order={order} saving={saving} showView={false} onProcess={onProcess} onComplete={onComplete} onDeny={onDeny} onFishbowl={onFishbowl} />
+						<OrderActionGrid order={order} saving={saving} showView={false} onProcess={onProcess} onComplete={onComplete} onDeny={onDeny} onFishbowl={onFishbowl} onArchive={onArchive} onDelete={onDelete} />
 					</div>
 				) : null}
 			</div>

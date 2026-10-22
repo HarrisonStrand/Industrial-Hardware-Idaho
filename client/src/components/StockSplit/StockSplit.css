@@ -1,0 +1,15 @@
+.stock-split {
+	color: #8a5a00;
+	font-weight: 600;
+	margin-top: 0.25rem;
+	line-height: 1.3;
+}
+
+.stock-split-notice {
+	background: #fff6e0;
+	border: 1px solid #f0d28a;
+	color: #6b4700;
+	border-radius: 0.75rem;
+	padding: 0.75rem 1rem;
+	font-size: 0.9rem;
+}

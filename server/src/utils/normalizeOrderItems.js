@@ -156,8 +156,15 @@ export async function normalizeOrderItems(
 
       const resolvedUnitPrice = Number(resolved.resolvedPrice || 0);
 
+      // Stock split from the Fishbowl inventory snapshot: what ships now and what is backordered.
+      const available = Math.max(0, Math.floor(Number(product?.inventory?.qtyAvailable || 0)));
+      const qtyInStock = Math.min(item.qty, available);
+      const qtyBackordered = Math.max(0, item.qty - qtyInStock);
+
       return {
         ...item,
+        qtyInStock,
+        qtyBackordered,
         productId: String(product._id),
         partNumber: resolvedPartNumber,
         sku: resolvedSku,

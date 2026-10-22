@@ -1,11 +1,16 @@
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../../context/CartContext.jsx";
 import CartItem from "../../components/Cart/CartItem/CartItem.jsx";
+import StockSplit, { splitStock, useStockLevels } from "../../components/StockSplit/StockSplit.jsx";
 import "./Cart.css";
 
 export default function Cart() {
 	const navigate = useNavigate();
 	const { items, cartTotal } = useCart();
+	const { stock } = useStockLevels(items.map((item) => item.productId));
+	const anyBackordered = items.some(
+		(item) => stock[String(item.productId)] !== undefined && splitStock(item.quantity, stock[String(item.productId)]).backordered > 0,
+	);
 
 	return (
 		<div className='theme-detail container-fluid px-3 px-sm-5 py-4 py-md-5'>
@@ -22,9 +27,21 @@ export default function Cart() {
 
 					<div className='cart-list g-0'>
 						{items.map((item) => (
-							<CartItem key={item.partNumber} item={item} detailed />
+							<div key={item.partNumber}>
+								<CartItem item={item} detailed />
+								<div className='text-end pe-2'>
+									<StockSplit quantity={item.quantity} available={stock[String(item.productId)]} />
+								</div>
+							</div>
 						))}
 					</div>
+
+					{anyBackordered && (
+						<div className='stock-split-notice mt-3'>
+							Some items are backordered. In-stock quantities ship right away; backordered quantities ship as soon as
+							they are restocked. We'll contact you with timing.
+						</div>
+					)}
 				</div>
 
 				<div className='row justify-content-between cta-button-row align-items-center'>

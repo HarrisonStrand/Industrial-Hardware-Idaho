@@ -12,6 +12,15 @@ const CatalogGlobalSettingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Customer-facing cart and checkout switches (admins always bypass).
+    cartEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    checkoutEnabled: {
+      type: Boolean,
+      default: false,
+    },
     updatedBy: {
       type: mongoose.Schema.Types.Mixed,
       default: null,

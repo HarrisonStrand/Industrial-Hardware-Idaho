@@ -118,6 +118,8 @@ router.get("/", async (_req, res) => {
     return res.json({
       global: {
         buildersEnabled: globalSetting?.buildersEnabled !== false,
+        cartEnabled: globalSetting?.cartEnabled === true,
+        checkoutEnabled: globalSetting?.checkoutEnabled === true,
         updatedAt: globalSetting?.updatedAt || null,
       },
       options: {
@@ -150,14 +152,17 @@ router.get("/", async (_req, res) => {
 
 router.put("/global", async (req, res) => {
   try {
+    // Only update the switches sent in the request, so saving one never resets another.
+    const update = { updatedBy: req.user?.id || null };
+    for (const field of ["buildersEnabled", "cartEnabled", "checkoutEnabled"]) {
+      if (typeof req.body?.[field] === "boolean") {
+        update[field] = req.body[field];
+      }
+    }
+
     const doc = await CatalogGlobalSetting.findOneAndUpdate(
       { key: "default" },
-      {
-        $set: {
-          buildersEnabled: req.body?.buildersEnabled === true,
-          updatedBy: req.user?.id || null,
-        },
-      },
+      { $set: update },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
 
@@ -165,12 +170,14 @@ router.put("/global", async (req, res) => {
       success: true,
       global: {
         buildersEnabled: doc.buildersEnabled !== false,
+        cartEnabled: doc.cartEnabled === true,
+        checkoutEnabled: doc.checkoutEnabled === true,
         updatedAt: doc.updatedAt,
       },
     });
   } catch (error) {
     console.error("Admin catalog global setting update error:", error);
-    return res.status(500).json({ message: "Failed to update builder setting" });
+    return res.status(500).json({ message: "Failed to update site setting" });
   }
 });
 

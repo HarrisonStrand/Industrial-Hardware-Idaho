@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth.js";
 import requireAdmin from "../middleware/requireAdmin.js";
 import Order from "../models/Order.js";
 import { pushOrderToFishbowl } from "../services/fishbowl/pushOrderToFishbowl.js";
+import { stripe } from "../utils/stripe.js";
 
 const router = express.Router();
 
@@ -14,6 +15,31 @@ const ADMIN_REVIEW_STATUSES = [
 ];
 
 const PAYMENT_STATUSES = ["PENDING", "SUCCEEDED", "FAILED", "INVOICED"];
+
+// Matches orders with archivedAt null or missing.
+const NOT_ARCHIVED = { archivedAt: null };
+
+// Stripe PaymentIntent statuses that can still be canceled.
+const CANCELABLE_PI_STATUSES = ["requires_payment_method", "requires_confirmation", "requires_action"];
+
+function adminId(req) {
+  return req.user?.id || req.user?._id || null;
+}
+
+// Why an order may not be hard-deleted, or "" when it may.
+// Only unpaid pay-now orders that never reached Fishbowl can be deleted.
+function deleteBlockReason(order) {
+  const mode = order.payment?.mode || "PAY_NOW";
+  const status = order.payment?.status || "PENDING";
+  if (mode !== "PAY_NOW") return "Pay-later orders are real invoices and cannot be deleted. Archive it instead.";
+  if (!["PENDING", "FAILED"].includes(status)) {
+    return `Orders with payment status ${status} cannot be deleted. Archive it instead.`;
+  }
+  if (order.fishbowlId || order.fishbowlNumber || order.fishbowlPushedAt) {
+    return "This order was pushed to Fishbowl and cannot be deleted. Archive it instead.";
+  }
+  return "";
+}
 
 function safeStringify(value) {
   if (value == null || value === "") return "";
@@ -44,8 +70,12 @@ function fishbowlPushErrorMessage(result = {}) {
   return "Fishbowl push failed.";
 }
 
-function buildSearchFilter({ q = "", adminStatus = "", paymentStatus = "", fishbowlStatus = "" }) {
+function buildSearchFilter({ q = "", adminStatus = "", paymentStatus = "", fishbowlStatus = "", archived = "" }) {
   const filter = {};
+
+  // Default view hides archived orders.
+  if (archived === "only") filter.archivedAt = { $ne: null };
+  else if (archived !== "all") filter.archivedAt = null;
 
   if (adminStatus) filter["adminReview.status"] = adminStatus;
   if (paymentStatus) filter["payment.status"] = paymentStatus;
@@ -87,17 +117,19 @@ function buildSearchFilter({ q = "", adminStatus = "", paymentStatus = "", fishb
 
 async function getOrderSummary() {
   const [adminAgg, paymentAgg, fishbowlAgg, total] = await Promise.all([
-    Order.aggregate([{ $group: { _id: "$adminReview.status", count: { $sum: 1 } } }]),
-    Order.aggregate([{ $group: { _id: "$payment.status", count: { $sum: 1 } } }]),
-    Order.aggregate([{ $group: { _id: "$fishbowlStatus", count: { $sum: 1 } } }]),
-    Order.countDocuments({}),
+    Order.aggregate([{ $match: NOT_ARCHIVED }, { $group: { _id: "$adminReview.status", count: { $sum: 1 } } }]),
+    Order.aggregate([{ $match: NOT_ARCHIVED }, { $group: { _id: "$payment.status", count: { $sum: 1 } } }]),
+    Order.aggregate([{ $match: NOT_ARCHIVED }, { $group: { _id: "$fishbowlStatus", count: { $sum: 1 } } }]),
+    Order.countDocuments(NOT_ARCHIVED),
   ]);
 
   const admin = Object.fromEntries(adminAgg.map((row) => [row._id || "PENDING", row.count]));
   const payment = Object.fromEntries(paymentAgg.map((row) => [row._id || "PENDING", row.count]));
   const fishbowl = Object.fromEntries(fishbowlAgg.map((row) => [row._id || "NOT_SENT", row.count]));
 
-  return { total, admin, payment, fishbowl };
+  const archived = await Order.countDocuments({ archivedAt: { $ne: null } });
+
+  return { total, admin, payment, fishbowl, archived };
 }
 
 /**
@@ -110,6 +142,7 @@ router.get("/orders", requireAuth, requireAdmin, async (req, res) => {
       adminStatus = "",
       paymentStatus = "",
       fishbowlStatus = "",
+      archived = "",
       page = "1",
       limit = "25",
     } = req.query;
@@ -118,7 +151,7 @@ router.get("/orders", requireAuth, requireAdmin, async (req, res) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 25));
     const skip = (pageNum - 1) * limitNum;
 
-    const filter = buildSearchFilter({ q, adminStatus, paymentStatus, fishbowlStatus });
+    const filter = buildSearchFilter({ q, adminStatus, paymentStatus, fishbowlStatus, archived });
 
     const [items, total, summary] = await Promise.all([
       Order.find(filter)
@@ -151,6 +184,24 @@ router.get("/orders/summary", requireAuth, requireAdmin, async (_req, res) => {
     res.json(await getOrderSummary());
   } catch (err) {
     res.status(500).json({ error: err?.message || "Failed to summarize orders" });
+  }
+});
+
+/**
+ * POST /api/admin/orders/archive-completed
+ * Archives every non-archived order that is completed or denied.
+ */
+router.post("/orders/archive-completed", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const result = await Order.updateMany(
+      { ...NOT_ARCHIVED, "adminReview.status": { $in: ["APPROVED_COMPLETED", "DENIED"] } },
+      { $set: { archivedAt: new Date(), archivedBy: adminId(req) } }
+    );
+    const count = result.modifiedCount ?? 0;
+    console.log(`[admin-orders] archive-completed: ${count} orders archived by admin ${adminId(req)}`);
+    res.json({ ok: true, count });
+  } catch (err) {
+    res.status(500).json({ error: err?.message || "Failed to archive orders" });
   }
 });
 
@@ -201,6 +252,75 @@ router.patch("/orders/:id/review", requireAuth, requireAdmin, async (req, res) =
     res.json({ ok: true, orderId: order._id, adminReview: order.adminReview });
   } catch (err) {
     res.status(500).json({ error: err?.message || "Failed to update order review" });
+  }
+});
+
+/**
+ * PATCH /api/admin/orders/:id/archive  { archived: true|false }
+ */
+router.patch("/orders/:id/archive", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { archived } = req.body || {};
+    if (typeof archived !== "boolean") {
+      return res.status(400).json({ error: "archived must be true or false" });
+    }
+
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ error: "Order not found" });
+
+    order.archivedAt = archived ? new Date() : null;
+    order.archivedBy = archived ? adminId(req) : null;
+    await order.save();
+
+    res.json({ ok: true, orderId: order._id, archivedAt: order.archivedAt });
+  } catch (err) {
+    res.status(500).json({ error: err?.message || "Failed to update archive state" });
+  }
+});
+
+/**
+ * DELETE /api/admin/orders/:id
+ * Only unpaid PAY_NOW orders never pushed to Fishbowl. Real orders are archived instead.
+ */
+router.delete("/orders/:id", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ error: "Order not found" });
+
+    const blocked = deleteBlockReason(order);
+    if (blocked) return res.status(409).json({ error: blocked });
+
+    const piId = order.payment?.stripePaymentIntentId;
+    if (piId && stripe) {
+      let pi;
+      try {
+        pi = await stripe.paymentIntents.retrieve(piId);
+      } catch (err) {
+        return res.status(502).json({ error: `Could not check the Stripe payment: ${err?.message || "unknown error"}` });
+      }
+
+      if (pi.status === "succeeded") {
+        return res.status(409).json({ error: "Stripe shows this payment succeeded. The order cannot be deleted." });
+      }
+      if (pi.status === "processing" || pi.status === "requires_capture") {
+        return res.status(409).json({ error: `Stripe payment is ${pi.status}. Wait for it to settle before deleting.` });
+      }
+      if (CANCELABLE_PI_STATUSES.includes(pi.status)) {
+        try {
+          await stripe.paymentIntents.cancel(piId);
+        } catch (err) {
+          return res.status(502).json({ error: `Could not cancel the Stripe payment: ${err?.message || "unknown error"}` });
+        }
+      }
+      // "canceled" needs nothing more.
+    }
+
+    await Order.deleteOne({ _id: order._id });
+    console.log(`[admin-orders] deleted order ${order.orderNumber} (${order._id}) by admin ${adminId(req)}`);
+
+    res.json({ ok: true, orderId: order._id, orderNumber: order.orderNumber });
+  } catch (err) {
+    res.status(500).json({ error: err?.message || "Failed to delete order" });
   }
 });
 

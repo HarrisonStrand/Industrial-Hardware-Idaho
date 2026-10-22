@@ -38,6 +38,10 @@ const OrderItemSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.Mixed,
       default: {},
     },
+
+    // Stock split when the order was placed: qtyInStock ships now, qtyBackordered waits for restock.
+    qtyInStock: { type: Number, default: 0, min: 0 },
+    qtyBackordered: { type: Number, default: 0, min: 0 },
   },
   { _id: false },
 );
@@ -68,6 +72,7 @@ const OrderSchema = new mongoose.Schema(
     purchaseOrderNumber: { type: String, default: "", trim: true },
 
     items: { type: [OrderItemSchema], default: [] },
+    hasBackorder: { type: Boolean, default: false, index: true },
 
     currency: { type: String, default: "usd" },
     amountTotalCents: { type: Number, default: 0 },
@@ -115,6 +120,14 @@ const OrderSchema = new mongoose.Schema(
         ref: "User",
         default: null,
       },
+    },
+
+    // Hidden from the admin orders list (nothing is removed). Unpaid orders can be deleted instead.
+    archivedAt: { type: Date, default: null, index: true },
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   { timestamps: true },

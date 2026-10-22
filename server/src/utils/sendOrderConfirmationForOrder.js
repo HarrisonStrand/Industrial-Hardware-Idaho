@@ -45,7 +45,7 @@ function orderItemsTable(order = {}) {
           <strong>${escapeHtml(item.partNumber || "")}</strong><br/>
           <span>${escapeHtml(item.name || item.detail || "")}</span>
         </td>
-        <td style="padding:8px 10px; border-bottom:1px solid #ddd; text-align:center;">${Number(item.qty || 0)}</td>
+        <td style="padding:8px 10px; border-bottom:1px solid #ddd; text-align:center;">${Number(item.qty || 0)}${Number(item.qtyBackordered || 0) > 0 ? `<br><span style="color:#8a5a00; font-size:12px; font-weight:600;">${Number(item.qtyBackordered)} backordered</span>` : ""}</td>
         <td style="padding:8px 10px; border-bottom:1px solid #ddd; text-align:right;">${lineMoney(item.unitPrice)}</td>
         <td style="padding:8px 10px; border-bottom:1px solid #ddd; text-align:right;">${lineMoney(item.lineTotal)}</td>
       </tr>

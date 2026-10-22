@@ -124,6 +124,7 @@ async function buildNormalizedOrderPayload({
     ),
     shippingSameAsBilling: Boolean(shippingSameAsBilling),
     items: normalizedItems,
+    hasBackorder: normalizedItems.some((item) => Number(item.qtyBackordered || 0) > 0),
     currency,
     amountTotalCents,
     payment: {

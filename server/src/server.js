@@ -14,6 +14,7 @@ import specialRequestsRoute from "./routes/specialRequestsRoute.js";
 import newsletterRoutes from "./routes/newsletterRoutes.js";
 
 import checkoutRoutes from "./routes/checkoutRoutes.js";
+import stockRoutes from "./routes/stockRoutes.js";
 import adminUsersRoutes from "./routes/adminUsersRoutes.js";
 import adminOrdersRoutes from "./routes/adminOrdersRoutes.js";
 import adminPricingRoutes from "./routes/adminPricingRoutes.js";
@@ -82,6 +83,7 @@ app.use("/api/special-requests", specialRequestsRoute);
 app.use("/api/newsletter", newsletterRoutes);
 
 app.use("/api/checkout", checkoutRoutes);
+app.use("/api/stock", stockRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin/users", adminUsersRoutes);
 app.use("/api/admin", adminOrdersRoutes);

@@ -138,7 +138,7 @@ export default function App() {
 								path='/cart'
 								element={
 									<FeatureGate
-										enabled={SITE_ACCESS.cart.enabled}
+										feature='cart'
 										title={SITE_ACCESS.cart.title}
 										description={SITE_ACCESS.cart.description}
 										backTo='/products'
@@ -151,7 +151,7 @@ export default function App() {
 								path='/checkout'
 								element={
 									<FeatureGate
-										enabled={SITE_ACCESS.checkout.enabled}
+										feature='checkout'
 										title={SITE_ACCESS.checkout.title}
 										description={SITE_ACCESS.checkout.description}
 										backTo='/cart'
@@ -164,7 +164,7 @@ export default function App() {
 								path='/order-confirmation/:orderId'
 								element={
 									<FeatureGate
-										enabled={SITE_ACCESS.checkout.enabled}
+										feature='checkout'
 										title='Order confirmation is not live yet'
 										description='We are still finalizing the checkout and order flow for launch.'
 										backTo='/'

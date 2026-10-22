@@ -140,6 +140,13 @@ export default function OrderConfirmation() {
                   <div className='text-muted small'>
                     {it.partNumber ? `${it.partNumber} • ` : ""}{it.detail ? `${it.detail} • ` : ""}Qty {it.qty}
                   </div>
+                  {Number(it.qtyBackordered || 0) > 0 ? (
+                    <div className='small fw-semibold' style={{ color: "#8a5a00" }}>
+                      {Number(it.qtyInStock || 0) > 0
+                        ? `${Number(it.qtyInStock).toLocaleString()} ship now · ${Number(it.qtyBackordered).toLocaleString()} backordered`
+                        : `Backordered (${Number(it.qtyBackordered).toLocaleString()}) · ships when restocked`}
+                    </div>
+                  ) : null}
                 </div>
                 <div className='text-main fw-semibold text-nowrap'>
                   ${Number(it.lineTotal || 0).toFixed(2)}

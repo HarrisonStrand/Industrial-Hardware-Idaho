@@ -236,7 +236,7 @@ export async function sendOrderConfirmationEmail({
       (it) => `
         <tr>
           <td style="padding:10px 12px 10px 0; font-family:${BRAND.fontBody}; font-size:14px; line-height:1.6; color:${BRAND.altColor}; border-bottom:1px solid ${BRAND.secondaryLight};">${escapeHtml(it.name || it.partNumber)}</td>
-          <td style="padding:10px 12px; text-align:center; font-family:${BRAND.fontBody}; font-size:14px; line-height:1.6; color:${BRAND.altColor}; border-bottom:1px solid ${BRAND.secondaryLight};">${Number(it.qty || 0)}</td>
+          <td style="padding:10px 12px; text-align:center; font-family:${BRAND.fontBody}; font-size:14px; line-height:1.6; color:${BRAND.altColor}; border-bottom:1px solid ${BRAND.secondaryLight};">${Number(it.qty || 0)}${Number(it.qtyBackordered || 0) > 0 ? `<br><span style="color:#8a5a00; font-size:12px; font-weight:600;">${Number(it.qtyBackordered)} backordered</span>` : ""}</td>
           <td style="padding:10px 0; text-align:right; font-family:${BRAND.fontBody}; font-size:14px; line-height:1.6; color:${BRAND.altColor}; border-bottom:1px solid ${BRAND.secondaryLight};">$${Number(it.lineTotal || 0).toFixed(2)}</td>
         </tr>
       `,

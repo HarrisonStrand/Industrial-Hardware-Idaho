@@ -6,6 +6,7 @@ import {
   updateAdminCatalogGlobalSettings,
   updateAdminCatalogSubcategory,
 } from "../../services/catalogLayoutApi.js";
+import { refreshSiteSwitches } from "../../hooks/useSiteSwitches.js";
 import "./AdminCatalogLayouts.css";
 
 const DEFAULT_OPTIONS = {
@@ -46,7 +47,12 @@ export default function AdminCatalogLayouts() {
   const [loading, setLoading] = useState(true);
   const [savingGlobal, setSavingGlobal] = useState(false);
   const [savingKey, setSavingKey] = useState("");
-  const [global, setGlobal] = useState({ buildersEnabled: false });
+  const [global, setGlobal] = useState({
+    buildersEnabled: false,
+    cartEnabled: false,
+    checkoutEnabled: false,
+  });
+  const [savingSwitch, setSavingSwitch] = useState("");
   const [items, setItems] = useState([]);
   const [options, setOptions] = useState(DEFAULT_OPTIONS);
   const [search, setSearch] = useState("");
@@ -60,7 +66,12 @@ export default function AdminCatalogLayouts() {
       setLoading(true);
       setError("");
       const data = await fetchAdminCatalogLayouts();
-      setGlobal(data?.global || { buildersEnabled: false });
+      setGlobal({
+        buildersEnabled: false,
+        cartEnabled: false,
+        checkoutEnabled: false,
+        ...(data?.global || {}),
+      });
       setItems(Array.isArray(data?.items) ? data.items : []);
       setOptions({ ...DEFAULT_OPTIONS, ...(data?.options || {}) });
     } catch (loadError) {
@@ -141,7 +152,7 @@ export default function AdminCatalogLayouts() {
       const data = await updateAdminCatalogGlobalSettings({
         buildersEnabled: nextEnabled,
       });
-      setGlobal(data?.global || { buildersEnabled: nextEnabled });
+      setGlobal((current) => ({ ...current, ...(data?.global || { buildersEnabled: nextEnabled }) }));
       setMessage(
         nextEnabled
           ? "Product builders are enabled."
@@ -153,6 +164,28 @@ export default function AdminCatalogLayouts() {
       setError(saveError.message || "Failed to update builder switch.");
     } finally {
       setSavingGlobal(false);
+    }
+  }
+
+  async function saveSiteSwitch(field, nextEnabled) {
+    try {
+      setSavingSwitch(field);
+      setError("");
+      setMessage("");
+      const data = await updateAdminCatalogGlobalSettings({ [field]: nextEnabled });
+      setGlobal((current) => ({ ...current, ...(data?.global || { [field]: nextEnabled }) }));
+      refreshSiteSwitches();
+      const label = field === "cartEnabled" ? "Cart" : "Checkout";
+      setMessage(
+        nextEnabled
+          ? `${label} is now on for customers.`
+          : `${label} is now off for customers. Admins can still use it.`
+      );
+    } catch (saveError) {
+      console.error("Failed to update site switch:", saveError);
+      setError(saveError.message || "Failed to update switch.");
+    } finally {
+      setSavingSwitch("");
     }
   }
 
@@ -242,6 +275,42 @@ export default function AdminCatalogLayouts() {
               />
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="admin-catalog-global card border-0 shadow-sm rounded-4">
+        <div className="card-body p-4 d-flex flex-column gap-3">
+          <div>
+            <h2 className="h5 text-main text-uppercase mb-1">Cart &amp; Checkout Switches</h2>
+            <p className="text-muted mb-0">
+              Turns the cart and checkout on or off for customers right away. Admins can always use both for testing.
+            </p>
+          </div>
+          {[
+            { field: "cartEnabled", label: "Cart enabled for customers" },
+            { field: "checkoutEnabled", label: "Checkout enabled for customers" },
+          ].map(({ field, label }) => (
+            <div
+              key={field}
+              className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2"
+            >
+              <span className="fw-semibold">{label}</span>
+              <div className="d-flex align-items-center gap-3">
+                <span className="small text-muted">{global[field] ? "On" : "Off (Coming Soon)"}</span>
+                <div className="form-check form-switch fs-3 mb-0">
+                  <input
+                    className="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    checked={!!global[field]}
+                    disabled={!!savingSwitch}
+                    onChange={(event) => saveSiteSwitch(field, event.target.checked)}
+                    aria-label={label}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

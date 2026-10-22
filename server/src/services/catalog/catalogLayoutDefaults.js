@@ -140,6 +140,8 @@ export async function ensureCatalogLayoutRecords() {
         $setOnInsert: {
           key: "default",
           buildersEnabled: false,
+          cartEnabled: false,
+          checkoutEnabled: false,
         },
       },
       { upsert: true }
@@ -165,10 +167,24 @@ export async function getCatalogGlobalSetting() {
       $setOnInsert: {
         key: "default",
         buildersEnabled: false,
+        cartEnabled: false,
+        checkoutEnabled: false,
       },
     },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   );
+}
+
+// Read-only lookup of the cart/checkout switches. Missing record or field = off.
+export async function getSiteSwitches() {
+  const doc = await CatalogGlobalSetting.findOne({ key: "default" })
+    .select("cartEnabled checkoutEnabled")
+    .lean();
+
+  return {
+    cartEnabled: doc?.cartEnabled === true,
+    checkoutEnabled: doc?.checkoutEnabled === true,
+  };
 }
 
 export function resolveEffectiveCatalogMode(setting, globalSetting) {
