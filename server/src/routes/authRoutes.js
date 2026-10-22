@@ -295,23 +295,30 @@ router.get("/me", requireAuth, async (req, res) => {
    Forgot / Reset password
    =========================== */
 
+
 function getResetClientOrigin(req) {
-	const configuredOrigin =
-		process.env.CLIENT_ORIGIN ||
-		process.env.FRONTEND_URL ||
-		process.env.SITE_URL ||
-		"";
+  // A single URL used for password-reset links.
+  // Keep this separate from the comma-separated CORS origins.
+  const configuredOrigin =
+    process.env.FRONTEND_URL ||
+    process.env.SITE_URL ||
+    (process.env.CLIENT_ORIGIN || "")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)[0] ||
+    "";
 
-	if (configuredOrigin) {
-		return configuredOrigin.replace(/\/$/, "");
-	}
+  if (configuredOrigin) {
+    return configuredOrigin.trim().replace(/\/+$/, "");
+  }
 
-	if (process.env.NODE_ENV !== "production") {
-		return "http://localhost:5173";
-	}
+  if (process.env.NODE_ENV !== "production") {
+    return "http://localhost:5173";
+  }
 
-	return `${req.protocol}://${req.get("host")}`.replace(/\/$/, "");
+  return `${req.protocol}://${req.get("host")}`.replace(/\/+$/, "");
 }
+
 
 function getMailCredentials() {
 	return {
