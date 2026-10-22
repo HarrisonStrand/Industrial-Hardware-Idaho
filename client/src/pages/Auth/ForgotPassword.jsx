@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useToast } from "../../context/ToastContext";
+import { apiFetch } from "../../utils/apiFetch";
 import ContactBanner from "../../components/ContactBanner/ContactBanner";
 import "./ForgotPassword.css"; // optional (you can delete if not using)
 
@@ -12,35 +13,36 @@ export default function ForgotPassword() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  async function submit(e) {
-    e.preventDefault();
-    setLoading(true);
 
-    try {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email })
-      });
+async function submit(e) {
+  e.preventDefault();
+  setLoading(true);
 
-      // server always returns success to avoid leaking account existence
-      await res.json().catch(() => ({}));
+  try {
+    await apiFetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.trim() }),
+    });
 
-      setSent(true);
-      showToast({
-        variant: "success",
-        message: "If that email exists, we sent a reset link."
-      });
-    } catch {
-      showToast({
-        variant: "danger",
-        message: "Could not send reset email. Please try again."
-      });
-    } finally {
-      setLoading(false);
-    }
+    setSent(true);
+
+    showToast({
+      variant: "success",
+      message: "If that email exists, we sent a reset link.",
+    });
+  } catch (err) {
+    console.error("Forgot password request failed:", err);
+
+    showToast({
+      variant: "danger",
+      message: "Could not send reset email. Please try again.",
+    });
+  } finally {
+    setLoading(false);
   }
+}
+
 
   return (
     <>
