@@ -89,11 +89,17 @@ export async function getPricingContext(input = {}, pricingSettings = null) {
 
   const rule = getAccountPriceRuleFromSettings(effectiveApprovedType, settings);
 
+  // An account's own multiplier wins over its account type's multiplier.
+  const override = input?.priceMultiplierOverride;
+  const hasOverride =
+    override !== null && override !== undefined && override !== "" && Number.isFinite(Number(override)) && Number(override) >= 0;
+
   return {
     approvedType: effectiveApprovedType,
     approvalStatus: String(input?.approvalStatus || "NONE").toUpperCase(),
-    label: rule.label,
-    multiplier: Number(rule.multiplier || 1),
+    label: hasOverride ? `${rule.label} (account price)` : rule.label,
+    multiplier: hasOverride ? Number(override) : Number(rule.multiplier || 1),
+    priceMultiplierOverride: hasOverride ? Number(override) : null,
     originalApprovedType: normalizeApprovedType(input?.approvedType || "RETAIL"),
   };
 }
@@ -105,6 +111,7 @@ export async function buildPricingContextFromUser(user = null, pricingSettings =
     {
       approvedType: account.approvedType || "RETAIL",
       approvalStatus: account.approvalStatus || "NONE",
+      priceMultiplierOverride: account.priceMultiplier ?? null,
     },
     pricingSettings
   );

@@ -48,3 +48,24 @@ export async function updateAccountApproval(req, res) {
 
   res.json({ success: true });
 }
+
+// Set or clear one account's own price multiplier. null (or "") = follow the account type's multiplier.
+export async function updatePriceMultiplier(req, res) {
+  const raw = req.body?.priceMultiplier;
+  const clearing = raw === null || raw === undefined || raw === "";
+  const value = Number(raw);
+
+  if (!clearing && (!Number.isFinite(value) || value < 0 || value > 10)) {
+    return res.status(400).json({ error: "Price multiplier must be a number from 0 to 10, or empty to use the account type." });
+  }
+
+  const user = await User.findById(req.params.id);
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  if (!user.account) user.account = {};
+  user.account.priceMultiplier = clearing ? null : Number(value.toFixed(4));
+  await user.save();
+
+  console.log(`ADMIN PRICE MULTIPLIER: user ${user._id} -> ${user.account.priceMultiplier ?? "type default"} (by ${req.user?.id})`);
+  res.json({ success: true, priceMultiplier: user.account.priceMultiplier });
+}

@@ -61,7 +61,9 @@ const AccountSchema = new mongoose.Schema(
       ref: "User",
       default: null
     },
-    rejectionReason: { type: String, default: "" }
+    rejectionReason: { type: String, default: "" },
+    // This account's own price multiplier. null = use the multiplier of its account type (Admin > Pricing).
+    priceMultiplier: { type: Number, default: null, min: 0 }
   },
   { _id: false }
 );
