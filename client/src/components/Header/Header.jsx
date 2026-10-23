@@ -373,7 +373,7 @@ export default function Header({ onCartOpen }) {
 							</li>
 							<li className='py-2'>
 								<Link
-									to='/orders'
+									to='/order-status'
 									onClick={closeMenu}
 									className='text-decoration-none text-main text-uppercase'>
 									orders
@@ -381,7 +381,7 @@ export default function Header({ onCartOpen }) {
 							</li>
 							<li className='py-2'>
 								<Link
-									to='/career'
+									to='/careers'
 									onClick={closeMenu}
 									className='text-decoration-none text-main text-uppercase'>
 									career

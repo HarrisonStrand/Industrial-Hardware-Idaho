@@ -914,23 +914,23 @@ function ProductResultCard({
 						</div>
 
 						<div className='mt-auto pt-2 d-flex justify-content-between align-items-end gap-2'>
-							<div>
+							<div className='min-w-0'>
 								<div className='small text-muted'>Part #</div>
-								<div className='small fw-semibold text-main'>
+								<div className='small fw-semibold text-main text-break'>
 									{variant?.partNumber || variant?.sku || "—"}
 								</div>
-							</div>
-
-							<div className='text-end'>
-								<div className='fw-semibold text-main'>
-									{formatCurrency(price, currency)}
-								</div>
-								<div className='builder-grid-stock small text-muted justify-content-end'>
+								<div className='builder-grid-stock small text-muted mt-1'>
 									<span
 										className={`builder-grid-stock-dot ${getStockLevelClass(variant)}`}
 										aria-hidden='true'
 									/>
 									<span>{getGridStockLabel(variant)}</span>
+								</div>
+							</div>
+
+							<div className='text-end flex-shrink-0'>
+								<div className='fw-semibold text-main'>
+									{formatCurrency(price, currency)}
 								</div>
 							</div>
 						</div>
