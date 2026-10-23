@@ -5,6 +5,8 @@ import { BrandContext } from "../../context/BrandContext";
 import { footerData } from "../../data/footerData.js";
 import { apiFetch } from "../../utils/apiFetch.js";
 import "./Footer.css";
+import logoDarkGreen from "../../assets/images/IHI-stamp-darkgreen-512.png";
+import logoWhite from "../../assets/images/IHI-stamp-white-512.png";
 
 export default function Footer() {
 	const brand = useContext(BrandContext);
@@ -56,18 +58,8 @@ export default function Footer() {
 	 * THEME HANDLING
 	 * ------------------------------------------ */
 	const { theme, toggleTheme } = useContext(ThemeContext);
-	const [logoSrc, setLogoSrc] = useState("");
-
-	const updateLogoSrc = () => {
-		const root = document.documentElement;
-		const logoValue = getComputedStyle(root).getPropertyValue("--logo").trim();
-		const match = logoValue.match(/url\((['"]?)(.*?)\1\)/);
-		if (match) setLogoSrc(match[2]);
-	};
-
-	useEffect(() => {
-		updateLogoSrc();
-	}, [theme]);
+	// Imported directly so the logo never depends on reading CSS variables at mount (iPhone browsers).
+	const logoSrc = theme === "dark" ? logoDarkGreen : logoWhite;
 
 	return (
 		<footer className='footer-container container-fluid bg-secondary pt-4 px-3 px-sm-4 pt-md-5'>

@@ -8,6 +8,8 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import ShopNowItems from "../../data/shop-now-items.json";
 import ShopNowFeatured from "../../data/shop-now-featured.json";
 import "./Header.css";
+import logoDarkGreen from "../../assets/images/IHI-stamp-darkgreen-512.png";
+import logoWhite from "../../assets/images/IHI-stamp-white-512.png";
 import CartIcon from "../Cart/CartIcon/CartIcon.jsx";
 
 export default function Header({ onCartOpen }) {
@@ -240,34 +242,13 @@ export default function Header({ onCartOpen }) {
 			searchResults.builders.length > 0);
 
 	const { theme, toggleTheme } = useContext(ThemeContext);
-	const [logoSrc, setLogoSrc] = useState("");
-	const [logoSrcMobile, setLogoSrcMobile] = useState("");
-
-	const updateLogoSrc = () => {
-		const root = document.documentElement;
-
-		const logoValue = getComputedStyle(root).getPropertyValue("--logo").trim();
-		const match = logoValue.match(/url\((['"]?)(.*?)\1\)/);
-		if (match) setLogoSrc(match[2]);
-
-		const logoMobileValue = getComputedStyle(root)
-			.getPropertyValue("--logo-mobile")
-			.trim();
-		const matchMobile = logoMobileValue.match(/url\((['"]?)(.*?)\1\)/);
-		if (matchMobile) setLogoSrcMobile(matchMobile[2]);
-	};
-
-	useEffect(() => {
-		updateLogoSrc();
-	}, []);
-
-	useEffect(() => {
-		updateLogoSrc();
-	}, [theme]);
+	// Logos are imported directly (not read from CSS variables at mount, which can run before the stylesheet
+	// is applied on iPhone browsers and leave the logo empty). Same images and colours as design-tokens.css.
+	const logoSrc = theme === "dark" ? logoDarkGreen : logoWhite;
+	const logoSrcMobile = logoDarkGreen;
 
 	const handleToggleTheme = () => {
 		toggleTheme();
-		setTimeout(updateLogoSrc, 0);
 	};
 
 	const openMenu = () => {
