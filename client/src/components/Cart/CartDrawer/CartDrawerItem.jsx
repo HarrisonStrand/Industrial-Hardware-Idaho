@@ -10,6 +10,7 @@ export default function CartDrawerItem({ item }) {
     quantity = 1,
     lineTotal = 0,
     name,
+    image = "",
     attributes = {},
     metadata = {},
   } = item;
@@ -47,30 +48,42 @@ export default function CartDrawerItem({ item }) {
 
   return (
     <div className="drawer-item rounded-3 p-3 mb-3">
-      <div className="d-flex justify-content-between align-items-start">
-        <div className="drawer-item-name text-main fw-semibold">
-          {String(displayName).toUpperCase()}
+      <div className="d-flex align-items-start gap-3">
+        <div className="drawer-item-image rounded-3 overflow-hidden flex-shrink-0">
+          {image ? (
+            <img src={image} alt={displayName} className="drawer-item-img" loading="lazy" />
+          ) : (
+            <div className="drawer-item-image-placeholder" />
+          )}
         </div>
 
-        <button
-          className="drawer-remove-btn text-danger"
-          onClick={() => removeFromCart(lineId)}
-        >
-          ×
-        </button>
+        <div className="flex-grow-1 min-w-0">
+          <div className="d-flex justify-content-between align-items-start">
+            <div className="drawer-item-name text-main fw-semibold">
+              {String(displayName).toUpperCase()}
+            </div>
+
+            <button
+              className="drawer-remove-btn text-danger"
+              onClick={() => removeFromCart(lineId)}
+            >
+              ×
+            </button>
+          </div>
+
+          {detailText && (
+            <div className="drawer-item-details mt-1">
+              {detailText}
+            </div>
+          )}
+
+          {partNumber && (
+            <div className="drawer-item-part mt-1">
+              Part # {partNumber}
+            </div>
+          )}
+        </div>
       </div>
-
-      {detailText && (
-        <div className="drawer-item-details mt-1">
-          {detailText}
-        </div>
-      )}
-
-      {partNumber && (
-        <div className="drawer-item-part mt-1">
-          Part # {partNumber}
-        </div>
-      )}
 
       <div className="d-flex justify-content-between align-items-center mt-3">
         <div className="drawer-qty-controls d-flex align-items-center">

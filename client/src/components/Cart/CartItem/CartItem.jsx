@@ -59,7 +59,8 @@ export default function CartItem({ item }) {
 					<img
 						src={image}
 						alt={displayName}
-						className='cart-image-placeholder item-image'
+						className='item-image'
+						loading='lazy'
 					/>
 				) : (
 					<div className='cart-image-placeholder item-image' />

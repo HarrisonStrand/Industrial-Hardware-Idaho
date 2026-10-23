@@ -1742,7 +1742,7 @@ const handleAddToCart = () => {
 		sku: exactVariant.sku,
 		slug: exactVariant.slug || "",
 		title: exactVariant.name,
-		image: exactVariant.image,
+		image: exactVariant.image || builderData?.image || "",
 		attributes: exactVariant.attributes || {},
 		price: Number(exactVariant.price || 0),
 		category: builderData?.categoryId || "",
