@@ -651,3 +651,11 @@ body.builder-detail-modal-active {
   color: var(--main-color) !important;
   filter: brightness(0.70) !important;
 }
+/* Phones: the part number under the product image stays on one line. */
+.builder-result-card-mobile-part {
+	font-size: 0.66rem;
+	letter-spacing: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

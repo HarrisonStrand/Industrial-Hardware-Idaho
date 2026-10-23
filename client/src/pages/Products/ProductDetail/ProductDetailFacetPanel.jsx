@@ -784,6 +784,14 @@ function formatStockQuantityCompact(value = 0) {
 	return formatStockQuantity(qty);
 }
 
+// Phones: long part numbers get a slightly smaller font so they fit on one line under the image.
+function mobilePartFontSize(partNumber = "") {
+	const length = String(partNumber).length;
+	if (length >= 14) return "0.56rem";
+	if (length >= 13) return "0.6rem";
+	return "0.66rem";
+}
+
 function getStockLabel(variant = {}) {
 	const qty = getStockQuantityValue(variant);
 	if (qty > 0) return `${formatStockQuantity(qty)} available`;
@@ -871,7 +879,7 @@ function ProductResultCard({
 			}`}
 			style={{ transition: "box-shadow 180ms ease, border-color 180ms ease" }}>
 			<div className='row g-0 h-100'>
-				<div className='col-4 col-sm-12'>
+				<div className='col-5 col-sm-12'>
 					<div
 						className='bg-white d-flex align-items-center justify-content-center border-bottom builder-result-card-image-shell'
 						style={{ minHeight: "120px" }}>
@@ -889,9 +897,27 @@ function ProductResultCard({
 							<div className='small text-muted text-center p-3'>No image</div>
 						)}
 					</div>
+
+					{/* Phones: part number and stock sit under the image so the price has room on the right. */}
+					<div className='d-sm-none ps-2 pe-1 py-2 builder-result-card-mobile-meta'>
+						<div className='small text-muted'>Part #</div>
+						<div
+							className='fw-semibold text-main builder-result-card-mobile-part'
+							style={{ fontSize: mobilePartFontSize(variant?.partNumber || variant?.sku || "") }}
+							title={variant?.partNumber || variant?.sku || ""}>
+							{variant?.partNumber || variant?.sku || "—"}
+						</div>
+						<div className='builder-grid-stock small text-muted mt-1'>
+							<span
+								className={`builder-grid-stock-dot ${getStockLevelClass(variant)}`}
+								aria-hidden='true'
+							/>
+							<span>{getGridStockLabel(variant)}</span>
+						</div>
+					</div>
 				</div>
 
-				<div className='col-8 col-sm-12'>
+				<div className='col-7 col-sm-12'>
 					<div className='p-3 d-flex flex-column gap-2 h-100'>
 						<div className='builder-result-card-title-lines'>
 							{titleLines.length ? (
@@ -914,7 +940,7 @@ function ProductResultCard({
 						</div>
 
 						<div className='mt-auto pt-2 d-flex justify-content-between align-items-end gap-2'>
-							<div className='min-w-0'>
+							<div className='min-w-0 d-none d-sm-block'>
 								<div className='small text-muted'>Part #</div>
 								<div className='small fw-semibold text-main text-break'>
 									{variant?.partNumber || variant?.sku || "—"}
@@ -928,8 +954,8 @@ function ProductResultCard({
 								</div>
 							</div>
 
-							<div className='text-end flex-shrink-0'>
-								<div className='fw-semibold text-main'>
+							<div className='text-end flex-shrink-0 ms-auto'>
+								<div className='fw-semibold text-main text-nowrap'>
 									{formatCurrency(price, currency)}
 								</div>
 							</div>
