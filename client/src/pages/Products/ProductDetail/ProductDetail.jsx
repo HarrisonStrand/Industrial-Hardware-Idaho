@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
+import AddToCartButton from "../../../components/Cart/AddToCartButton/AddToCartButton.jsx";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
@@ -663,12 +664,11 @@ export default function ProductDetail() {
 
 					<div className='col-12 col-md-4 text-center'>
 						<div className='d-flex justify-content-center align-items-center gap-4'>
-							<button
+							<AddToCartButton
 								className='btn-main-cta justify-content-center text-center rounded-4 text-uppercase fw-regular fs-4 py-4 text-main-light'
 								onClick={handleAddToCart}
-								disabled={!displayVariant}>
-								Add to Cart
-							</button>
+								disabled={!displayVariant}
+							/>
 
 							{cartItemCount > 0 && (
 								<button

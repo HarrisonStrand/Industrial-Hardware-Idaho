@@ -1,4 +1,5 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import AddToCartButton from "../../../components/Cart/AddToCartButton/AddToCartButton.jsx";
 import StockSplit from "../../../components/StockSplit/StockSplit.jsx";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -1151,12 +1152,10 @@ function ProductPreviewPanel({
 						</button>
 
 
-						<button
-							type='button'
+						<AddToCartButton
 							className='btn-main-cta rounded-3 text-uppercase text-main-light px-4 py-2'
-							onClick={onAddToCart}>
-							Add to Cart
-						</button>
+							onClick={onAddToCart}
+						/>
 
 						{showViewCartCta ? (
 							<button
@@ -1411,12 +1410,10 @@ function ProductDetailModal({
 									</div>
 								) : null}
 
-								<button
-									type='button'
+								<AddToCartButton
 									className='btn-main-cta rounded-3 text-uppercase text-main-light px-4 py-2 w-100'
-									onClick={onAddToCart}>
-									Add to Cart
-								</button>
+									onClick={onAddToCart}
+								/>
 							</div>
 						</div>
 					</div>

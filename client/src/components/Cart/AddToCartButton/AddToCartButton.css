@@ -1,0 +1,37 @@
+/* Locked Add to Cart: same look as the locked category card button. */
+.add-to-cart-locked,
+.add-to-cart-locked:hover,
+.add-to-cart-locked:focus {
+	background: rgb(from var(--main-color) r g b / 0.25) !important;
+	border: 1px solid rgb(from var(--main-color) r g b / 0.34) !important;
+	color: var(--alt-color) !important;
+	cursor: not-allowed !important;
+	opacity: 0.9;
+	box-shadow: none !important;
+	transform: none !important;
+}
+
+.add-to-cart-locked .add-to-cart-soon {
+	display: none;
+}
+
+.add-to-cart-locked:hover .add-to-cart-label,
+.add-to-cart-locked:focus-visible .add-to-cart-label {
+	display: none;
+}
+
+.add-to-cart-locked:hover .add-to-cart-soon,
+.add-to-cart-locked:focus-visible .add-to-cart-soon {
+	display: inline;
+}
+
+/* Touch screens have no hover, so show "Coming Soon" straight away. */
+@media (hover: none) {
+	.add-to-cart-locked .add-to-cart-label {
+		display: none;
+	}
+
+	.add-to-cart-locked .add-to-cart-soon {
+		display: inline;
+	}
+}
