@@ -26,5 +26,6 @@
   --body-light: #1b1b1b;
   --text-color: #e7e7e7;
 	--logo: url('../assets/images/IHI-stamp-darkgreen-512.png');
-	--logo-mobile: url('../assets/images/IHI-stamp-white-512.png');
+	/* The phone logo sits on the light grey top bar in both themes, so it stays dark green. */
+	--logo-mobile: url('../assets/images/IHI-stamp-darkgreen-512.png');
 }
