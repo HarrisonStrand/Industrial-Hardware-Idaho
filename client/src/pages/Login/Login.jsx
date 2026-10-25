@@ -53,6 +53,12 @@ export default function Login() {
 					replace: true,
 				});
 		} catch (ex) {
+			if (ex?.code === "EMAIL_NOT_VERIFIED") {
+				navigate("/verify-email", {
+					state: { email: ex.data?.email || email, fromLogin: true, from },
+				});
+				return;
+			}
 			const msg = ex?.message || "Login failed";
 			setErr(msg);
 			showToast({ variant: "danger", message: msg });

@@ -105,7 +105,17 @@ const UserSchema = new mongoose.Schema(
 
     // used by your forgot/reset flow
     resetPasswordTokenHash: { type: String, default: "" },
-    resetPasswordExpiresAt: { type: Date, default: null }
+    resetPasswordExpiresAt: { type: Date, default: null },
+
+    // false only for a new sign-up that has not entered its emailed code yet.
+    // Accounts made before email codes have no value and count as verified.
+    emailVerified: { type: Boolean },
+    emailVerification: {
+      codeHash: { type: String, default: "" },
+      expiresAt: { type: Date, default: null },
+      attempts: { type: Number, default: 0 },
+      sentAt: { type: Date, default: null }
+    }
   },
   { timestamps: true }
 );

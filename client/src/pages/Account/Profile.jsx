@@ -4,6 +4,8 @@ import { useToast } from "../../context/ToastContext";
 import { apiFetch } from "../../utils/apiFetch";
 import CardOnFile from "../../components/Billing/CardOnFile.jsx";
 import CardModal from "../../components/Billing/CardModal.jsx";
+import ChangePassword from "../../components/Account/ChangePassword.jsx";
+import DeleteAccount from "../../components/Account/DeleteAccount.jsx";
 import "./Profile.css";
 
 function formatTaxStatus(status) {
@@ -933,6 +935,9 @@ export default function Profile() {
               )}
             </div>
           </div>
+
+          <ChangePassword authProvider={user?.authProvider} />
+          <DeleteAccount />
         </div>
       </div>
 

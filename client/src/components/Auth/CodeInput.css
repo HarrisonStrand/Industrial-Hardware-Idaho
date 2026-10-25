@@ -1,0 +1,22 @@
+/* Six one-digit boxes in a row; they shrink together on narrow phones. */
+.code-input {
+	display: grid;
+	grid-template-columns: repeat(6, minmax(0, 3.25rem));
+	justify-content: center;
+	gap: 0.5rem;
+}
+
+.code-input-box {
+	aspect-ratio: 1 / 1.15;
+	max-width: 100%;
+	padding: 0;
+	font-size: 1.6rem;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 360px) {
+	.code-input {
+		gap: 0.35rem;
+	}
+}

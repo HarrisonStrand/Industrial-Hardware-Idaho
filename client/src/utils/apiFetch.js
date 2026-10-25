@@ -18,7 +18,12 @@ export async function apiFetch(path, options = {}) {
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(data?.message || data?.error || `Request failed (${response.status})`);
+    const error = new Error(data?.message || data?.error || `Request failed (${response.status})`);
+    // Callers can branch on these, e.g. code "EMAIL_NOT_VERIFIED".
+    error.status = response.status;
+    error.code = data?.code || "";
+    error.data = data;
+    throw error;
   }
 
   return data;

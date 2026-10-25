@@ -80,6 +80,9 @@ export function AuthProvider({ children }) {
         { onUnauthorized: handleUnauthorized }
       );
 
+      // New sign-ups are not signed in until they enter their emailed code.
+      if (data?.verificationRequired) return data;
+
       setUser(data.user);
       return data.user;
     },

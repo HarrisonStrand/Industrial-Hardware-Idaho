@@ -2,7 +2,7 @@ import User from "../models/User.js";
 
 export async function listUsers(req, res) {
   const users = await User.find({})
-    .select("firstName lastName email phone role company account payment createdAt")
+    .select("firstName lastName email phone role company account payment emailVerified createdAt")
     .sort({ createdAt: -1 })
     .lean();
 

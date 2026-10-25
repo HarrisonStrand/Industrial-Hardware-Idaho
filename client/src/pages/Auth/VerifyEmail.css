@@ -1,0 +1,9 @@
+.verify-email-form {
+	max-width: 30rem;
+}
+
+.verify-email-error {
+	min-height: 1.5em;
+	color: crimson;
+	text-align: center;
+}

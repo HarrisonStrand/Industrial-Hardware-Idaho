@@ -170,6 +170,9 @@ export default function AdminAccounts() {
                 <div>
                   <div className='text-main fw-semibold'>
                     {u.firstName} {u.lastName}
+                    {u.emailVerified === false && (
+                      <span className='badge rounded-pill text-bg-warning ms-2 align-middle'>Email not verified</span>
+                    )}
                   </div>
                   <div className='text-muted small'>{u.email}</div>
                   {u.phone && (

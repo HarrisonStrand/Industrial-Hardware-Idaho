@@ -26,13 +26,21 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await register({
+      const result = await register({
         firstName,
         lastName,
         email,
         password,
         companyName,
       });
+
+      if (result?.verificationRequired) {
+        navigate("/verify-email", {
+          replace: true,
+          state: { email: result.email, emailSent: result.emailSent },
+        });
+        return;
+      }
 
       showToast({ variant: "success", message: "Account created" });
       navigate("/profile", { replace: true });

@@ -339,6 +339,92 @@ export async function sendOrderConfirmationEmail({
   });
 }
 
+// True when the site has somewhere to send mail from.
+export function mailConfigured() {
+  return Boolean(FROM_ADDRESS);
+}
+
+// purpose "verify" finishes a sign-up; "delete" confirms deleting an account.
+export async function sendVerificationCodeEmail({ to, code, firstName = "", purpose = "verify" }) {
+  const deleting = purpose === "delete";
+  const contentHtml = `
+    <div style="font-family:${BRAND.fontBody}; font-size:15px; line-height:1.7; color:${BRAND.altColor}; margin-bottom:18px;">
+      ${firstName ? `Hi ${escapeHtml(firstName)},<br/><br/>` : ""}${
+        deleting
+          ? "Enter this code on the Industrial Hardware Idaho website to confirm <strong>deleting your account</strong>. If you didn't ask for this, don't share the code and call us at " + BUSINESS_PHONE + "."
+          : "Enter this code on the Industrial Hardware Idaho website to finish creating your account."
+      }
+    </div>
+    <div style="text-align:center; margin:0 0 18px;">
+      <div style="display:inline-block; font-family:${BRAND.fontMain}; font-size:34px; letter-spacing:10px; color:${BRAND.mainColor}; background:${BRAND.mainLight}; border:1px solid ${BRAND.accentLight}; border-radius:14px; padding:14px 22px;">${escapeHtml(code)}</div>
+    </div>
+    <div style="font-family:${BRAND.fontBody}; font-size:14px; line-height:1.7; color:${BRAND.altColor};">
+      The code expires in 15 minutes. If you didn't sign up, you can ignore this email.
+    </div>
+  `;
+
+  return transporter.sendMail({
+    from: fromHeader("Industrial Hardware Idaho"),
+    to,
+    replyTo: process.env.EMAIL_TO || FROM_ADDRESS,
+    subject: deleting
+      ? `Code to delete your Industrial Hardware Idaho account: ${code}`
+      : `Your Industrial Hardware Idaho code: ${code}`,
+    html: emailShell({
+      preheader: deleting ? `Your account deletion code is ${code}` : `Your verification code is ${code}`,
+      title: deleting ? "Confirm account deletion" : "Verify your email",
+      contentHtml,
+      footerNote: deleting
+        ? "Sent because someone asked to delete this account on ihidaho.com."
+        : "Sent because this email address was used to create an account on ihidaho.com.",
+    }),
+  });
+}
+
+export async function sendAccountDeletedEmail({ to, firstName = "" }) {
+  const contentHtml = `
+    <div style="font-family:${BRAND.fontBody}; font-size:15px; line-height:1.7; color:${BRAND.altColor};">
+      ${firstName ? `Hi ${escapeHtml(firstName)},<br/><br/>` : ""}Your Industrial Hardware Idaho website account has been deleted. Your saved card, addresses and profile were removed. Records of past orders are kept by the store.<br/><br/>
+      If you didn't do this, call us at ${BUSINESS_PHONE}. You're always welcome to create a new account.
+    </div>
+  `;
+
+  return transporter.sendMail({
+    from: fromHeader("Industrial Hardware Idaho"),
+    to,
+    replyTo: process.env.EMAIL_TO || FROM_ADDRESS,
+    subject: "Your Industrial Hardware Idaho account was deleted",
+    html: emailShell({
+      preheader: "Your website account was deleted.",
+      title: "Account deleted",
+      contentHtml,
+      footerNote: "Sent to confirm a change to your account.",
+    }),
+  });
+}
+
+export async function sendPasswordChangedEmail({ to, firstName = "" }) {
+  const contentHtml = `
+    <div style="font-family:${BRAND.fontBody}; font-size:15px; line-height:1.7; color:${BRAND.altColor};">
+      ${firstName ? `Hi ${escapeHtml(firstName)},<br/><br/>` : ""}The password for your Industrial Hardware Idaho account was just changed.<br/><br/>
+      If you made this change, there's nothing else to do. If you didn't, reset your password from the sign-in page right away and call us at ${BUSINESS_PHONE}.
+    </div>
+  `;
+
+  return transporter.sendMail({
+    from: fromHeader("Industrial Hardware Idaho"),
+    to,
+    replyTo: process.env.EMAIL_TO || FROM_ADDRESS,
+    subject: "Your Industrial Hardware Idaho password was changed",
+    html: emailShell({
+      preheader: "Your account password was changed.",
+      title: "Password changed",
+      contentHtml,
+      footerNote: "Sent to let you know about a change to your account.",
+    }),
+  });
+}
+
 function escapeHtml(str) {
   return String(str || "")
     .replaceAll("&", "&amp;")

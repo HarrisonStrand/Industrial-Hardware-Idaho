@@ -1,0 +1,18 @@
+.delete-account-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 1050;
+	background: rgb(0 0 0 / 0.58);
+	backdrop-filter: blur(3px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem;
+}
+
+.delete-account-modal {
+	width: min(480px, 100%);
+	max-height: calc(100vh - 2rem);
+	overflow-y: auto;
+	box-shadow: 0 1rem 3rem rgb(0 0 0 / 0.22);
+}
