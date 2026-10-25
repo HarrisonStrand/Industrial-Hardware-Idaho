@@ -1,6 +1,8 @@
 import Order from "../models/Order.js";
 import {
   transporter,
+  fromHeader,
+  FROM_ADDRESS,
   sendOrderConfirmationEmail,
   backorderedItems,
   backorderListHtml,
@@ -117,9 +119,9 @@ async function sendAdminOrderNotificationEmail(order = {}) {
   `;
 
   await transporter.sendMail({
-    from: `"IHI Website" <${process.env.EMAIL_USER}>`,
+    from: fromHeader("IHI Website"),
     to: recipient,
-    replyTo: order.customer?.email || process.env.EMAIL_USER,
+    replyTo: order.customer?.email || process.env.EMAIL_TO || FROM_ADDRESS,
     subject: `New Website Order — ${order.orderNumber}`,
     html,
   });

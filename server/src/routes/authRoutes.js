@@ -1,7 +1,7 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
+import { transporter, fromHeader, FROM_ADDRESS } from "../utils/mailer.js";
 import User from "../models/User.js";
 import { signToken } from "../utils/jwt.js";
 import { requireAuth } from "../middleware/auth.js";
@@ -320,31 +320,17 @@ function getResetClientOrigin(req) {
 }
 
 
-function getMailCredentials() {
-	return {
-		user: process.env.GMAIL_USER || process.env.EMAIL_USER || "",
-		pass: process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS || "",
-	};
-}
-
+// Sent through the same mail settings as every other site email (utils/mailer.js).
 async function sendPasswordResetEmail({ to, resetLink }) {
-	const { user, pass } = getMailCredentials();
-
-	if (!user || !pass) {
-		console.warn(
-			"PASSWORD RESET EMAIL NOT SENT: missing GMAIL_USER/GMAIL_APP_PASSWORD or EMAIL_USER/EMAIL_PASS.",
-		);
+	if (!FROM_ADDRESS) {
+		console.warn("PASSWORD RESET EMAIL NOT SENT: mail settings are missing.");
 		console.warn("Development reset link:", resetLink);
 		return { skipped: true };
 	}
 
-	const transporter = nodemailer.createTransport({
-		service: "gmail",
-		auth: { user, pass },
-	});
-
 	return transporter.sendMail({
-		from: `"Industrial Hardware Idaho" <${user}>`,
+		from: fromHeader("Industrial Hardware Idaho"),
+		replyTo: process.env.EMAIL_TO || FROM_ADDRESS,
 		to,
 		subject: "Reset your Industrial Hardware Idaho password",
 		html: `

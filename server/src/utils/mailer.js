@@ -2,20 +2,38 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
+// With SMTP_HOST set (Amazon SES), mail goes through that server and comes from
+// EMAIL_FROM. Without it, mail goes through the Gmail account in EMAIL_USER.
+const SMTP_HOST = process.env.SMTP_HOST || "";
+const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
+
+export const transporter = nodemailer.createTransport(
+  SMTP_HOST
+    ? {
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      }
+    : {
+        service: "gmail",
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+      },
+);
+
+// Address every site email is sent from.
+export const FROM_ADDRESS = process.env.EMAIL_FROM || process.env.EMAIL_USER || "";
+
+export function fromHeader(name = "Industrial Hardware Idaho") {
+  return `"${name}" <${FROM_ADDRESS}>`;
+}
+
 console.log("📧 MAILER CONFIG:", {
-  host: process.env.EMAIL_HOST,
-  user: process.env.EMAIL_USER,
-  hasPass: !!process.env.EMAIL_PASS,
+  via: SMTP_HOST ? `SMTP ${SMTP_HOST}:${SMTP_PORT}` : "Gmail",
+  from: FROM_ADDRESS,
+  hasLogin: SMTP_HOST ? !!(process.env.SMTP_USER && process.env.SMTP_PASS) : !!(process.env.EMAIL_USER && process.env.EMAIL_PASS),
   contactTo: process.env.EMAIL_TO,
   specialTo: process.env.SPECIAL_REQUEST_TO || process.env.EMAIL_TO,
-});
-
-export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
 });
 
 transporter.verify((error) => {
@@ -161,7 +179,7 @@ export async function sendContactEmail({ name, company, email, phone, date, subj
   `;
 
   return transporter.sendMail({
-    from: `"IHI Website" <${process.env.EMAIL_USER}>`,
+    from: fromHeader("IHI Website"),
     to: process.env.EMAIL_TO,
     replyTo: email,
     subject: `Contact Form: ${subject || "General inquiry"}`,
@@ -199,7 +217,7 @@ export async function sendSpecialRequestEmail({ partName, partDescription, quant
   `;
 
   return transporter.sendMail({
-    from: `"IHI Website" <${process.env.EMAIL_USER}>`,
+    from: fromHeader("IHI Website"),
     to: recipient,
     replyTo: email,
     subject: `Special Request: ${partName} (${quantityNeeded})`,
@@ -231,7 +249,7 @@ export async function sendNewsletterSignupEmail({ email, source = "website" }) {
   `;
 
   return transporter.sendMail({
-    from: `"IHI Website" <${process.env.EMAIL_USER}>`,
+    from: fromHeader("IHI Website"),
     to: recipient,
     replyTo: email,
     subject: `Newsletter Signup: ${email}`,
@@ -305,10 +323,10 @@ export async function sendOrderConfirmationEmail({
   `;
 
   return transporter.sendMail({
-    from: `"Industrial Hardware Idaho" <${process.env.EMAIL_USER}>`,
+    from: fromHeader("Industrial Hardware Idaho"),
     to,
     // Customer replies go to the store inbox.
-    replyTo: process.env.EMAIL_TO || process.env.EMAIL_USER,
+    replyTo: process.env.EMAIL_TO || FROM_ADDRESS,
     subject: `Order Confirmation — ${orderNumber}`,
     html: emailShell({
       preheader: `Your order ${orderNumber} has been received.`,
