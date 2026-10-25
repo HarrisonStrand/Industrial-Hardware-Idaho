@@ -38,8 +38,8 @@ export default function Cart() {
 
 					{anyBackordered && (
 						<div className='stock-split-notice mt-3'>
-							Some items are backordered. In-stock quantities ship right away; backordered quantities ship as soon as
-							they are restocked. We'll contact you with timing.
+							Some items are backordered (typically 3–4 business days). All orders are pickup / will call at our
+							Boise store; we'll contact you when your order is ready.
 						</div>
 					)}
 				</div>

@@ -5,6 +5,12 @@ import { generateOrderNumber } from "../utils/orderNumber.js";
 import { normalizeOrderItems, calcAmountTotalCents } from "../utils/normalizeOrderItems.js";
 import { buildPricingContextFromUser } from "../utils/resolveProductPrice.js";
 import { sendOrderConfirmationForOrder } from "../utils/sendOrderConfirmationForOrder.js";
+import {
+  SALES_TAX_RATE,
+  SALES_TAX_LABEL,
+  isTaxExempt,
+  calcSalesTaxCents,
+} from "../config/salesTax.js";
 
 const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2024-06-20" })
@@ -97,12 +103,16 @@ async function buildNormalizedOrderPayload({
     throw err;
   }
 
-  const amountTotalCents = calcAmountTotalCents(normalizedItems);
-  if (!amountTotalCents || amountTotalCents <= 0) {
+  const subtotalCents = calcAmountTotalCents(normalizedItems);
+  if (!subtotalCents || subtotalCents <= 0) {
     const err = new Error("Invalid order total");
     err.statusCode = 400;
     throw err;
   }
+
+  const taxExempt = isTaxExempt(user);
+  const taxCents = calcSalesTaxCents(subtotalCents, taxExempt);
+  const amountTotalCents = subtotalCents + taxCents;
 
   return {
     userId: user._id,
@@ -126,7 +136,12 @@ async function buildNormalizedOrderPayload({
     items: normalizedItems,
     hasBackorder: normalizedItems.some((item) => Number(item.qtyBackordered || 0) > 0),
     currency,
+    subtotalCents,
+    taxCents,
+    taxRate: taxExempt ? 0 : SALES_TAX_RATE,
+    taxExempt,
     amountTotalCents,
+    fulfillment: "PICKUP",
     payment: {
       mode: paymentMode,
       status: paymentStatus,
@@ -153,6 +168,13 @@ export async function getCapabilities(req, res) {
       rejectionReason: account.rejectionReason || "",
     },
     payment: { hasCardOnFile },
+    // Checkout shows the same tax the server will charge.
+    tax: {
+      rate: SALES_TAX_RATE,
+      label: SALES_TAX_LABEL,
+      exempt: isTaxExempt(user),
+      status: user.tax?.status || "non_exempt",
+    },
     canUseNet30: approvalStatus === "APPROVED" && approvedType === "NET30",
     canUseHouse: approvalStatus === "APPROVED" && approvedType === "HOUSE",
   });

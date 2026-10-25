@@ -68,7 +68,8 @@ export default function Checkout() {
 	const [saveThisCard, setSaveThisCard] = useState(true);
 
 	const [placing, setPlacing] = useState(false);
-	const [shippingSameAsBilling, setShippingSameAsBilling] = useState(true);
+	// Every order is pickup, so the ship-to on the order is the billing contact.
+	const shippingSameAsBilling = true;
 
 	const [billing, setBilling] = useState({
 		firstName: "",
@@ -98,9 +99,13 @@ export default function Checkout() {
 	const manualCardActive =
 		payMode === "PAY_NOW" && (!hasCardOnFile || useDifferentCard);
 
-	const amountCents = useMemo(() => {
-		return Math.max(0, Math.round(Number(cartTotal || 0) * 100));
-	}, [cartTotal]);
+	// Same math as the server (config/salesTax.js): tax rounded to the cent on the subtotal.
+	const taxRate = Number(caps?.tax?.rate ?? 0.06);
+	const taxExempt = Boolean(caps?.tax?.exempt);
+	const subtotalCents = Math.max(0, Math.round(Number(cartTotal || 0) * 100));
+	const taxCents = taxExempt ? 0 : Math.round(subtotalCents * taxRate);
+
+	const amountCents = useMemo(() => subtotalCents + taxCents, [subtotalCents, taxCents]);
 
 	const orderItemsPayload = useMemo(() => {
 		return items.map((it) => ({
@@ -205,14 +210,8 @@ export default function Checkout() {
 	function setBillingField(key, value) {
 		setBilling((p) => ({ ...p, [key]: value }));
 	}
-	function setShippingField(key, value) {
-		setShipping((p) => ({ ...p, [key]: value }));
-	}
 	function setBillingAddressField(key, value) {
 		setBilling((p) => ({ ...p, address: { ...p.address, [key]: value } }));
-	}
-	function setShippingAddressField(key, value) {
-		setShipping((p) => ({ ...p, address: { ...p.address, [key]: value } }));
 	}
 
 	function validateAddresses() {
@@ -247,9 +246,6 @@ export default function Checkout() {
 			email: billing.email,
 			phone: billing.phone,
 			billingAddress: { ...billing.address, name: billing.companyName || "", companyName: billing.companyName || "" },
-			deliveryAddress: shippingSameAsBilling
-				? { ...billing.address, name: billing.companyName || "", companyName: billing.companyName || "" }
-				: { ...shipping.address, name: shipping.companyName || "", companyName: shipping.companyName || "" },
 		};
 
 		const data = await apiFetch("/api/users/me", {
@@ -445,15 +441,27 @@ export default function Checkout() {
 
 						{anyBackordered && (
 							<div className='stock-split-notice mt-3'>
-								Some items are backordered. You're charged for the full order now; in-stock quantities ship right
-								away and backordered quantities ship as soon as they are restocked.
+								Some items are backordered. You're charged for the full order now. We'll contact you when
+								your order is ready for pickup; backordered items typically take 3–4 business days.
 							</div>
 						)}
 
-						<div className='d-flex justify-content-between pt-3'>
+						<div className='d-flex justify-content-between pt-3 text-main'>
+							<div>Subtotal</div>
+							<div>${(subtotalCents / 100).toFixed(2)}</div>
+						</div>
+						<div className='d-flex justify-content-between pt-1 text-main'>
+							<div>
+								{taxExempt
+									? "Sales tax (exempt)"
+									: `Idaho sales tax (${Math.round(taxRate * 10000) / 100}%)`}
+							</div>
+							<div>${(taxCents / 100).toFixed(2)}</div>
+						</div>
+						<div className='d-flex justify-content-between pt-2'>
 							<div className='text-main text-uppercase'>Total</div>
 							<div className='text-main fw-semibold fs-4'>
-								${cartTotal.toFixed(2)}
+								${(amountCents / 100).toFixed(2)}
 							</div>
 						</div>
 					</div>
@@ -557,85 +565,12 @@ export default function Checkout() {
 						</div>
 					</div>
 
-					<div className='mt-4'>
-						<div className='form-check'>
-							<input
-								className='form-check-input'
-								type='checkbox'
-								id='shippingSame'
-								checked={shippingSameAsBilling}
-								onChange={(e) => setShippingSameAsBilling(e.target.checked)}
-							/>
-							<label className='form-check-label text-main fw-semibold' htmlFor='shippingSame'>
-								Shipping is the same as billing
-							</label>
+					<div className='profile-link-box rounded-4 border border-3 border-main py-3 px-3 px-xl-5 mt-4 text-main'>
+						<div className='fs-5 contact-form-title text-uppercase'>Pickup / Will Call</div>
+						<div className='small mt-1'>
+							All website orders are picked up at our store: <strong>115 E 48th St, Boise, ID 83714</strong>,
+							Monday–Friday 7:30am–4:30pm. We'll contact you when your order is ready.
 						</div>
-
-						{!shippingSameAsBilling && (
-							<div className='profile-link-box row align-items-center justify-content-center rounded-4 border border-3 border-main py-3 py-sm-2 py-xl-4 px-3 px-xl-5 fw-semibold g-0 mt-3'>
-								<div className='fs-4 contact-form-title text-main text-uppercase text-start'>
-									Shipping
-								</div>
-								<div className='main-linebreak w-100 border-0 border-top border-main py-2 d-none d-sm-block'></div>
-
-								<div className='row g-3 py-3'>
-									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>First name</label>
-										<input className='form-input form-control rounded-3 text-dark' value={shipping.firstName} onChange={(e) => setShippingField("firstName", e.target.value)} />
-									</div>
-
-									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>Last name</label>
-										<input className='form-input form-control rounded-3 text-dark' value={shipping.lastName} onChange={(e) => setShippingField("lastName", e.target.value)} />
-									</div>
-
-									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>Phone</label>
-										<input className='form-input form-control rounded-3 text-dark' value={shipping.phone} onChange={(e) => setShippingField("phone", e.target.value)} />
-									</div>
-
-									<div className='col-12 col-md-6'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>Company name <span className='text-muted text-capitalize'>(optional)</span></label>
-										<input
-											className='form-input form-control rounded-3 text-dark'
-											value={shipping.companyName}
-											onChange={(e) => setShippingField("companyName", e.target.value)}
-											placeholder='Shipping company name'
-										/>
-									</div>
-
-									<div className='col-12'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>Address</label>
-										<input className='form-input form-control rounded-3 text-dark' value={shipping.address.address1} onChange={(e) => setShippingAddressField("address1", e.target.value)} />
-									</div>
-
-									<div className='col-12'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>Address line 2</label>
-										<input className='form-input form-control rounded-3 text-dark' value={shipping.address.address2} onChange={(e) => setShippingAddressField("address2", e.target.value)} />
-									</div>
-
-									<div className='col-12 col-md-4'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>City</label>
-										<input className='form-input form-control rounded-3 text-dark' value={shipping.address.city} onChange={(e) => setShippingAddressField("city", e.target.value)} />
-									</div>
-
-									<div className='col-12 col-md-4'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>State</label>
-										<select className='form-input form-control rounded-3 text-dark' value={shipping.address.state} onChange={(e) => setShippingAddressField("state", e.target.value)}>
-											<option value=''>Select</option>
-											{US_STATES.map((s) => (
-												<option key={s} value={s}>{s}</option>
-											))}
-										</select>
-									</div>
-
-									<div className='col-12 col-md-4'>
-										<label className='form-input-label text-uppercase form-label text-main mb-0'>ZIP</label>
-										<input className='form-input form-control rounded-3 text-dark' value={shipping.address.zip} onChange={(e) => setShippingAddressField("zip", e.target.value)} />
-									</div>
-								</div>
-							</div>
-						)}
 					</div>
 
 					<div className='mt-4'>

@@ -201,8 +201,8 @@ export default function OrderConfirmation() {
 											className='small fw-semibold'
 											style={{ color: "#8a5a00" }}>
 											{Number(it.qtyInStock || 0) > 0
-												? `${Number(it.qtyInStock).toLocaleString()} ship now · ${Number(it.qtyBackordered).toLocaleString()} backordered`
-												: `Backordered (${Number(it.qtyBackordered).toLocaleString()}) · ships when restocked`}
+												? `${Number(it.qtyInStock).toLocaleString()} in stock · ${Number(it.qtyBackordered).toLocaleString()} backordered`
+												: `Backordered (${Number(it.qtyBackordered).toLocaleString()}) · available when restocked`}
 										</div>
 									) : null}
 								</div>
@@ -212,10 +212,31 @@ export default function OrderConfirmation() {
 							</div>
 						))}
 
+						{order.subtotalCents !== null && order.subtotalCents !== undefined && (
+							<>
+								<div className='d-flex justify-content-between pt-3 text-main'>
+									<div>Subtotal</div>
+									<div>{formatMoneyFromCents(order.subtotalCents)}</div>
+								</div>
+								<div className='d-flex justify-content-between pt-1 text-main'>
+									<div>
+										{order.taxExempt
+											? "Sales tax (exempt)"
+											: `Idaho sales tax (${Math.round(Number(order.taxRate || 0) * 10000) / 100}%)`}
+									</div>
+									<div>{formatMoneyFromCents(order.taxCents)}</div>
+								</div>
+							</>
+						)}
 						<div className='d-flex justify-content-between pt-3'>
 							<div className='text-main text-uppercase'>Total</div>
 							<div className='text-main fw-semibold fs-4'>{total}</div>
 						</div>
+					</div>
+
+					<div className='profile-link-box rounded-4 border border-3 border-main py-3 px-3 mt-3 text-main small'>
+						<strong>Pickup / Will Call:</strong> 115 E 48th St, Boise, ID 83714, Monday–Friday 7:30am–4:30pm.
+						We'll contact you when your order is ready.
 					</div>
 
 					<div className='text-muted small mt-3'>

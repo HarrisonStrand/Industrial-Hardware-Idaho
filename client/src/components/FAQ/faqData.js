@@ -17,17 +17,22 @@ const FAQ_SECTIONS = [
   },
   {
     category: "shipping",
-    title: "Shipping & Delivery",
+    title: "Pickup & Delivery",
     items: [
       {
-        question: "How long does shipping usually take?",
+        question: "How do I get my online order?",
         answer:
-          "Shipping timelines depend on inventory availability, vendor lead times, and destination. If timing is critical, please contact us before ordering.",
+          "All online orders are pickup / will call at our store at 115 E 48th St, Boise, Monday–Friday 7:30am–4:30pm. We'll contact you when your order is ready.",
       },
       {
-        question: "Will I receive tracking information?",
+        question: "How long until my order is ready?",
         answer:
-          "Tracking information will be provided when available after the order is processed and shipped.",
+          "In-stock orders are usually ready within 1–2 business days. Backordered items typically take 3–4 business days but can't be guaranteed. If timing is critical, please call us before ordering.",
+      },
+      {
+        question: "Do you deliver?",
+        answer:
+          "We don't ship online orders. Businesses on our established delivery schedule can arrange delivery directly with our team. Call us to ask.",
       },
     ],
   },

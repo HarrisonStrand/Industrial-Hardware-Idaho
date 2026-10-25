@@ -113,6 +113,8 @@ async function fetchFishbowlInventoryMap({
   samples = false,
 }) {
   const inventoryByPartNumber = new Map();
+  // Filled only when Fishbowl's stock rows carry the part's internal id.
+  const inventoryByPartId = new Map();
   const sampleRows = [];
 
   const summary = {
@@ -162,18 +164,23 @@ async function fetchFishbowlInventoryMap({
       }
 
       const existing = inventoryByPartNumber.get(partNumber);
+      let entry = existing;
       if (existing) {
         summary.duplicatePartRows += 1;
         existing.quantity += quantity;
         existing.rowCount += 1;
       } else {
-        inventoryByPartNumber.set(partNumber, {
+        entry = {
           partNumber,
           quantity,
           rowCount: 1,
-        });
+        };
+        inventoryByPartNumber.set(partNumber, entry);
         summary.rowsMapped += 1;
       }
+
+      const rowPartId = String(row?.partId ?? row?.part?.id ?? "").trim();
+      if (rowPartId && !inventoryByPartId.has(rowPartId)) inventoryByPartId.set(rowPartId, entry);
 
       if (samples && sampleRows.length < 10) {
         sampleRows.push({
@@ -187,7 +194,7 @@ async function fetchFishbowlInventoryMap({
     if (!isLikelyMorePages({ data: resp.data, rows, pageNumber, pageSize, pageLimit })) break;
   }
 
-  return { inventoryByPartNumber, summary, sampleRows };
+  return { inventoryByPartNumber, inventoryByPartId, summary, sampleRows };
 }
 
 async function fetchFishbowlInventoryMapAdaptive({
@@ -389,6 +396,7 @@ async function getTargetProducts({
     sku: 1,
     internalPartNumber: 1,
     "fishbowl.partNum": 1,
+    "fishbowl.partId": 1,
     inventory: 1,
   };
 
@@ -647,6 +655,7 @@ async function runFishbowlInventoryMapSyncInternal({
 
     const {
       inventoryByPartNumber,
+      inventoryByPartId = new Map(),
       summary: inventorySummary,
       sampleRows: inventorySamples,
     } = inventoryResult;
@@ -722,7 +731,11 @@ async function runFishbowlInventoryMapSyncInternal({
       }
 
       syncSummary.checked += 1;
-      const inventoryMatch = inventoryByPartNumber.get(normalizedPartNumber);
+      // Fishbowl's internal part id first (survives renames), then the part number.
+      const productPartId = String(product?.fishbowl?.partId || "").trim();
+      const inventoryMatch =
+        (productPartId && inventoryByPartId.get(productPartId)) ||
+        inventoryByPartNumber.get(normalizedPartNumber);
 
       if (!inventoryMatch && !setMissingZero) {
         syncSummary.noInventoryRow += 1;

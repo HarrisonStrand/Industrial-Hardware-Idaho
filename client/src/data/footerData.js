@@ -41,7 +41,7 @@ export const footerData = (brand) => ({
       { text: "Returns & Exchanges", path: "/returns" },
       { text: "Special Requests", path: "/requests" },
       { text: "Order Status", path: "/order-status" },
-      { text: "Shipping Information", path: "/shipping" }
+      { text: "Pickup & Delivery", path: "/shipping" }
     ],
     textAlign: "text-center text-md-center text-lg-end"
   },

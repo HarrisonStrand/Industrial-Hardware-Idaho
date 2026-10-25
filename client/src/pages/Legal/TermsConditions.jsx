@@ -68,16 +68,19 @@ export default function TermsConditions() {
 
                 <h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>Tax & tax-exempt orders</h5>
                 <p className='mb-3'>
-                  Sales tax may be applied where required. If you are tax-exempt, you may need to
-                  provide documentation before tax exemption is applied to your account or order.
+                  Idaho sales tax is added to every order unless your account has an approved tax
+                  exemption. To request one, use Request Exempt on your account page and send us your
+                  completed Idaho Form ST-101. Tax is charged until the exemption is approved.
                 </p>
 
-                <h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>Shipping & delivery</h5>
+                <h5 className='legal-title text-uppercase mt-4 text-center text-md-start'>Pickup & delivery</h5>
                 <ul className='legal-list'>
-                  <li>Delivery dates are estimates and not guaranteed.</li>
-                  <li>Risk of loss typically passes upon carrier pickup (unless required otherwise by law).</li>
+                  <li>All online orders are pickup / will call at our Boise store. We do not ship online orders.</li>
+                  <li>Ready times and backorder lead times are estimates and not guaranteed.</li>
+                  <li>Risk of loss passes to you when the order is picked up (unless required otherwise by law).</li>
                   <li>
-                    Some items may ship separately; backordered items may ship when available.
+                    Delivery is available only to established accounts on our delivery schedule, by arrangement
+                    with our team.
                   </li>
                 </ul>
 

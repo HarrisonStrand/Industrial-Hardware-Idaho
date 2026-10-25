@@ -10,8 +10,8 @@ import "./Profile.css";
 
 function formatTaxStatus(status) {
   if (status === "exempt") return "Exempt (Approved)";
-  if (status === "pending") return "Pending Approval";
-  return "";
+  if (status === "pending") return "Exempt — Pending Approval";
+  return "Taxable (Idaho 6%)";
 }
 
 function formatAccountType(type) {
@@ -663,6 +663,12 @@ export default function Profile() {
                           disabled={saving}>
                           Request Exempt
                         </button>
+                      )}
+                      {taxStatus === "pending" && (
+                        <div className='text-muted small fw-normal mt-1'>
+                          To finish, email your completed Idaho Form ST-101 (Sales Tax Resale or Exemption
+                          Certificate) to sales@ihidaho.com. Tax is charged until we approve it.
+                        </div>
                       )}
                     </div>
                   </div>

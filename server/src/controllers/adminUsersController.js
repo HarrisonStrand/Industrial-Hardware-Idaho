@@ -2,7 +2,7 @@ import User from "../models/User.js";
 
 export async function listUsers(req, res) {
   const users = await User.find({})
-    .select("firstName lastName email phone role company account payment emailVerified createdAt")
+    .select("firstName lastName email phone role company account payment tax emailVerified createdAt")
     .sort({ createdAt: -1 })
     .lean();
 
@@ -68,4 +68,27 @@ export async function updatePriceMultiplier(req, res) {
 
   console.log(`ADMIN PRICE MULTIPLIER: user ${user._id} -> ${user.account.priceMultiplier ?? "type default"} (by ${req.user?.id})`);
   res.json({ success: true, priceMultiplier: user.account.priceMultiplier });
+}
+
+// Approve or remove an account's sales tax exemption. Body: { status: "exempt" | "non_exempt" }.
+// Approve only after the customer's Idaho Form ST-101 is on file.
+export async function updateTaxStatus(req, res) {
+  const status = req.body?.status;
+  if (!["exempt", "non_exempt"].includes(status)) {
+    return res.status(400).json({ error: "status must be exempt or non_exempt" });
+  }
+
+  const user = await User.findById(req.params.id);
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  user.tax = {
+    ...(user.tax?.toObject?.() || user.tax || {}),
+    status,
+    approvedAt: status === "exempt" ? new Date() : null,
+    approvedBy: status === "exempt" ? req.user.id : null,
+  };
+  await user.save();
+
+  console.log(`ADMIN TAX STATUS: user ${user._id} -> ${status} (by ${req.user?.id})`);
+  res.json({ success: true, tax: user.tax });
 }

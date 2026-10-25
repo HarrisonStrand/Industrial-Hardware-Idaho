@@ -16,6 +16,39 @@ function marginPercentToMultiplier(marginPercent) {
   return Math.round((1 / (1 - margin / 100)) * 10000) / 10000;
 }
 
+// Sales tax exemption: approve only once the customer's Idaho Form ST-101 is on file.
+function TaxExemptControl({ user, saving, onChange }) {
+  const status = user.tax?.status || "non_exempt";
+  const labels = { non_exempt: "Taxable", pending: "Exempt requested", exempt: "Tax exempt" };
+
+  return (
+    <div className='text-muted small'>
+      Tax: <span className={status === "pending" ? "text-warning-emphasis fw-semibold" : "text-main"}>{labels[status] || status}</span>
+      {status !== "exempt" ? (
+        status === "pending" && (
+          <>
+            {" "}
+            <button type='button' className='btn btn-link btn-sm p-0 align-baseline' disabled={saving} onClick={() => onChange("exempt")}>
+              Approve
+            </button>
+            {" · "}
+            <button type='button' className='btn btn-link btn-sm p-0 align-baseline text-danger' disabled={saving} onClick={() => onChange("non_exempt")}>
+              Deny
+            </button>
+          </>
+        )
+      ) : (
+        <>
+          {" "}
+          <button type='button' className='btn btn-link btn-sm p-0 align-baseline text-danger' disabled={saving} onClick={() => onChange("non_exempt")}>
+            Remove
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function AdminAccounts() {
   const { showToast } = useToast();
   const [users, setUsers] = useState([]);
@@ -54,6 +87,23 @@ export default function AdminAccounts() {
         body: JSON.stringify({ priceMultiplier: value === "" ? null : value }),
       });
       showToast({ variant: "success", message: value === "" ? "Account uses its type's price again" : "Account price updated" });
+      await loadUsers();
+    } catch (e) {
+      showToast({ variant: "danger", message: e.message });
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function updateTaxStatus(userId, status) {
+    try {
+      setSavingId(userId);
+      await apiFetch(`/api/admin/users/${userId}/tax-status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      showToast({ variant: "success", message: status === "exempt" ? "Tax exemption approved" : "Account set to taxable" });
       await loadUsers();
     } catch (e) {
       showToast({ variant: "danger", message: e.message });
@@ -194,6 +244,7 @@ export default function AdminAccounts() {
                   <div className='text-muted small'>
                     Status: <span className='text-main'>{approvalStatus}</span>
                   </div>
+                  <TaxExemptControl user={u} saving={savingId === u._id} onChange={(status) => updateTaxStatus(u._id, status)} />
                 </div>
               </div>
 

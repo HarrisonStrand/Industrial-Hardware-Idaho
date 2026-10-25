@@ -75,7 +75,17 @@ const OrderSchema = new mongoose.Schema(
     hasBackorder: { type: Boolean, default: false, index: true },
 
     currency: { type: String, default: "usd" },
+    // Items total before tax, the sales tax charged, and the rate used.
+    // amountTotalCents = subtotalCents + taxCents. Orders placed before tax
+    // was added have no subtotal or tax and their total is items only.
+    subtotalCents: { type: Number, default: null },
+    taxCents: { type: Number, default: null },
+    taxRate: { type: Number, default: null },
+    taxExempt: { type: Boolean, default: false },
     amountTotalCents: { type: Number, default: 0 },
+
+    // Every website order is picked up at the store (will call).
+    fulfillment: { type: String, default: "PICKUP" },
 
     payment: {
       mode: {

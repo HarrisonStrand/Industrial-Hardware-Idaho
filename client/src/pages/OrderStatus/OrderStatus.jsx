@@ -57,7 +57,7 @@ export default function OrderStatus() {
             </form>
 
             <div className='text-muted small'>
-              Note: For backorders, we typically hold orders until complete unless you requested a partial shipment.
+              Note: All orders are pickup / will call. For backorders, we typically hold orders until complete unless you asked to pick up the in-stock items first.
             </div>
           </div>
         </div>

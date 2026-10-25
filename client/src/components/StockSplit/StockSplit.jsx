@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch";
 import "./StockSplit.css";
 
-// How many of a line ship now and how many wait for restock.
+// How many of a line are in stock now and how many wait for restock.
 export function splitStock(quantity, available) {
 	const qty = Math.max(0, Math.floor(Number(quantity || 0)));
 	const stock = Math.max(0, Math.floor(Number(available || 0)));
@@ -55,10 +55,10 @@ export default function StockSplit({ quantity, available, compact = false }) {
 
 	const text =
 		inStock > 0
-			? `${inStock.toLocaleString()} ship now · ${backordered.toLocaleString()} backordered`
+			? `${inStock.toLocaleString()} in stock · ${backordered.toLocaleString()} backordered`
 			: compact
 				? "Backordered"
-				: `Backordered (${backordered.toLocaleString()}) · ships when restocked`;
+				: `Backordered (${backordered.toLocaleString()}) · available when restocked`;
 
 	return (
 		<div className='stock-split small' role='note'>

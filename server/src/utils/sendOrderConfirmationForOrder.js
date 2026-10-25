@@ -6,6 +6,7 @@ import {
   sendOrderConfirmationEmail,
   backorderedItems,
   backorderListHtml,
+  orderTotalRows,
 } from "./mailer.js";
 
 function toPlainOrder(order) {
@@ -93,6 +94,10 @@ async function sendAdminOrderNotificationEmail(order = {}) {
 
       <table cellspacing="0" cellpadding="0" style="font-size:14px; margin:16px 0;">
         <tr><td style="padding:4px 16px 4px 0;"><strong>Order #</strong></td><td>${escapeHtml(order.orderNumber)}</td></tr>
+        <tr><td style="padding:4px 16px 4px 0;"><strong>Fulfillment</strong></td><td><strong>PICKUP / WILL CALL</strong></td></tr>
+        ${orderTotalRows(order)
+          .map(([label, value]) => `<tr><td style="padding:4px 16px 4px 0;"><strong>${escapeHtml(label)}</strong></td><td>${escapeHtml(value)}</td></tr>`)
+          .join("")}
         <tr><td style="padding:4px 16px 4px 0;"><strong>Total</strong></td><td>$${money(order.amountTotalCents, order.currency)}</td></tr>
         <tr><td style="padding:4px 16px 4px 0;"><strong>Payment</strong></td><td>${escapeHtml(order.payment?.mode)} / ${escapeHtml(order.payment?.status)}</td></tr>
         <tr><td style="padding:4px 16px 4px 0;"><strong>Customer</strong></td><td>${escapeHtml(customerName)}</td></tr>
@@ -113,8 +118,8 @@ async function sendAdminOrderNotificationEmail(order = {}) {
       <h3 style="color:#495a42; margin-top:22px;">Billing</h3>
       <p>${formatAddress(order.billingAddress)}</p>
 
-      <h3 style="color:#495a42; margin-top:22px;">Shipping</h3>
-      <p>${order.shippingSameAsBilling ? "Same as billing" : formatAddress(order.shippingAddress)}</p>
+      <h3 style="color:#495a42; margin-top:22px;">Pickup</h3>
+      <p>Will call at the store. The customer was told we'll contact them when the order is ready.</p>
     </div>
   `;
 
@@ -152,11 +157,13 @@ export async function sendOrderConfirmationForOrder(orderOrId) {
         orderNumber: orderData.orderNumber,
         items: orderData.items,
         amountTotalCents: orderData.amountTotalCents,
+        subtotalCents: orderData.subtotalCents,
+        taxCents: orderData.taxCents,
+        taxRate: orderData.taxRate,
+        taxExempt: orderData.taxExempt,
         currency: orderData.currency,
         customer: orderData.customer,
         billingAddress: orderData.billingAddress,
-        shippingAddress: orderData.shippingAddress,
-        shippingSameAsBilling: orderData.shippingSameAsBilling,
       });
 
       order.confirmationEmail = order.confirmationEmail || {};

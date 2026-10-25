@@ -1,5 +1,6 @@
 import { fishbowlClient } from "../../integrations/fishbowl/fishbowlClient.js";
 import Order from "../../models/Order.js";
+import Product from "../../models/Product.js";
 
 function asBool(value, fallback = false) {
   if (value == null || value === "") return fallback;
@@ -110,10 +111,25 @@ function resolveItemDescription(item = {}) {
 function getOrderNote(order = {}) {
   const paymentMode = order.payment?.mode || "";
   const paymentStatus = order.payment?.status || "";
+  const tax = order.taxExempt ? " TAX EXEMPT customer." : "";
   return truncate(
-    `Website order ${order.orderNumber || order._id}. Payment: ${paymentMode} ${paymentStatus}. Customer email: ${order.customer?.email || "N/A"}. PO#: ${order.customerPO || order.poNumber || order.purchaseOrderNumber || "N/A"}.`,
+    `PICKUP / WILL CALL. Website order ${order.orderNumber || order._id}. Payment: ${paymentMode} ${paymentStatus}.${tax} Customer email: ${order.customer?.email || "N/A"}. PO#: ${order.customerPO || order.poNumber || order.purchaseOrderNumber || "N/A"}.`,
     500,
   );
+}
+
+// Website orders arrive as estimates (Fishbowl status 10); staff issue them in
+// Fishbowl, which is when stock is committed. FISHBOWL_SO_STATUS_ID overrides.
+function salesOrderStatus() {
+  return Number(envString("FISHBOWL_SO_STATUS_ID", "10"));
+}
+
+// Taxable orders use the Fishbowl tax rate named in FISHBOWL_SO_TAX_RATE_NAME;
+// exempt customers use FISHBOWL_SO_EXEMPT_TAX_RATE_NAME and untaxed lines.
+function taxRateName(order = {}) {
+  return order.taxExempt
+    ? envString("FISHBOWL_SO_EXEMPT_TAX_RATE_NAME", "None")
+    : envString("FISHBOWL_SO_TAX_RATE_NAME", "None");
 }
 
 const BASE_SALES_ORDER_DETAIL_HEADERS = [
@@ -204,7 +220,7 @@ function getSalesOrderCustomFields(order = {}) {
   return fields.filter((field) => field.header && field.value);
 }
 
-function buildSalesOrderDetailRows(order, externalRef) {
+export function buildSalesOrderDetailRows(order, externalRef) {
   const customerName = customerDisplayName(order);
   const contactName = contactDisplayName(order);
   const billing = resolveAddress(order, "billing");
@@ -217,7 +233,7 @@ function buildSalesOrderDetailRows(order, externalRef) {
 
   const common = {
     SONum: truncate(externalRef, 25),
-    Status: Number(envString("FISHBOWL_SO_STATUS_ID", "20")),
+    Status: salesOrderStatus(),
     CustomerName: customerName,
     CustomerContact: contactName,
     BillToName: addressName(order, "billing"),
@@ -234,7 +250,7 @@ function buildSalesOrderDetailRows(order, externalRef) {
     ShipToCountry: shipping.country,
     ShipToResidential: envString("FISHBOWL_SO_SHIP_TO_RESIDENTIAL", "false"),
     CarrierName: envString("FISHBOWL_SO_CARRIER_NAME", "Will Call"),
-    TaxRateName: envString("FISHBOWL_SO_TAX_RATE_NAME", "None"),
+    TaxRateName: taxRateName(order),
     PriorityId: Number(envString("FISHBOWL_SO_PRIORITY_ID", "30")),
     PONum: truncate(order.customerPO || order.poNumber || order.purchaseOrderNumber || externalRef, 15),
     VendorPONum: "",
@@ -275,7 +291,7 @@ function buildSalesOrderDetailRows(order, externalRef) {
       ProductQuantity: qty,
       UOM: resolveUom(item),
       ProductPrice: money(item.unitPrice || 0),
-      Taxable: envString("FISHBOWL_SO_TAXABLE", "true"),
+      Taxable: order.taxExempt ? "false" : envString("FISHBOWL_SO_TAXABLE", "true"),
       TaxCode: envString("FISHBOWL_SO_TAX_CODE", ""),
       Note: truncate(item.detail || item.name || "", 500),
     };
@@ -295,7 +311,7 @@ function buildDirectPayload(order, externalRef) {
 
   return {
     num: externalRef,
-    status: Number(envString("FISHBOWL_SO_STATUS_ID", "20")),
+    status: salesOrderStatus(),
     customer: {
       name: customerName,
       email: order.customer?.email || "",
@@ -327,6 +343,24 @@ function serializeFishbowlError(resp = {}) {
   }
 }
 
+// If a part was renamed in Fishbowl after the order was placed, send the
+// product's current number so Fishbowl recognizes it.
+async function refreshItemPartNumbers(order) {
+  const ids = (order.items || []).map((item) => item.productId).filter(Boolean);
+  if (!ids.length) return;
+
+  const products = await Product.find({ _id: { $in: ids } }, { "fishbowl.partNum": 1 }).lean();
+  const currentById = new Map(products.map((p) => [String(p._id), String(p?.fishbowl?.partNum || "").trim()]));
+
+  for (const item of order.items || []) {
+    const current = currentById.get(String(item.productId || ""));
+    if (current && current !== item.partNumber) {
+      console.log(`FISHBOWL PUSH: order ${order.orderNumber} line ${item.partNumber} -> current part number ${current}`);
+      item.partNumber = current;
+    }
+  }
+}
+
 export async function pushOrderToFishbowl(orderId, options = {}) {
   const enabled = asBool(process.env.FISHBOWL_ENABLED, false);
   const dryRun = Boolean(options.dryRun);
@@ -350,6 +384,8 @@ export async function pushOrderToFishbowl(orderId, options = {}) {
       fishbowlStatus: order.fishbowlStatus,
     };
   }
+
+  await refreshItemPartNumbers(order);
 
   const validItems = (order.items || []).filter((item) => resolveFishbowlPartNumber(item));
   if (!validItems.length) {

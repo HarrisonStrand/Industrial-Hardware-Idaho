@@ -133,6 +133,23 @@ function messageBlock(label = "Message", body = "") {
 }
 
 const BUSINESS_PHONE = "(208) 375-5534";
+
+// Every website order is will call: picked up at the store.
+export const PICKUP_ADDRESS = "115 E 48th St, Boise, ID 83714";
+const PICKUP_NOTE_HTML = `All website orders are <strong>pickup / will call</strong> at our store: ${PICKUP_ADDRESS}, Monday–Friday 7:30am–4:30pm. We'll contact you when your order is ready.`;
+
+// Subtotal and tax lines for an order. Orders placed before sales tax have neither.
+export function orderTotalRows({ subtotalCents = null, taxCents = null, taxRate = null, taxExempt = false } = {}) {
+  if (subtotalCents === null || subtotalCents === undefined) return [];
+  const dollars = (cents) => `$${(Number(cents || 0) / 100).toFixed(2)}`;
+  const taxLabel = taxExempt
+    ? "Sales tax (exempt)"
+    : `Idaho sales tax (${Math.round(Number(taxRate || 0) * 10000) / 100}%)`;
+  return [
+    ["Subtotal", dollars(subtotalCents)],
+    [taxLabel, dollars(taxCents)],
+  ];
+}
 const BACKORDER_COLOR = "#8a5a00";
 
 // Items on the order with at least one unit on backorder.
@@ -269,11 +286,13 @@ export async function sendOrderConfirmationEmail({
   orderNumber,
   items,
   amountTotalCents,
+  subtotalCents = null,
+  taxCents = null,
+  taxRate = null,
+  taxExempt = false,
   currency = "usd",
   customer,
   billingAddress,
-  shippingAddress,
-  shippingSameAsBilling,
 }) {
   if (!to) {
     console.warn("⚠️ No recipient email provided for order confirmation.");
@@ -281,6 +300,7 @@ export async function sendOrderConfirmationEmail({
   }
 
   const total = (Number(amountTotalCents || 0) / 100).toFixed(2);
+  const totalRows = [["Order number", escapeHtml(orderNumber)], ...orderTotalRows({ subtotalCents, taxCents, taxRate, taxExempt }), ["Order total", `$${total} ${escapeHtml(currency.toUpperCase())}`]];
   const rows = (items || [])
     .map(
       (it) => `
@@ -299,7 +319,7 @@ export async function sendOrderConfirmationEmail({
     </div>
     ${backorderNotice(items)}
     ${sectionTitle("Order summary")}
-    ${infoTable([["Order number", escapeHtml(orderNumber)], ["Order total", `$${total} ${escapeHtml(currency.toUpperCase())}`]])}
+    ${infoTable(totalRows)}
     <div style="margin-top:18px; border:1px solid ${BRAND.accentLight}; border-radius:14px; padding:18px; background:${BRAND.mainLight};">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;">
         <thead>
@@ -317,8 +337,8 @@ export async function sendOrderConfirmationEmail({
       <div style="font-family:${BRAND.fontBody}; font-size:14px; line-height:1.7; color:${BRAND.altColor};">${formatAddress(billingAddress)}</div>
     </div>
     <div style="margin-top:22px;">
-      ${sectionTitle("Shipping address")}
-      <div style="font-family:${BRAND.fontBody}; font-size:14px; line-height:1.7; color:${BRAND.altColor};">${shippingSameAsBilling ? "Same as billing" : formatAddress(shippingAddress)}</div>
+      ${sectionTitle("Pickup")}
+      <div style="font-family:${BRAND.fontBody}; font-size:14px; line-height:1.7; color:${BRAND.altColor};">${PICKUP_NOTE_HTML}</div>
     </div>
   `;
 

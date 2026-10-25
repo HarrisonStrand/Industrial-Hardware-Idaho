@@ -12,6 +12,7 @@ const REVIEW_BUCKETS = [
 	{ key: "published", label: "Published" },
 	{ key: "fishbowl-new", label: "New From Fishbowl" },
 	{ key: "fishbowl-changed", label: "Changed In Fishbowl" },
+	{ key: "fishbowl-missing", label: "Missing From Fishbowl" },
 ];
 
 const EMPTY_FORM = {
@@ -65,6 +66,7 @@ function formatIntakeStatusLabel(status = "") {
 	const value = String(status || "none").toLowerCase();
 	if (value === "new") return "New From Fishbowl";
 	if (value === "changed") return "Changed In Fishbowl";
+	if (value === "missing") return "Missing From Fishbowl (hidden)";
 	if (value === "reviewed") return "Reviewed";
 	return "None";
 }

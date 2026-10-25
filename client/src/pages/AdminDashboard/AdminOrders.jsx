@@ -722,6 +722,16 @@ function OrderDetailModal({ order, loading, saving, onClose, onProcess, onComple
 							<div className='admin-order-detail-card'>
 								<div className='admin-order-detail-title'>Order</div>
 								<InfoRow label='Created' value={formatDate(order.createdAt)} />
+								<InfoRow label='Fulfillment' value='Pickup / Will Call' />
+								{order?.subtotalCents !== null && order?.subtotalCents !== undefined && (
+									<>
+										<InfoRow label='Subtotal' value={formatMoneyFromCents(order.subtotalCents)} />
+										<InfoRow
+											label='Sales Tax'
+											value={order.taxExempt ? "Exempt ($0.00)" : `${formatMoneyFromCents(order.taxCents)} (${Math.round(Number(order.taxRate || 0) * 10000) / 100}%)`}
+										/>
+									</>
+								)}
 								<InfoRow label='Total' value={total} />
 								<InfoRow label='Payment Mode' value={order?.payment?.mode === "PAY_LATER" ? "Pay Later" : "Pay Now"} />
 								<InfoRow label='Stripe PI' value={order?.payment?.stripePaymentIntentId} />

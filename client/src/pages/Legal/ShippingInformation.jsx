@@ -22,116 +22,60 @@ export default function ShippingInformation() {
 			<div className='container-fluid px-3 px-sm-5 py-4 pt-md-5'>
 				<div className='theme-section-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 					<div className='text-main text-uppercase mb-1 fs-2 px-0 ps-4'>
-						Shipping Information
+						Pickup & Delivery
 					</div>
 
 					<div className='theme-detail-container py-4 fade-in rounded-4 px-3 px-sm-5'>
 						<div className='row m-0'>
 							<div className='legal-copy text-main'>
 								<p className='mb-3'>
-									Below is shipping and delivery information for online orders
-									from <span className='fw-semibold'>{BRAND}</span>.
+									<span className='fw-semibold'>All online orders from {BRAND} are pickup / will call</span> at
+									our store. We don't ship online orders.
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>
-									Processing time
-								</h5>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>Where to pick up</h5>
+								<p className='mb-2'>
+									<span className='fw-semibold'>{BRAND}</span>
+									<br />
+									{ADDR1 || "115 E 48th St"}
+									{ADDR2 ? (
+										<>
+											<br />
+											{ADDR2}
+										</>
+									) : null}
+									<br />
+									{CITY || "Boise, ID 83714"}
+								</p>
+								{HOURS ? (
+									<p className='text-muted small mb-3'>
+										Pickup hours: <span className='fw-semibold'>{HOURS}</span>
+									</p>
+								) : null}
+
+								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>When it's ready</h5>
 								<p className='mb-3'>
-									Most in-stock orders are prepared within{" "}
-									<span className='fw-semibold'>1–2 business days</span>. Larger
-									orders may require additional handling time.
+									Most in-stock orders are ready within <span className='fw-semibold'>1–2 business days</span>.
+									We'll contact you when your order is ready. Larger orders may take a little longer.
 								</p>
 
 								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>Backorders</h5>
-								<p className='mb-2'>
-									If an item is out of stock, it may be backordered.{" "}
-									<span className='fw-semibold'>
-										We typically hold orders until complete
-									</span>{" "}
-									so everything ships together.
-								</p>
 								<p className='mb-3'>
-									If you would like a partial shipment, please contact us and
-									we’ll do our best to accommodate (additional shipping charges
-									may apply).
+									If an item is out of stock, it's backordered. Backordered items typically take{" "}
+									<span className='fw-semibold'>3–4 business days</span>, but we can't guarantee timing. We
+									usually hold an order until it's complete; if you'd like to pick up the in-stock items first,
+									just let us know.
 								</p>
 
-								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>
-									Delivery methods
-								</h5>
-								<ul className='legal-list'>
-									<li>
-										<span className='fw-semibold'>Standard carriers:</span>{" "}
-										common parcel services for most orders.
-									</li>
-									<li>
-										<span className='fw-semibold'>
-											Local delivery (heavy orders):
-										</span>{" "}
-										For qualifying heavy or bulky orders, we may deliver using
-										our own van (availability and delivery area may apply).
-									</li>
-									<li>
-										<span className='fw-semibold'>
-											Freight / special handling:
-										</span>{" "}
-										For oversized items, we may coordinate special delivery
-										options when needed.
-									</li>
-									<li>
-										<span className='fw-semibold'>Local pickup:</span> Pick up
-										your order at our location during regular hours.
-									</li>
-								</ul>
-
-								{(ADDR1 || CITY) && (
-									<>
-										<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>
-											Local pickup
-										</h5>
-										<p className='mb-2'>
-											<span className='fw-semibold'>{BRAND}</span>
-											<br />
-											{ADDR1}
-											{ADDR2 ? (
-												<>
-													<br />
-													{ADDR2}
-												</>
-											) : null}
-											{CITY ? (
-												<>
-													<br />
-													{CITY}
-												</>
-											) : null}
-										</p>
-										{HOURS ? (
-											<p className='text-muted small mb-0'>
-												Regular hours:{" "}
-												<span className='fw-semibold'>{HOURS}</span>
-											</p>
-										) : null}
-									</>
-								)}
-
-								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>Tracking</h5>
+								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>Delivery</h5>
 								<p className='mb-3'>
-									When your order ships, tracking details may be provided by
-									email (if an email was supplied at checkout).
-								</p>
-
-								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>
-									Delivery estimates
-								</h5>
-								<p className='mb-3'>
-									Delivery dates are estimates and may vary due to carrier
-									delays, weather, or other factors outside our control.
+									Businesses on our established delivery schedule can arrange delivery directly with our
+									team. Please call us to ask.
 								</p>
 
 								<h5 className='legal-title text-uppercase mt-4 text-center text-sm-start'>Questions?</h5>
 								<p className='mb-0'>
-									For shipping questions, contact us
+									For pickup questions, contact us
 									{EMAIL ? (
 										<>
 											{" "}
@@ -160,8 +104,8 @@ export default function ShippingInformation() {
 			<ContactBanner />
 			<FAQAccordion
 				categories={["shipping", "ordering"]}
-				title='Shipping FAQs'
-				subtitle='Helpful answers about delivery, timing, and order processing.'
+				title='Pickup FAQs'
+				subtitle='Helpful answers about pickup, timing, and order processing.'
 			/>
 		</>
 	);

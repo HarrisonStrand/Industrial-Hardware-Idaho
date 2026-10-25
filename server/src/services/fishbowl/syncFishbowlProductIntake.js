@@ -412,6 +412,104 @@ async function baselineExistingProduct({ productId, normalized, hash }) {
 	);
 }
 
+// Fishbowl renamed this part (same internal id, new number). The site takes the
+// new number so stock sync and orders keep working; catalog content (enrichment,
+// pictures, specs, page address) belongs to the product, not the number.
+async function applyPartNumberRename({ productId, normalized, now }) {
+	const product = await Product.findById(productId);
+	if (!product) return { applied: false, reason: "not-found" };
+
+	const previous = clean(product?.fishbowl?.partNum || product?.sku || "");
+	const next = clean(normalized.partNumber);
+	const clash = await Product.findOne({ _id: { $ne: product._id }, sku: next }, { _id: 1 }).lean();
+	if (clash) return { applied: false, reason: "number-in-use", previous, next };
+
+	const fishbowl = product.fishbowl?.toObject?.() || product.fishbowl || {};
+	const intake = product.fishbowlIntake?.toObject?.() || product.fishbowlIntake || {};
+	const history = Array.isArray(intake.partNumberHistory) ? intake.partNumberHistory : [];
+
+	product.sku = next;
+	product.internalPartNumber = next;
+	product.fishbowl = { ...fishbowl, partNum: next, partId: fishbowl.partId || clean(normalized.partId) };
+	product.fishbowlIntake = {
+		...intake,
+		sourcePartNumber: next,
+		partNumberHistory: [...history, { from: previous, to: next, at: now }],
+	};
+	await product.save();
+
+	console.log(`FISHBOWL PART RENAMED: product ${product._id} ${previous} -> ${next}`);
+	return { applied: true, previous, next };
+}
+
+// A part that was missing from Fishbowl is back. It stays hidden; an admin decides.
+async function markPartReturned({ productId, normalized, now }) {
+	await Product.updateOne(
+		{ _id: productId },
+		{
+			$set: {
+				needsReview: true,
+				"fishbowlIntake.status": "changed",
+				"fishbowlIntake.changeType": "fishbowl-part-returned",
+				"fishbowlIntake.lastDetectedAt": now,
+				"fishbowlIntake.missingSince": null,
+				"fishbowlIntake.sourcePartNumber": normalized.partNumber || "",
+			},
+		},
+	);
+}
+
+// Published products whose part is no longer active in Fishbowl are hidden and
+// flagged. If an unusual number vanish in one scan (a Fishbowl outage or a bad
+// response looks like that), nothing is hidden and the run is flagged instead.
+async function hideMissingProducts({ products, seenPartIds, seenPartKeys, now, dryRun, stats, syncRun, sampleRows, samples }) {
+	const published = products.filter(
+		(p) => p.isPublished && (clean(p?.fishbowl?.partId) || normalizePartKey(p?.fishbowl?.partNum || p?.sku)),
+	);
+	const missing = published.filter((p) => {
+		if (clean(p?.fishbowlIntake?.status) === "missing") return false;
+		const partId = clean(p?.fishbowl?.partId);
+		if (partId && seenPartIds.has(partId)) return false;
+		const keys = [p?.fishbowl?.partNum, p?.sku, p?.internalPartNumber].map(normalizePartKey).filter(Boolean);
+		return !keys.some((key) => seenPartKeys.has(key));
+	});
+
+	stats.missingFound = missing.length;
+	if (samples) {
+		for (const p of missing.slice(0, 20)) {
+			sampleRows.push({ type: "missing-from-fishbowl", partNumber: p?.fishbowl?.partNum || p?.sku, productId: String(p._id), dryRun });
+		}
+	}
+	if (!missing.length) return;
+
+	const safeLimit = Math.max(10, Math.ceil(published.length * 0.02));
+	if (missing.length > safeLimit) {
+		stats.missingHeldForSafety = missing.length;
+		const message = `${missing.length} published products were not found in Fishbowl (limit ${safeLimit}). Nothing was hidden; check Fishbowl and run the scan again.`;
+		console.warn(`FISHBOWL INTAKE: ${message}`);
+		if (syncRun) syncRun.errors.push({ key: "missing-parts-safety", message, payload: null });
+		return;
+	}
+	if (dryRun) return;
+
+	const ids = missing.map((p) => p._id);
+	await Product.updateMany(
+		{ _id: { $in: ids } },
+		{
+			$set: {
+				isPublished: false,
+				needsReview: true,
+				"fishbowlIntake.status": "missing",
+				"fishbowlIntake.changeType": "fishbowl-part-missing",
+				"fishbowlIntake.missingSince": now,
+				"fishbowlIntake.lastDetectedAt": now,
+			},
+		},
+	);
+	stats.missingHidden = ids.length;
+	console.log(`FISHBOWL INTAKE: hid ${ids.length} products whose part is no longer active in Fishbowl: ${missing.map((p) => p?.fishbowl?.partNum || p?.sku).join(", ")}`);
+}
+
 export function getFishbowlProductIntakeRuntimeState() {
 	return { ...runtimeState };
 }
@@ -516,6 +614,14 @@ export async function runFishbowlProductIntakeScan({
 		existingSkippedByMode: 0,
 		newSkippedByMode: 0,
 		alreadyPending: 0,
+		renamedFound: 0,
+		renamed: 0,
+		renameBlocked: 0,
+		numberConflicts: 0,
+		returned: 0,
+		missingFound: 0,
+		missingHidden: 0,
+		missingHeldForSafety: 0,
 		rowsWithoutPartNumber: 0,
 		skippedInactive: 0,
 		skippedCleanupCandidate: 0,
@@ -551,6 +657,9 @@ export async function runFishbowlProductIntakeScan({
 		).lean();
 
 		const existingMaps = buildExistingProductMaps(products);
+		// Parts Fishbowl still lists as active, to find products whose part is gone.
+		const seenPartIds = new Set();
+		const seenPartKeys = new Set();
 
 		for (const rawRow of fetchResult.rows) {
 			const normalized = normalizeFishbowlPartRow(rawRow);
@@ -565,6 +674,11 @@ export async function runFishbowlProductIntakeScan({
 				activeOnly,
 				skipCleanupCandidates,
 			});
+
+			if (skipResult.reason !== "inactive") {
+				if (normalized.partId) seenPartIds.add(clean(normalized.partId));
+				seenPartKeys.add(partKey);
+			}
 
 			if (skipResult.skip) {
 				if (skipResult.reason === "inactive") stats.skippedInactive += 1;
@@ -586,9 +700,24 @@ export async function runFishbowlProductIntakeScan({
 
 			const hashPayload = buildHashPayload(normalized);
 			const currentHash = makeHash(hashPayload);
-			const existing =
-				existingMaps.byPartNumber.get(partKey) ||
-				(normalized.partId ? existingMaps.byPartId.get(String(normalized.partId)) : null);
+			// Fishbowl's internal part id never changes, so it is the main match;
+			// the part number is the fallback for products saved without an id.
+			const byId = normalized.partId ? existingMaps.byPartId.get(clean(normalized.partId)) : null;
+			const byNumber = existingMaps.byPartNumber.get(partKey);
+			const numberOwnerId = clean(byNumber?.fishbowl?.partId || "");
+			if (!byId && byNumber && numberOwnerId && normalized.partId && numberOwnerId !== clean(normalized.partId)) {
+				// A different Fishbowl part now uses a number a site product still has. Leave both alone.
+				stats.numberConflicts += 1;
+				if (syncRun) {
+					syncRun.errors.push({
+						key: normalized.partNumber,
+						message: `Fishbowl part ${normalized.partId} uses number ${normalized.partNumber}, which a site product for part ${numberOwnerId} still has. Not changed; please review.`,
+						payload: null,
+					});
+				}
+				continue;
+			}
+			const existing = byId || byNumber || null;
 
 			if (!existing) {
 				if (normalizedMode === "changed") {
@@ -640,6 +769,40 @@ export async function runFishbowlProductIntakeScan({
 				continue;
 			}
 
+			if (clean(existing?.fishbowlIntake?.status) === "missing") {
+				stats.returned += 1;
+				if (!dryRun) await markPartReturned({ productId: existing._id, normalized, now });
+				continue;
+			}
+
+			// Same Fishbowl part, new number: take the new number.
+			let renamedNow = false;
+			const existingKey = normalizePartKey(existing?.fishbowl?.partNum || existing?.sku || "");
+			if (existingKey && existingKey !== partKey) {
+				stats.renamedFound += 1;
+				if (samples && sampleRows.length < 30) {
+					sampleRows.push({ type: "renamed-part", from: existing?.fishbowl?.partNum || existing?.sku, to: normalized.partNumber, dryRun });
+				}
+				if (!dryRun) {
+					const rename = await applyPartNumberRename({ productId: existing._id, normalized, now });
+					if (rename.applied) {
+						stats.renamed += 1;
+						renamedNow = true;
+						existing.sku = normalized.partNumber;
+						existing.fishbowl = { ...(existing.fishbowl || {}), partNum: normalized.partNumber };
+					} else {
+						stats.renameBlocked += 1;
+						if (syncRun) {
+							syncRun.errors.push({
+								key: normalized.partNumber,
+								message: `Fishbowl renamed ${rename.previous} to ${rename.next}, but another product already uses ${rename.next}. Not changed; please review.`,
+								payload: null,
+							});
+						}
+					}
+				}
+			}
+
 			if (normalizedMode === "new") {
 				stats.existingSkippedByMode += 1;
 				continue;
@@ -661,6 +824,12 @@ export async function runFishbowlProductIntakeScan({
 
 			if (baselineHash === currentHash) {
 				stats.unchangedExisting += 1;
+				continue;
+			}
+
+			// A rename alone needs no review: accept the new source as the baseline.
+			if (renamedNow && buildChangeSummary(existing, normalized).length === 0) {
+				await baselineExistingProduct({ productId: existing._id, normalized, hash: currentHash });
 				continue;
 			}
 
@@ -688,6 +857,11 @@ export async function runFishbowlProductIntakeScan({
 				});
 				stats.changedFlagged += 1;
 			}
+		}
+
+		// Only a complete scan can tell which parts are gone.
+		if (normalizedMode === "all" && !limit && !pageLimit && !fetchResult.pagesFailed && fetchResult.rows.length > 0) {
+			await hideMissingProducts({ products, seenPartIds, seenPartKeys, now, dryRun, stats, syncRun, sampleRows, samples });
 		}
 
 		if (syncRun) {

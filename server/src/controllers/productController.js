@@ -264,6 +264,10 @@ function buildStatusProductFilter(status = "") {
 		return { "fishbowlIntake.status": "changed" };
 	}
 
+	if (normalizedStatus === "fishbowl-missing") {
+		return { "fishbowlIntake.status": "missing" };
+	}
+
 	if (normalizedStatus === "needs-review") {
 		return {
 			isPublished: false,

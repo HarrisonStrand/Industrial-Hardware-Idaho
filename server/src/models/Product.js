@@ -47,16 +47,20 @@ const FishbowlIntakeSchema = new mongoose.Schema(
   {
     status: {
       type: String,
-      enum: ["none", "new", "changed", "reviewed"],
+      // "missing": the part is no longer active in Fishbowl, so the product was hidden.
+      enum: ["none", "new", "changed", "reviewed", "missing"],
       default: "none",
       index: true,
     },
     changeType: {
       type: String,
-      enum: ["", "new-product", "fishbowl-source-changed"],
+      enum: ["", "new-product", "fishbowl-source-changed", "fishbowl-part-missing", "fishbowl-part-returned"],
       default: "",
       index: true,
     },
+    missingSince: { type: Date, default: null },
+    // Part numbers this product had in Fishbowl before a rename: [{ from, to, at }].
+    partNumberHistory: { type: mongoose.Schema.Types.Mixed, default: [] },
     firstDetectedAt: { type: Date, default: null },
     lastDetectedAt: { type: Date, default: null },
     lastReviewedAt: { type: Date, default: null },

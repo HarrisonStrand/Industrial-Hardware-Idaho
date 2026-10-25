@@ -14,6 +14,17 @@
   pointer-events: auto;
 } */
 
+/* A screen-sized frame that clips the drawer while it waits off the right edge,
+   so the closed drawer never makes the page wider than a phone screen.
+   Clicks pass through it to the page. */
+.cart-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 9999;
+}
+
 .cart-items {
   padding: 12px;
   padding-bottom: 220px; /* space for subtotal + buttons */
@@ -23,23 +34,32 @@
 
 
 .cart-drawer {
-	position: fixed;
+	position: absolute;
 	top: 0;
 	right: 0;
+	pointer-events: auto;
 	width: 30%;
+	/* Wide enough to use on phones, where 30% is only about 110px. */
+	min-width: min(380px, 90vw);
 	max-width: 90vw;
-	height: 100vh;
+	height: 100%;
+	/* Keeps the footer buttons inside the drawer so the closed drawer can't widen the page. */
+	overflow: hidden;
 	background: rgba(from var(--main-light) r g b / 0.9);
   backdrop-filter: blur(4px);
 	box-shadow: -3px 0 6px rgba(0, 0, 0, 0.25);
 	border-left: 1px solid rgba(from var(--secondary-light) r g b / 1) outset;
 	z-index: 9999;
 	transform: translateX(100%);
-	transition: transform 0.35s ease;
+	/* Hidden once it has slid away, so it is skipped by keyboard and screen readers. */
+	visibility: hidden;
+	transition: transform 0.35s ease, visibility 0s linear 0.35s;
 }
 
 .cart-drawer-overlay.open .cart-drawer {
 	transform: translateX(0);
+	visibility: visible;
+	transition: transform 0.35s ease;
 }
 
 .cart-drawer-title-banner {
