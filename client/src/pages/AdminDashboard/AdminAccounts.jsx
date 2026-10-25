@@ -22,6 +22,9 @@ export default function AdminAccounts() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
   const [typeRules, setTypeRules] = useState({});
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
 
   async function loadUsers() {
     try {
@@ -77,18 +80,78 @@ export default function AdminAccounts() {
     }
   }
 
+  const query = search.trim().toLowerCase();
+  const queryDigits = query.replace(/\D/g, "");
+  const shownUsers = users.filter((u) => {
+    const account = u.account || {};
+    if (statusFilter && (account.approvalStatus || "NONE") !== statusFilter) return false;
+    if (typeFilter && (account.approvedType || "RETAIL") !== typeFilter) return false;
+    if (!query) return true;
+    const text = [`${u.firstName || ""} ${u.lastName || ""}`, u.email, u.company?.name, u.phone]
+      .join(" ")
+      .toLowerCase();
+    // Phone numbers match on digits alone, so "208-375" finds "(208) 375-5534".
+    const phoneDigits = String(u.phone || "").replace(/\D/g, "");
+    return text.includes(query) || (queryDigits.length >= 3 && phoneDigits.includes(queryDigits));
+  });
+
   return (
     <div>
       <div className='text-main text-uppercase mb-2 fs-4'>Accounts</div>
 
+      <div className='row g-2 mb-3'>
+        <div className='col-12 col-md-6'>
+          <input
+            type='search'
+            className='form-input form-control rounded-3 text-dark'
+            placeholder='Search name, email, company or phone'
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className='col-6 col-md-3'>
+          <select
+            className='form-input form-control rounded-3 text-dark'
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label='Filter by approval status'>
+            <option value=''>All statuses</option>
+            <option value='NONE'>None</option>
+            <option value='PENDING'>Pending</option>
+            <option value='APPROVED'>Approved</option>
+            <option value='REJECTED'>Rejected</option>
+          </select>
+        </div>
+        <div className='col-6 col-md-3'>
+          <select
+            className='form-input form-control rounded-3 text-dark'
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            aria-label='Filter by account type'>
+            <option value=''>All types</option>
+            <option value='RETAIL'>Retail</option>
+            <option value='NET30'>Net 30</option>
+            <option value='HOUSE'>House Account</option>
+          </select>
+        </div>
+      </div>
+
       {loading && <div className='text-muted'>Loading users...</div>}
 
-      {!loading && users.length === 0 && (
-        <div className='text-muted'>No users found.</div>
+      {!loading && users.length > 0 && (
+        <div className='text-muted small mb-2'>
+          Showing {shownUsers.length} of {users.length} accounts
+        </div>
+      )}
+
+      {!loading && shownUsers.length === 0 && (
+        <div className='text-muted'>
+          {users.length === 0 ? "No users found." : "No accounts match your search."}
+        </div>
       )}
 
       {!loading &&
-        users.map((u) => {
+        shownUsers.map((u) => {
           const account = u.account || {};
           const requestedType = account.requestedType || "RETAIL";
           const approvedType = account.approvedType || "RETAIL";
@@ -109,6 +172,13 @@ export default function AdminAccounts() {
                     {u.firstName} {u.lastName}
                   </div>
                   <div className='text-muted small'>{u.email}</div>
+                  {u.phone && (
+                    <div className='text-muted small'>
+                      <a href={`tel:${u.phone.replace(/[^\d+]/g, "")}`} className='text-muted'>
+                        {u.phone}
+                      </a>
+                    </div>
+                  )}
                   {u.company?.name && (
                     <div className='text-muted small'>{u.company.name}</div>
                   )}

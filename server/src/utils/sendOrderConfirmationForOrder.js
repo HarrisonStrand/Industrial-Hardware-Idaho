@@ -1,5 +1,10 @@
 import Order from "../models/Order.js";
-import { transporter, sendOrderConfirmationEmail } from "./mailer.js";
+import {
+  transporter,
+  sendOrderConfirmationEmail,
+  backorderedItems,
+  backorderListHtml,
+} from "./mailer.js";
 
 function toPlainOrder(order) {
   if (!order) return null;
@@ -92,6 +97,13 @@ async function sendAdminOrderNotificationEmail(order = {}) {
         <tr><td style="padding:4px 16px 4px 0;"><strong>Email</strong></td><td>${escapeHtml(order.customer?.email || "")}</td></tr>
         <tr><td style="padding:4px 16px 4px 0;"><strong>Phone</strong></td><td>${escapeHtml(order.customer?.phone || "")}</td></tr>
       </table>
+
+      ${backorderedItems(order.items).length ? `
+      <div style="border:2px solid #8a5a00; border-radius:8px; padding:12px 16px; background:#fff8ec; margin:16px 0;">
+        <h3 style="color:#8a5a00; margin:0 0 8px;">Backordered items</h3>
+        ${backorderListHtml(order.items)}
+        <p style="margin:0; font-size:13px;">The customer was told: typical lead time 3-4 business days, not guaranteed.</p>
+      </div>` : ""}
 
       <h3 style="color:#495a42;">Items</h3>
       ${orderItemsTable(order)}

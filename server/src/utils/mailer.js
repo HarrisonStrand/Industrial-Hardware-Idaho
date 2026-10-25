@@ -114,6 +114,38 @@ function messageBlock(label = "Message", body = "") {
   `;
 }
 
+const BUSINESS_PHONE = "(208) 375-5534";
+const BACKORDER_COLOR = "#8a5a00";
+
+// Items on the order with at least one unit on backorder.
+export function backorderedItems(items = []) {
+  return (items || []).filter((it) => Number(it?.qtyBackordered || 0) > 0);
+}
+
+// One bullet per backordered item: "5 of 10 — Name (PART#)".
+export function backorderListHtml(items = []) {
+  const list = backorderedItems(items)
+    .map((it) => {
+      const name = it.name || it.partNumber || "Item";
+      const part = it.partNumber && it.partNumber !== name ? ` (${escapeHtml(it.partNumber)})` : "";
+      return `<li style="margin:0 0 6px;"><strong>${Number(it.qtyBackordered)} of ${Number(it.qty || 0)}</strong> — ${escapeHtml(name)}${part}</li>`;
+    })
+    .join("");
+  return list ? `<ul style="margin:0 0 14px; padding-left:20px;">${list}</ul>` : "";
+}
+
+function backorderNotice(items = []) {
+  const list = backorderListHtml(items);
+  if (!list) return "";
+  return `
+    <div style="margin:0 0 22px; border:2px solid ${BACKORDER_COLOR}; border-radius:14px; padding:18px; background:#fff8ec; font-family:${BRAND.fontBody}; font-size:14px; line-height:1.7; color:${BRAND.altColor};">
+      <div style="font-family:${BRAND.fontMain}; font-size:18px; color:${BACKORDER_COLOR}; margin:0 0 10px;">The following items are on backorder:</div>
+      ${list}
+      <div>Typical lead time is 3-4 business days but is not guaranteed. If you have any questions, please feel free to contact us at <a href="tel:+12083755534" style="color:${BRAND.accentDark}; text-decoration:none;">${BUSINESS_PHONE}</a> or reply to this email.</div>
+    </div>
+  `;
+}
+
 export async function sendContactEmail({ name, company, email, phone, date, subject, message }) {
   const contentHtml = `
     ${sectionTitle("Contact details")}
@@ -247,6 +279,7 @@ export async function sendOrderConfirmationEmail({
     <div style="font-family:${BRAND.fontBody}; font-size:15px; line-height:1.7; color:${BRAND.altColor}; margin-bottom:20px;">
       Thank you${customer?.firstName ? `, ${escapeHtml(customer.firstName)}` : ""}. Your order has been received and is being processed.
     </div>
+    ${backorderNotice(items)}
     ${sectionTitle("Order summary")}
     ${infoTable([["Order number", escapeHtml(orderNumber)], ["Order total", `$${total} ${escapeHtml(currency.toUpperCase())}`]])}
     <div style="margin-top:18px; border:1px solid ${BRAND.accentLight}; border-radius:14px; padding:18px; background:${BRAND.mainLight};">
@@ -274,6 +307,8 @@ export async function sendOrderConfirmationEmail({
   return transporter.sendMail({
     from: `"Industrial Hardware Idaho" <${process.env.EMAIL_USER}>`,
     to,
+    // Customer replies go to the store inbox.
+    replyTo: process.env.EMAIL_TO || process.env.EMAIL_USER,
     subject: `Order Confirmation — ${orderNumber}`,
     html: emailShell({
       preheader: `Your order ${orderNumber} has been received.`,

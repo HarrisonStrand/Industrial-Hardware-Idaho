@@ -1,0 +1,36 @@
+/* Tab buttons: equal width, centered as a group.
+   6 in one row on desktop, 3 per row on tablets, 2 per row on phones. */
+.admin-tab-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.5rem;
+	max-width: 66rem;
+	margin: 0 auto;
+}
+
+.admin-tab-grid > a {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	white-space: nowrap;
+}
+
+/* Smaller text on phones so "Catalog Layout" fits its half-width button. */
+@media (max-width: 575.98px) {
+	.admin-tab-grid > a {
+		font-size: 0.8rem;
+		letter-spacing: 0.5px;
+	}
+}
+
+@media (min-width: 576px) {
+	.admin-tab-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+@media (min-width: 992px) {
+	.admin-tab-grid {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+}
