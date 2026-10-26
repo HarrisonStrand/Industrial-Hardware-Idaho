@@ -76,6 +76,7 @@ function getIntakeStatusBadgeClass(status = "") {
 	if (value === "new") return "text-bg-primary";
 	if (value === "changed") return "text-bg-warning";
 	if (value === "reviewed") return "text-bg-success";
+	if (value === "missing") return "text-bg-danger";
 	return "text-bg-secondary";
 }
 
@@ -226,6 +227,18 @@ function ProductStatusPills({ product = {}, item = null }) {
 	const fishbowlActive = item
 		? item?.fishbowlActive !== false
 		: product?.fishbowl?.active !== false;
+	// A part gone from Fishbowl keeps its last saved "active" value, so the intake flag decides.
+	const fishbowlMissing = item
+		? String(item?.intakeStatus || "").toLowerCase() === "missing"
+		: String(product?.fishbowlIntake?.status || "").toLowerCase() === "missing";
+	const fishbowlClass = fishbowlMissing
+		? "text-bg-danger"
+		: getStatusBadgeClass(fishbowlActive, "text-bg-info", "text-bg-warning");
+	const fishbowlLabel = fishbowlMissing
+		? "Missing"
+		: fishbowlActive
+			? "Active"
+			: "Inactive";
 
 	return (
 		<div className='admin-products-status-pills'>
@@ -237,9 +250,8 @@ function ProductStatusPills({ product = {}, item = null }) {
 				className={`badge rounded-pill ${getStatusBadgeClass(isActive, "text-bg-primary", "text-bg-dark")}`}>
 				Product: {isActive ? "Active" : "Inactive"}
 			</span>
-			<span
-				className={`badge rounded-pill ${getStatusBadgeClass(fishbowlActive, "text-bg-info", "text-bg-warning")}`}>
-				Fishbowl: {fishbowlActive ? "Active" : "Inactive"}
+			<span className={`badge rounded-pill ${fishbowlClass}`}>
+				Fishbowl: {fishbowlLabel}
 			</span>
 		</div>
 	);
@@ -868,6 +880,7 @@ export default function AdminProducts() {
 	const selectedFishbowlIntakePending =
 		selectedFishbowlIntakeStatus === "new" ||
 		selectedFishbowlIntakeStatus === "changed";
+	const selectedFishbowlMissing = selectedFishbowlIntakeStatus === "missing";
 
 	const totalPages = listMeta.totalPages || 0;
 	const currentPage = listMeta.page || 1;
@@ -1730,6 +1743,27 @@ export default function AdminProducts() {
 											</div>
 										) : null}
 
+										{selectedFishbowlMissing ? (
+											<div className='alert alert-danger rounded-4 mb-4'>
+												<div className='fw-semibold'>
+													{formatIntakeStatusLabel(selectedFishbowlIntakeStatus)}
+												</div>
+												<div className='small'>
+													Hidden on:{" "}
+													{formatDate(
+														selectedFishbowlIntake?.missingSince ||
+															selectedFishbowlIntake?.lastDetectedAt,
+													)}
+												</div>
+												<div className='small mt-2'>
+													This part is no longer active in Fishbowl, so the website
+													unpublished it. If it was retired, leave it hidden. If not,
+													make it active in Fishbowl again; the next scan moves it to
+													Changed In Fishbowl so it can be reviewed and published.
+												</div>
+											</div>
+										) : null}
+
 										<div className='row g-3 mb-4'>
 											<div className='col-md-3'>
 												<SummaryCard
@@ -1775,9 +1809,11 @@ export default function AdminProducts() {
 												<SummaryCard
 													label='Fishbowl Active'
 													value={
-														selectedProduct?.fishbowl?.active !== false
-															? "Yes"
-															: "No"
+														selectedFishbowlMissing
+															? "Missing"
+															: selectedProduct?.fishbowl?.active !== false
+																? "Yes"
+																: "No"
 													}
 												/>
 											</div>

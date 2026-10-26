@@ -256,14 +256,21 @@ export async function toggleFeaturedAdminReview(req, res) {
   }
 }
 
+// The admin page shows a setup warning when these are false, so every admin reply carries them.
+function googleReviewSetupFlags() {
+  return {
+    configured: Boolean(process.env.GOOGLE_PLACE_ID || process.env.GOOGLE_REVIEWS_PLACE_ID),
+    hasApiKey: Boolean(process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY),
+  };
+}
+
 export async function getAdminGoogleReviews(req, res) {
   try {
     const snapshot = await getGoogleReviewSnapshot();
     const publicPayload = mapGoogleReviewSnapshotForPublic(snapshot);
 
     return res.json({
-      configured: Boolean(process.env.GOOGLE_PLACE_ID || process.env.GOOGLE_REVIEWS_PLACE_ID),
-      hasApiKey: Boolean(process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY),
+      ...googleReviewSetupFlags(),
       snapshot: snapshot
         ? {
             placeId: snapshot.placeId,
@@ -292,6 +299,7 @@ export async function syncAdminGoogleReviews(req, res) {
     const publicPayload = mapGoogleReviewSnapshotForPublic(result.snapshot);
 
     return res.json({
+      ...googleReviewSetupFlags(),
       success: true,
       message: "Google reviews synced successfully",
       snapshot: {
