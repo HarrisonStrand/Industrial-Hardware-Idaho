@@ -1,23 +1,19 @@
 import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
 import VendorOffering from "../../models/VendorOffering.js";
+import { getCatalogPageFilters } from "./catalogLayoutDefaults.js";
+import { catalogNamePattern } from "./getCatalogBuilderSubcategory.js";
+import { buildReviewerInfo, findPreviewRows, isDraftPreview } from "./draftPreview.js";
+import { isListedForImage } from "./productImageVisibility.js";
 
 function escapeRegex(value = "") {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+// Same tolerant match as the range-list pages: the page id "hole-saws-cutters" finds the
+// stored name "hole saws & cutters", and "blades-wheels-bits" finds "blades, wheels & bits".
 function catalogValueRegex(value = "") {
-  const normalized = String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/-/g, " ")
-    .replace(/\s+/g, " ");
-
-  if (normalized === "bits drivers" || normalized === "bits and drivers") {
-    return /^bits\s*(?:(?:&|and)\s*)?drivers$/i;
-  }
-
-  return new RegExp(`^${escapeRegex(normalized)}$`, "i");
+  return new RegExp(catalogNamePattern(value), "i");
 }
 
 function clean(value = "") {
@@ -100,6 +96,87 @@ function buildFacets(enrichments = []) {
   };
 }
 
+// "1-1/8" -> 1.125, "3/16" -> 0.1875, "10mm" -> inches. NaN when it is not a size.
+export function parseSizeValue(value = "") {
+  const raw = clean(value).toLowerCase().replace(/["\u201d]|\s*in\.?$/g, "");
+  const mm = raw.match(/^(\d+(?:\.\d+)?)\s*mm$/);
+  if (mm) return Number(mm[1]) / 25.4;
+  const mixed = raw.match(/^(?:(\d+)[-\s])?(\d+)\/(\d+)$/);
+  if (mixed) {
+    return Number(mixed[1] || 0) + Number(mixed[2]) / Number(mixed[3]);
+  }
+  return /^\d+(?:\.\d+)?$/.test(raw) ? Number(raw) : NaN;
+}
+
+function sortFilterValues(values = [], sort = "") {
+  const unique = sortedUnique(values);
+  if (sort !== "size") return unique;
+
+  return unique.sort((a, b) => {
+    const sizeA = parseSizeValue(a);
+    const sizeB = parseSizeValue(b);
+    if (Number.isNaN(sizeA) || Number.isNaN(sizeB)) {
+      if (Number.isNaN(sizeA) !== Number.isNaN(sizeB)) return Number.isNaN(sizeA) ? 1 : -1;
+      return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
+    }
+    return sizeA - sizeB;
+  });
+}
+
+function getAttributeValue(enrichment = {}, key = "") {
+  const value = enrichment?.attributes?.[key];
+  return Array.isArray(value) ? value.map(clean).filter(Boolean) : [clean(value)].filter(Boolean);
+}
+
+// Each page filter lists the values found on the page; a choice keeps rows holding that value.
+export function buildAttributeFacets(enrichments = [], pageFilters = []) {
+  return pageFilters
+    .map((filter) => ({
+      ...filter,
+      values: sortFilterValues(
+        enrichments.flatMap((enrichment) => getAttributeValue(enrichment, filter.key)),
+        filter.sort
+      ),
+    }))
+    .filter((facet) => facet.values.length > 0);
+}
+
+export function matchesAttributeFilters(enrichment = {}, pageFilters = [], selected = {}) {
+  return pageFilters.every((filter) => {
+    const wanted = normalize(selected?.[filter.key]);
+    if (!wanted) return true;
+    return getAttributeValue(enrichment, filter.key).some((value) => normalize(value) === wanted);
+  });
+}
+
+const EMPTY_FACETS = {
+  productTypes: [],
+  grades: [],
+  materialFinishes: [],
+  measurementSystems: [],
+};
+
+// Draft preview: same order as the live query (merchandising.sortOrder, title, newest first), on the overlaid rows.
+function comparePreviewRows(a, b) {
+  return (
+    Number(a?.merchandising?.sortOrder || 0) - Number(b?.merchandising?.sortOrder || 0) ||
+    String(a?.title || "").localeCompare(String(b?.title || "")) ||
+    new Date(b?.createdAt || 0) - new Date(a?.createdAt || 0)
+  );
+}
+
+// Draft preview only: the rows a shopper would see once every staged draft is promoted.
+async function findPreviewCatalogRows(enrichmentQuery) {
+  const { enrichments, productMap } = await findPreviewRows({
+    ProductEnrichment,
+    Product,
+    query: enrichmentQuery,
+    productCommon: { isActive: true },
+    productPublished: { isPublished: true, catalogStatus: "published" },
+  });
+  return { publicEnrichments: enrichments.sort(comparePreviewRows), productMap };
+}
+
 export async function getPublishedCatalog(filters = {}) {
   const {
     category,
@@ -109,9 +186,12 @@ export async function getPublishedCatalog(filters = {}) {
     grade,
     materialFinish,
     measurementSystem,
+    attributeFilters = {},
     limit = 24,
     skip = 0,
   } = filters;
+  const pageFilters =
+    category && subcategory ? getCatalogPageFilters(category, subcategory) : [];
 
   const safeLimit = Math.min(100, Math.max(1, Number(limit) || 24));
   const safeSkip = Math.max(0, Number(skip) || 0);
@@ -146,55 +226,80 @@ export async function getPublishedCatalog(filters = {}) {
     ];
   }
 
-  // Fetch matching enrichment records first, then apply the public Product
-  // visibility rule before pagination. This prevents pages from appearing
-  // partially empty when an enrichment belongs to an unpublished product.
-  const candidateEnrichments = await ProductEnrichment.find(enrichmentQuery)
-    .sort({ "merchandising.sortOrder": 1, title: 1, createdAt: -1 })
-    .lean();
+  const preview = isDraftPreview();
+  let productMap;
+  let publicEnrichments;
 
-  if (!candidateEnrichments.length) {
-    return {
-      items: [],
-      total: 0,
-      limit: safeLimit,
-      skip: safeSkip,
-      page: 1,
-      totalPages: 0,
-      facets: {
-        productTypes: [],
-        grades: [],
-        materialFinishes: [],
-        measurementSystems: [],
-      },
-    };
+  if (preview) {
+    ({ publicEnrichments, productMap } = await findPreviewCatalogRows(enrichmentQuery));
+    if (!publicEnrichments.length) {
+      return {
+        items: [],
+        total: 0,
+        limit: safeLimit,
+        skip: safeSkip,
+        page: 1,
+        totalPages: 0,
+        facets: { ...EMPTY_FACETS },
+        attributeFacets: [],
+      };
+    }
+  } else {
+    // Fetch matching enrichment records first, then apply the public Product
+    // visibility rule before pagination. This prevents pages from appearing
+    // partially empty when an enrichment belongs to an unpublished product.
+    const candidateEnrichments = await ProductEnrichment.find(enrichmentQuery)
+      .sort({ "merchandising.sortOrder": 1, title: 1, createdAt: -1 })
+      .lean();
+
+    if (!candidateEnrichments.length) {
+      return {
+        items: [],
+        total: 0,
+        limit: safeLimit,
+        skip: safeSkip,
+        page: 1,
+        totalPages: 0,
+        facets: {
+          productTypes: [],
+          grades: [],
+          materialFinishes: [],
+          measurementSystems: [],
+        },
+        attributeFacets: [],
+      };
+    }
+
+    const candidateProductIds = candidateEnrichments.map((item) => item.productId);
+
+    const publishedProducts = await Product.find({
+      ...productQuery,
+      _id: { $in: candidateProductIds },
+    }).lean();
+
+    productMap = new Map(
+      publishedProducts.map((product) => [String(product._id), product])
+    );
+
+    publicEnrichments = candidateEnrichments.filter((enrichment) =>
+      productMap.has(String(enrichment.productId))
+    );
   }
 
-  const candidateProductIds = candidateEnrichments.map((item) => item.productId);
-
-  const publishedProducts = await Product.find({
-    ...productQuery,
-    _id: { $in: candidateProductIds },
-  }).lean();
-
-  const productMap = new Map(
-    publishedProducts.map((product) => [String(product._id), product])
-  );
-
-  const publicEnrichments = candidateEnrichments.filter((enrichment) =>
-    productMap.has(String(enrichment.productId))
-  );
+  publicEnrichments = publicEnrichments.filter(isListedForImage);
 
   // Facets are calculated before the selected facet filters are applied so
   // customers can switch between every available type in the subcategory.
   const facets = buildFacets(publicEnrichments);
+  const attributeFacets = buildAttributeFacets(publicEnrichments, pageFilters);
 
   const filteredEnrichments = publicEnrichments.filter((enrichment) => {
     return (
       matchesFacet(enrichment, "productType", productType) &&
       matchesFacet(enrichment, "grade", grade) &&
       matchesFacet(enrichment, "materialFinish", materialFinish) &&
-      matchesFacet(enrichment, "measurementSystem", measurementSystem)
+      matchesFacet(enrichment, "measurementSystem", measurementSystem) &&
+      matchesAttributeFilters(enrichment, pageFilters, attributeFilters)
     );
   });
 
@@ -269,6 +374,7 @@ export async function getPublishedCatalog(filters = {}) {
         grade: facetValues.grade,
         materialFinish: facetValues.materialFinish,
         measurementSystem: facetValues.measurementSystem,
+        ...(preview ? { preview: buildReviewerInfo(product, enrichment) } : {}),
       };
     })
     .filter(Boolean);
@@ -281,6 +387,7 @@ export async function getPublishedCatalog(filters = {}) {
     page: total ? Math.floor(safeSkip / safeLimit) + 1 : 1,
     totalPages: total ? Math.ceil(total / safeLimit) : 0,
     facets,
+    attributeFacets,
   };
 }
 

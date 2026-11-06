@@ -7,6 +7,8 @@ import { useCart } from "../../../context/CartContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
 import { fetchCatalogBuilderSubcategory } from "../../../services/catalogBuilderApi.js";
 import SpecificationsTable from "../../../components/Specifications/SpecificationsTable.jsx";
+import ReviewerStrip from "../../../components/DraftPreview/ReviewerStrip.jsx";
+import { formatBuilderValue, systemForRows, titleEvidence } from "../../../utils/formatBuilderValue.js";
 import "./ProductDetail.css";
 import "./ProductDetailBuilderGrid.css";
 
@@ -164,7 +166,19 @@ function formatThreadedNumberedDiameterLabel(value = "") {
 	return `#${normalizedRaw}`;
 }
 
-function formatFacetOptionLabel(key = "", value = "", variants = [], selected = {}) {
+// Hand-tuned pages read a bare "2" diameter as a #2 screw. When the product titles write it as 2" (a 2" washer)
+// and never as #2, it is an inch size and keeps its number.
+function isInchNotNumberedSize(value = "", titles = []) {
+	const raw = String(value || "").trim();
+	if (!NUMBERED_DIAMETER_SIZES.has(raw) || !titles.length) return false;
+	const numbered = new RegExp(`#${raw}(?![\\d./])`);
+	return titleEvidence(raw, titles) === "inch" && !titles.some((title) => numbered.test(String(title || "")));
+}
+
+function formatFacetOptionLabel(key = "", value = "", variants = [], selected = {}, general = false) {
+	// General pages show values as stored: a bare "3" there is a 3" wheel, not a #3 screw.
+	if (general) return value;
+
 	if (key === "diameter") {
 		return formatThreadedNumberedDiameterLabel(value);
 	}
@@ -252,7 +266,10 @@ function shouldHideAttributeForContext(
 	return false;
 }
 
-function formatAttributeLabel(key = "") {
+function formatAttributeLabel(key = "", labels = null) {
+	// General builder pages send their own readable labels (server builderShaping.js).
+	if (labels && labels[key]) return labels[key];
+
 	const baseMap = {
 		measurementSystem: "Measurement System",
 		threadPitch: "Thread Pitch",
@@ -651,7 +668,9 @@ function buildVariantSpecRows(variant = {}, subcategoryId = "", maxRows = 18) {
 		rows.push({
 			key,
 			label: formatAttributeLabel(key === "driveType" ? "drive_type" : key),
-			value: formatModalSpecValue(value),
+			value: formatModalSpecValue(
+				formatBuilderValue(key, value, attrs.measurementSystem, { titles: [variant?.name || variant?.title || ""] }),
+			),
 		});
 	};
 
@@ -672,7 +691,7 @@ function normalizeDisplayText(value = "") {
 	return formatModalSpecValue(String(value || "").replace(/\s+/g, " ").trim());
 }
 
-function formatDimensionValue(value = "", measurementSystem = "") {
+function formatDimensionValue(value = "", measurementSystem = "", key = "length", titles = []) {
 	const stringValue = String(value || "").trim();
 	if (!stringValue) return "";
 
@@ -681,8 +700,7 @@ function formatDimensionValue(value = "", measurementSystem = "") {
 		return `${stringValue}mm`;
 	}
 
-	if (/"$|in\.?$/i.test(stringValue)) return stringValue;
-	return `${stringValue}"`;
+	return formatBuilderValue(key, stringValue, measurementSystem, { titles });
 }
 
 function getProductTypeLabel(variant = {}, subcategoryId = "", fallback = "Product") {
@@ -710,12 +728,19 @@ function getVariantSizeLine(variant = {}) {
 	const threadPitch = String(attrs.threadPitch || "").trim();
 	const lengthRaw = String(attrs.length || "").trim();
 
-	const diameter = diameterRaw;
-	const width = formatDimensionValue(widthRaw, measurementSystem);
-	const length = formatDimensionValue(lengthRaw, measurementSystem);
+	const titles = [variant?.name || variant?.title || ""];
+	// Numbered sizes read "#10" first, so a gauge never gets an inch mark.
+	const diameter = formatBuilderValue(
+		"diameter",
+		isInchNotNumberedSize(diameterRaw, titles) ? diameterRaw : formatThreadedNumberedDiameterLabel(diameterRaw),
+		measurementSystem,
+		{ titles },
+	);
+	const width = formatDimensionValue(widthRaw, measurementSystem, "width", titles);
+	const length = formatDimensionValue(lengthRaw, measurementSystem, "length", titles);
 
 	if (size && !diameterRaw && !widthRaw && !lengthRaw) {
-		return /^m\d/i.test(size) ? size : formatDimensionValue(size, measurementSystem);
+		return /^m\d/i.test(size) ? size : formatDimensionValue(size, measurementSystem, "size", titles);
 	}
 
 	const primarySize = diameter || width;
@@ -815,6 +840,77 @@ function getGenericDisplayName(builderData, subcategoryId) {
 	return builderData?.name || String(subcategoryId || "").replace(/-/g, " ");
 }
 
+// General builder pages (draft preview for now): the server sends `choices` [{ key, label, sort }] in buyer
+// order and each choice's values already sorted (sizes by value). The hand-tuned pages send no `choices`
+// and keep their own handling below.
+const GENERAL_TYPE_KEYS = [
+	"productType",
+	"familyType",
+	"hardwareType",
+	"toolType",
+	"terminalType",
+	"anchorType",
+	"ringType",
+	"collarType",
+	"ppeType",
+];
+
+function getGeneralChoices(builderData = {}) {
+	return Array.isArray(builderData?.choices) ? builderData.choices : null;
+}
+
+function sortByServerOrder(values = [], serverValues = []) {
+	const order = new Map(serverValues.map((value, index) => [String(value), index]));
+	return [...values].sort((a, b) => {
+		const aIndex = order.has(String(a)) ? order.get(String(a)) : Number.MAX_SAFE_INTEGER;
+		const bIndex = order.has(String(b)) ? order.get(String(b)) : Number.MAX_SAFE_INTEGER;
+		if (aIndex !== bIndex) return aIndex - bIndex;
+		return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: "base" });
+	});
+}
+
+function getGeneralChoiceSummary(variant = {}, choices = []) {
+	const attrs = variant?.attributes || {};
+	const titles = [variant?.name || variant?.title || ""];
+	return choices
+		.filter(({ key }) => attrs[key] !== undefined && attrs[key] !== null && attrs[key] !== "")
+		.map(({ key }) => formatBuilderValue(key, String(attrs[key]), attrs.measurementSystem, { titles }))
+		.join(" · ");
+}
+
+// The image badge: the row's value for the page's type choice (e.g. "Set Screw"), else the page name.
+function getGeneralTypeLabel(variant = {}, choices = [], fallback = "") {
+	const attrs = variant?.attributes || {};
+	const typeChoice = choices.find((choice) => GENERAL_TYPE_KEYS.includes(choice.key));
+	const value = typeChoice ? attrs[typeChoice.key] : "";
+	return normalizeDisplayText(String(value || fallback || "Product").replace(/-/g, " "));
+}
+
+const MAX_CONTEXT_TITLES = 40;
+
+function buildValueUnitContext(variants = [], selection = {}, keys = []) {
+	const context = {};
+	for (const key of keys) {
+		const byValue = new Map();
+		for (const variant of variants) {
+			const attrs = variant?.attributes || {};
+			const value = attrs[key];
+			if (value === undefined || value === null || value === "") continue;
+			const matchesOthers = Object.entries(selection).every(
+				([selKey, selValue]) =>
+					selKey === "quantity" || selKey === key || !selValue || String(attrs[selKey] || "") === String(selValue),
+			);
+			if (!matchesOthers) continue;
+			const entry = byValue.get(String(value)) || { systems: new Set(), titles: [] };
+			entry.systems.add(String(attrs.measurementSystem || ""));
+			if (entry.titles.length < MAX_CONTEXT_TITLES) entry.titles.push(variant?.name || variant?.title || "");
+			byValue.set(String(value), entry);
+		}
+		context[key] = byValue;
+	}
+	return context;
+}
+
 function FacetOptionCard({ label, selected = false, count = null, onClick }) {
 	return (
 		<button
@@ -831,12 +927,12 @@ function FacetOptionCard({ label, selected = false, count = null, onClick }) {
 	);
 }
 
-function SelectedPathSummary({ selected = {}, attributeEntries = [], variants = [] }) {
+function SelectedPathSummary({ selected = {}, attributeEntries = [], labels = null, formatValue }) {
 	const chips = attributeEntries
 		.map(([key]) => ({
 			key,
-			label: formatAttributeLabel(key),
-			value: formatFacetOptionLabel(key, selected[key] || "", variants, selected),
+			label: formatAttributeLabel(key, labels),
+			value: selected[key] ? formatValue(key, selected[key]) : "",
 		}))
 		.filter((item) => item.value);
 
@@ -861,13 +957,20 @@ function ProductResultCard({
 	variant,
 	builderImage = "",
 	subcategoryId = "",
+	choices = null,
+	pageName = "",
 	selected = false,
 	onClick,
 }) {
 	const image = variant?.image || builderImage || "";
 	const title = variant?.name || variant?.title || "Product option";
-	const productTypeLabel = getProductTypeLabel(variant, subcategoryId, title);
-	const titleLines = getVariantCardTitleLines(variant);
+	// General pages: the product title comes first, so rows that share every choice still read differently.
+	const productTypeLabel = choices
+		? getGeneralTypeLabel(variant, choices, pageName || title)
+		: getProductTypeLabel(variant, subcategoryId, title);
+	const titleLines = choices
+		? [title, getGeneralChoiceSummary(variant, choices)].filter(Boolean)
+		: getVariantCardTitleLines(variant);
 	const price = Number(variant?.price || 0);
 	const currency = variant?.currency || "USD";
 
@@ -940,6 +1043,8 @@ function ProductResultCard({
 							)}
 						</div>
 
+						<ReviewerStrip info={variant?.preview} />
+
 						<div className='mt-auto pt-2 d-flex justify-content-between align-items-end gap-2'>
 							<div className='min-w-0 d-none d-sm-block'>
 								<div className='small text-muted'>Part #</div>
@@ -972,6 +1077,8 @@ function ProductResultsGrid({
 	variants = [],
 	builderImage = "",
 	subcategoryId = "",
+	choices = null,
+	pageName = "",
 	selectedVariantKey = "",
 	visibleCount = DEFAULT_VISIBLE_RESULT_COUNT,
 	onSelectVariant,
@@ -1006,6 +1113,8 @@ function ProductResultsGrid({
 										variant={variant}
 										builderImage={builderImage}
 										subcategoryId={subcategoryId}
+										choices={choices}
+										pageName={pageName}
 										selected={selectedVariantKey === key}
 										onClick={() => onSelectVariant?.(variant)}
 									/>
@@ -1044,6 +1153,7 @@ function ProductPreviewPanel({
 	variant,
 	builderImage = "",
 	subcategoryId = "",
+	choices = null,
 	displayName = "",
 	unitPrice = 0,
 	currency = "USD",
@@ -1059,8 +1169,13 @@ function ProductPreviewPanel({
 }) {
 	const image = variant?.image || builderImage || "";
 	const title = variant?.name || variant?.title || displayName || "Product preview";
-	const productTypeLabel = getProductTypeLabel(variant, subcategoryId, displayName || title);
-	const titleLines = getVariantCardTitleLines(variant);
+	// General pages: the selected product's own title is the heading, its choices the line under it.
+	const productTypeLabel = choices
+		? title
+		: getProductTypeLabel(variant, subcategoryId, displayName || title);
+	const titleLines = choices
+		? [getGeneralChoiceSummary(variant, choices)].filter(Boolean)
+		: getVariantCardTitleLines(variant);
 	return (
 		<div className='rounded-4 p-3 p-md-4 theme-section-container bg-main-light builder-product-preview mb-4'>
 			<div className='builder-product-preview-label small text-muted text-uppercase'>
@@ -1099,6 +1214,7 @@ function ProductPreviewPanel({
 							Qty: {variant ? formatStockQuantity(qtyAvailable) : "—"}
 						</span>
 					</div>
+					<ReviewerStrip info={variant?.preview} className='mt-2' />
 				</div>
 
 				<div className='builder-product-preview-actions'>
@@ -1274,6 +1390,7 @@ function ProductDetailModal({
 									{title}
 								</h5>
 								<div className='builder-detail-modal-part small text-muted'>Part #: {partNumber}</div>
+								<ReviewerStrip info={variant?.preview} />
 							</div>
 							<button type='button' className='btn-close' aria-label='Close' onClick={onClose} />
 						</div>
@@ -1571,9 +1688,23 @@ export default function ProductDetailFacetPanel({ includeUnpublished = false }) 
 		return inferProductFamilyLabelContext(builderData, variants);
 	}, [builderData, variants]);
 
+	const generalChoices = useMemo(() => getGeneralChoices(builderData), [builderData]);
+	const choiceLabels = useMemo(() => {
+		if (!generalChoices) return null;
+		return Object.fromEntries(generalChoices.map((choice) => [choice.key, choice.label]));
+	}, [generalChoices]);
+
 	const attributes = useMemo(() => {
 		const topLevel = builderData?.attributes || {};
 		const cleaned = {};
+
+		// General pages: exactly the server's choices, in its order and value order.
+		if (generalChoices) {
+			for (const { key } of generalChoices) {
+				if (Array.isArray(topLevel[key]) && topLevel[key].length > 0) cleaned[key] = topLevel[key];
+			}
+			return cleaned;
+		}
 
 		for (const [key, values] of Object.entries(topLevel)) {
 			if (HIDDEN_ATTRIBUTE_KEYS.has(key)) continue;
@@ -1602,30 +1733,48 @@ export default function ProductDetailFacetPanel({ includeUnpublished = false }) 
 			builderData?.subcategoryId,
 			selected,
 		);
-	}, [builderData, variants, labelContext, selected]);
+	}, [builderData, variants, labelContext, selected, generalChoices]);
 
 const attributeEntries = useMemo(() => {
+	if (generalChoices) return Object.entries(attributes);
 	return reorderAttributeEntriesForSubcategory(
 		getOrderedAttributeEntries(attributes),
 		builderData?.subcategoryId,
 	);
-}, [attributes, builderData?.subcategoryId]);
+}, [attributes, builderData?.subcategoryId, generalChoices]);
 
 	const filteredAttributeEntries = useMemo(() => {
 		return attributeEntries
 			.map(([key, values]) => {
-				const allowedValues = sortOptionValues(
-					getAllowedValuesForKey(variants, selected, key),
-					key,
-				);
+				const allowed = getAllowedValuesForKey(variants, selected, key);
+				const allowedValues = generalChoices
+					? sortByServerOrder(allowed, values)
+					: sortOptionValues(allowed, key);
 				return [key, allowedValues.length ? allowedValues : values];
 			})
 			.filter(([_, values]) => values.length > 0);
-	}, [attributeEntries, variants, selected]);
+	}, [attributeEntries, variants, selected, generalChoices]);
 
 	useEffect(() => {
 		setExpandedSections(getSectionOpenState(filteredAttributeEntries, selected));
 	}, [filteredAttributeEntries, selected]);
+
+	// For each choice value: the measurement systems and product titles of the rows that would match it, so the
+	// inch mark goes only on inch values (formatBuilderValue). Display only; selections use the stored value.
+	const valueUnitContext = useMemo(
+		() => buildValueUnitContext(variants, selected, filteredAttributeEntries.map(([key]) => key)),
+		[variants, selected, filteredAttributeEntries],
+	);
+
+	const displayChoiceValue = (key, value) => {
+		const context = valueUnitContext[key]?.get(String(value));
+		const shown =
+			!generalChoices && key === "diameter" && isInchNotNumberedSize(value, context?.titles || [])
+				? String(value)
+				: formatFacetOptionLabel(key, value, variants, selected, !!generalChoices);
+		const system = context ? systemForRows(context.systems) : selected.measurementSystem || "";
+		return formatBuilderValue(key, shown, system, { titles: context?.titles || [] });
+	};
 
 	const validVariants = useMemo(() => {
 		if (!variants.length) return [];
@@ -1920,7 +2069,8 @@ const handleAddToCart = () => {
 								<SelectedPathSummary
 									selected={selected}
 									attributeEntries={filteredAttributeEntries}
-									variants={variants}
+									labels={choiceLabels}
+									formatValue={displayChoiceValue}
 									/>
 							</div>
 
@@ -1965,10 +2115,10 @@ const handleAddToCart = () => {
 												}>
 												<div>
 													<div className='text-main text-uppercase small fw-bold'>
-														{formatAttributeLabel(key)}
+														{formatAttributeLabel(key, choiceLabels)}
 													</div>
 													<div className='small text-muted text-capitalize'>
-														{selected[key] ? formatFacetOptionLabel(key, selected[key], variants, selected) : "Choose an option"}
+														{selected[key] ? displayChoiceValue(key, selected[key]) : "Choose an option"}
 													</div>
 												</div>
 
@@ -1994,7 +2144,7 @@ const handleAddToCart = () => {
 																	key={`${key}-${value}`}
 																	className='col-12 col-sm-6'>
 																	<FacetOptionCard
-																		label={formatFacetOptionLabel(key, value, variants, selected)}
+																		label={displayChoiceValue(key, value)}
 																		count={count}
 																		selected={selected[key] === value}
 																		onClick={() => handleSelect(key, value)}
@@ -2019,6 +2169,8 @@ const handleAddToCart = () => {
 								variants={validVariants}
 								builderImage={builderData?.image || ""}
 								subcategoryId={builderData?.subcategoryId || subcategoryId}
+								choices={generalChoices}
+								pageName={builderData?.name || ""}
 								selectedVariantKey={selectedVariantKey}
 								visibleCount={visibleResultCount}
 								onSelectVariant={(variant) => {
@@ -2035,6 +2187,7 @@ const handleAddToCart = () => {
 								variant={previewVariant}
 								builderImage={builderData?.image || ""}
 								subcategoryId={builderData?.subcategoryId || subcategoryId}
+								choices={generalChoices}
 								displayName={displayName}
 								unitPrice={unitPrice}
 								currency={currency}

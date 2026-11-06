@@ -8,6 +8,8 @@ import { fetchCatalogLayouts } from "../../../services/catalogLayoutApi.js";
 import "./ProductList.css";
 import FeatureBanner from "../../../components/FeatureBanner/FeatureBanner.jsx";
 import ContactBanner from "../../../components/ContactBanner/ContactBanner.jsx";
+import ReviewerStrip from "../../../components/DraftPreview/ReviewerStrip.jsx";
+import useDraftPreview from "../../../hooks/useDraftPreview.js";
 
 function formatTitle(value = "") {
 	return String(value)
@@ -57,6 +59,8 @@ function ProductSearchCard({ item }) {
 					{item.title}
 				</h5>
 
+				<ReviewerStrip info={item.preview} />
+
 				<div className='product-search-card-meta small text-muted mb-2'>
 					{[item.category, item.subcategory].filter(Boolean).join(" / ")}
 				</div>
@@ -77,6 +81,8 @@ function ProductSearchCard({ item }) {
 
 export default function ProductList() {
 	const location = useLocation();
+	// Local draft preview shows the home-hidden categories too.
+	const previewMode = useDraftPreview();
 
 	const [query, setQuery] = useState("");
 	const [category, setCategory] = useState("");
@@ -171,12 +177,15 @@ export default function ProductList() {
 	}, [catalogLayouts]);
 
 	const displayCategories = useMemo(() => {
-		return categoriesUI.categories.map((cat) => ({
+		return categoriesUI.categories.filter((cat) => !cat.hidden && (previewMode || !cat.homeHidden)).map((cat) => ({
 			...cat,
 			subcategories: (cat.subcategories || []).map((sub) => {
+				// A card listed under another category (directPath) keeps its own page's setting.
+				const [, pageCategoryId = cat.id, pageSubcategoryId = sub.id] =
+					String(sub.directPath || "").match(/^\/products\/([^/?]+)\/([^/?]+)/) || [];
 				const setting = catalogLayoutMap.get(
-					`${String(cat.id || "").toLowerCase()}/${String(
-						sub.id || "",
+					`${String(pageCategoryId || "").toLowerCase()}/${String(
+						pageSubcategoryId || "",
 					).toLowerCase()}`,
 				);
 
@@ -190,7 +199,7 @@ export default function ProductList() {
 				};
 			}),
 		}));
-	}, [catalogLayoutMap]);
+	}, [catalogLayoutMap, previewMode]);
 
 	const selectedCategory = useMemo(() => {
 		if (!category) return null;
@@ -278,7 +287,7 @@ export default function ProductList() {
 				categoryId: cat.id,
 				subcategoryId: sub.id,
 				image: sub.image || cat.image || "",
-				path: `/products/${cat.id}/${sub.id}`,
+				path: sub.directPath || `/products/${cat.id}/${sub.id}`,
 			})),
 		);
 	}, [globalResults.builders, localCategorySearchResults, catalogLayoutMap]);

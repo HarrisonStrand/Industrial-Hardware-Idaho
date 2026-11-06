@@ -5,6 +5,7 @@ import evaluateProductPublishReadiness from "../services/catalog/evaluateProduct
 import publishProduct from "../services/catalog/publishProduct.js";
 import bulkPublishProducts from "../services/catalog/bulkPublishProducts.js";
 import { markFishbowlIntakeReviewed } from "../services/fishbowl/syncFishbowlProductIntake.js";
+import { isDraftPreview, visibleDraftFilter } from "../services/catalog/draftPreview.js";
 
 function safeObject(value) {
 	return value && typeof value === "object" && !Array.isArray(value)
@@ -564,6 +565,16 @@ async function buildFilteredAdminRows({
 	};
 }
 
+// Draft preview only: "published" also means "has a staged draft that preview shows".
+async function withPreviewVisibility(filter = {}) {
+	const { isPublished: _published, ...rest } = filter;
+	const stagedIds = await ProductEnrichment.distinct("productId", visibleDraftFilter());
+	return {
+		...rest,
+		$and: [{ $or: [{ isPublished: true }, { _id: { $in: stagedIds } }] }],
+	};
+}
+
 export const listProducts = async (req, res) => {
 	try {
 		const { q } = req.query;
@@ -582,7 +593,9 @@ export const listProducts = async (req, res) => {
 			];
 		}
 
-		const items = await Product.find(filter).limit(200).sort({ createdAt: -1 });
+		const items = await Product.find(
+			isDraftPreview() ? await withPreviewVisibility(filter) : filter,
+		).limit(200).sort({ createdAt: -1 });
 		res.json(items);
 	} catch (e) {
 		console.error(e);
@@ -592,12 +605,15 @@ export const listProducts = async (req, res) => {
 
 export const getProduct = async (req, res) => {
 	try {
-		const p = await Product.findOne({
+		const publicFilter = {
 			_id: req.params.id,
 			isPublished: true,
 			isActive: { $ne: false },
 			"fishbowl.active": { $ne: false },
-		});
+		};
+		const p = await Product.findOne(
+			isDraftPreview() ? await withPreviewVisibility(publicFilter) : publicFilter,
+		);
 		if (!p) return res.status(404).json({ message: "Not found" });
 		res.json(p);
 	} catch (e) {

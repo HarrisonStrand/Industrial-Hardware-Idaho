@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Footer from "./components/Footer/Footer.jsx";
 import FeatureGate from "./components/SiteAccess/FeatureGate.jsx";
 import CustomerPreviewBanner from "./components/SiteAccess/CustomerPreviewBanner.jsx";
+import DraftPreviewBanner from "./components/DraftPreview/DraftPreviewBanner.jsx";
 import { SITE_ACCESS } from "./config/siteAccess.js";
 
 import { CartProvider } from "./context/CartContext";
@@ -100,6 +101,7 @@ export default function App() {
 			<div className='app-shell d-flex flex-column min-vh-100'>
 				<Header onCartOpen={openCart} />
 				{!isAdminDashboardRoute && <CustomerPreviewBanner />}
+				<DraftPreviewBanner />
 
 				<AnimatePresence mode='wait'>
 					<motion.main

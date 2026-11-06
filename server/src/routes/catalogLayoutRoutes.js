@@ -8,8 +8,10 @@ import {
   getCatalogSubcategorySetting,
   getSiteSwitches,
   normalizeCatalogId,
+  previewLayoutSettings,
   resolveEffectiveCatalogMode,
 } from "../services/catalog/catalogLayoutDefaults.js";
+import { isDraftPreview } from "../services/catalog/draftPreview.js";
 import getCatalogRangeSummary from "../services/catalog/getCatalogRangeSummary.js";
 
 const router = express.Router();
@@ -52,9 +54,11 @@ router.get("/", async (_req, res) => {
   try {
     await ensureCatalogLayoutRecords();
     const globalSetting = await getCatalogGlobalSetting();
-    const settings = await CatalogSubcategorySetting.find({})
-      .sort({ sortOrder: 1, categoryName: 1, displayName: 1 })
-      .lean();
+    const settings = isDraftPreview()
+      ? await previewLayoutSettings()
+      : await CatalogSubcategorySetting.find({})
+          .sort({ sortOrder: 1, categoryName: 1, displayName: 1 })
+          .lean();
 
     return res.json({
       global: {

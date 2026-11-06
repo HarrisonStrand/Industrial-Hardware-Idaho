@@ -52,6 +52,54 @@
           "name": "Carriage Bolts",
           "image": "/images/subcategories/carriage-bolts.png",
           "locked": false
+        },
+        {
+          "id": "threaded-rod",
+          "name": "Threaded Rod",
+          "image": "/images/categories/THREADED-ROD.png",
+          "locked": true
+        },
+        {
+          "id": "set-screws",
+          "name": "Set Screws",
+          "image": "/images/subcategories/set-screws.png",
+          "locked": true
+        },
+        {
+          "id": "shoulder-bolts",
+          "name": "Shoulder Bolts",
+          "image": "/images/subcategories/shoulder-bolts.png",
+          "locked": true
+        },
+        {
+          "id": "studs",
+          "name": "Studs",
+          "image": "/images/subcategories/studs.png",
+          "locked": true
+        },
+        {
+          "id": "structural-bolts",
+          "name": "Structural Bolts",
+          "image": "/images/subcategories/structural-bolts.png",
+          "locked": true
+        },
+        {
+          "id": "plow-bolts",
+          "name": "Plow Bolts",
+          "image": "/images/subcategories/plow-bolts.png",
+          "locked": true
+        },
+        {
+          "id": "square-head",
+          "name": "Square Head",
+          "image": "/images/subcategories/bolts-square-head.png",
+          "locked": true
+        },
+        {
+          "id": "penta-head",
+          "name": "Penta Head",
+          "image": "/images/subcategories/bolts-penta-head.png",
+          "locked": true
         }
       ]
     },
@@ -106,6 +154,12 @@
           "id": "thread-cutting-screws",
           "name": "Thread Cutting Screws",
           "image": "/images/subcategories/thread-cutting-screws.png",
+          "locked": true
+        },
+        {
+          "id": "thumb-screws",
+          "name": "Thumb Screws",
+          "image": "/images/subcategories/thumb-screws.png",
           "locked": true
         }
       ]
@@ -192,6 +246,30 @@
           "name": "T-Nuts",
           "image": "/images/subcategories/t-nuts.png",
           "locked": true
+        },
+        {
+          "id": "weld-nuts",
+          "name": "Weld Nuts",
+          "image": "/images/subcategories/weld-nuts.png",
+          "locked": true
+        },
+        {
+          "id": "cage-nuts",
+          "name": "Cage Nuts",
+          "image": "/images/subcategories/cage-nuts.png",
+          "locked": true
+        },
+        {
+          "id": "axle-nuts",
+          "name": "Axle Nuts",
+          "image": "/images/subcategories/axle-nuts.png",
+          "locked": true
+        },
+        {
+          "id": "stand-offs",
+          "name": "Stand-Offs",
+          "image": "/images/subcategories/stand-offs.png",
+          "locked": true
         }
       ]
     },
@@ -277,6 +355,12 @@
           "name": "Specialty Washers",
           "image": "/images/subcategories/specialty-washers.png",
           "locked": false
+        },
+        {
+          "id": "machine-bushings",
+          "name": "Machine Bushings",
+          "image": "/images/subcategories/machine-bushings.png",
+          "locked": true
         }
       ]
     },
@@ -284,8 +368,26 @@
       "id": "rivets",
       "name": "Rivets",
       "image": "/images/categories/RIVETS.png",
-      "subcategories": [],
-      "directPath": "/products/rivets/rivets"
+      "subcategories": [
+        {
+          "id": "blind-rivets",
+          "name": "Blind Rivets",
+          "image": "/images/subcategories/blind-rivets.png",
+          "locked": true
+        },
+        {
+          "id": "solid-specialty-rivets",
+          "name": "Solid & Specialty Rivets",
+          "image": "/images/subcategories/solid-specialty-rivets.png",
+          "locked": true
+        },
+        {
+          "id": "riveting-tools",
+          "name": "Riveting Tools",
+          "image": "/images/subcategories/riveting-tools.png",
+          "locked": true
+        }
+      ]
     },
     {
       "id": "abrasives",
@@ -339,15 +441,123 @@
           "name": "Hand Pads",
           "image": "/images/subcategories/hand-pads.png",
           "locked": true
+        },
+        {
+          "id": "sanding-belts",
+          "name": "Sanding Belts",
+          "image": "/images/subcategories/sanding-belts.png",
+          "locked": true
+        },
+        {
+          "id": "sanding-sheets",
+          "name": "Sanding Sheets",
+          "image": "/images/subcategories/sanding-sheets.png",
+          "locked": true
+        },
+        {
+          "id": "psa-discs",
+          "name": "PSA Discs",
+          "image": "/images/subcategories/psa-discs.png",
+          "locked": true
+        },
+        {
+          "id": "back-up-pads",
+          "name": "Back-Up Pads",
+          "image": "/images/subcategories/back-up-pads.png",
+          "locked": true
+        },
+        {
+          "id": "wire-brushes",
+          "name": "Wire Brushes",
+          "image": "/images/subcategories/wire-brushes.png",
+          "locked": true
+        },
+        {
+          "id": "mounted-stones",
+          "name": "Mounted Stones",
+          "image": "/images/subcategories/mounted-stones.png",
+          "locked": true
+        },
+        {
+          "id": "cartridge-rolls",
+          "name": "Cartridge Rolls",
+          "image": "/images/subcategories/cartridge-rolls.png",
+          "locked": true
         }
       ]
     },
     {
-      "id": "threaded-rod",
-      "name": "Threaded Rod",
-      "image": "/images/categories/THREADED-ROD.png",
-      "subcategories": [],
-      "directPath": "/products/threaded-rod/threaded-rod"
+      "id": "concrete",
+      "name": "Concrete & Anchors",
+      "image": "/images/categories/CONCRETE.png",
+      "subcategories": [
+        {
+          "id": "wedge-anchors",
+          "name": "Wedge Anchors",
+          "image": "/images/subcategories/concrete-wedge-anchors.png",
+          "locked": true
+        },
+        {
+          "id": "concrete-screws",
+          "name": "Concrete Screws",
+          "image": "/images/subcategories/concrete-concrete-screws.png",
+          "locked": true
+        },
+        {
+          "id": "sleeve-anchors",
+          "name": "Sleeve Anchors",
+          "image": "/images/subcategories/concrete-sleeve-anchors.png",
+          "locked": true
+        },
+        {
+          "id": "drop-in-anchors",
+          "name": "Drop-In Anchors",
+          "image": "/images/subcategories/concrete-drop-in-anchors.png",
+          "locked": true
+        },
+        {
+          "id": "lag-expansion-shields",
+          "name": "Lag & Expansion Shields",
+          "image": "/images/subcategories/concrete-lag-expansion-shields.png",
+          "locked": true
+        },
+        {
+          "id": "anchor-bolts",
+          "name": "Anchor Bolts",
+          "image": "/images/subcategories/anchor-bolts.png",
+          "locked": true
+        },
+        {
+          "id": "hollow-wall-anchors",
+          "name": "Hollow Wall Anchors",
+          "image": "/images/subcategories/concrete-hollow-wall-anchors.png",
+          "locked": true
+        },
+        {
+          "id": "light-duty-anchors",
+          "name": "Light Duty Anchors",
+          "image": "/images/subcategories/concrete-light-duty-anchors.png",
+          "locked": true
+        },
+        {
+          "id": "rod-hanger-anchors",
+          "name": "Rod Hanger Anchors",
+          "image": "/images/subcategories/concrete-rod-hanger-anchors.png",
+          "locked": true
+        },
+        {
+          "id": "adhesive-anchoring",
+          "name": "Adhesive Anchoring",
+          "image": "/images/subcategories/concrete-adhesive-anchoring.png",
+          "locked": true
+        },
+        {
+          "id": "powder-loads",
+          "name": "Powder Loads",
+          "image": "/images/subcategories/powder-loads.png",
+          "locked": true
+        }
+      ]
     },
     {
       "id": "wire-hardware",
@@ -401,6 +611,115 @@
           "name": "Cotter Pins",
           "image": "/images/subcategories/cotter-pins.png",
           "locked": true
+        },
+        {
+          "id": "clevis-pins",
+          "name": "Clevis Pins",
+          "image": "/images/subcategories/clevis-pins.png",
+          "locked": true
+        },
+        {
+          "id": "roll-pins",
+          "name": "Roll Pins",
+          "image": "/images/subcategories/roll-pins.png",
+          "locked": true
+        },
+        {
+          "id": "dowel-pins",
+          "name": "Dowel Pins",
+          "image": "/images/subcategories/dowel-pins.png",
+          "locked": true
+        },
+        {
+          "id": "coiled-spring-pins",
+          "name": "Coiled Spring Pins",
+          "image": "/images/subcategories/coiled-spring-pins.png",
+          "locked": true
+        },
+        {
+          "id": "hitch-pins",
+          "name": "Hitch Pins & Clips",
+          "image": "/images/subcategories/hitch-pins.png",
+          "locked": true
+        },
+        {
+          "id": "keys-key-stock",
+          "name": "Keys & Key Stock",
+          "image": "/images/subcategories/keys-key-stock.png",
+          "locked": true
+        },
+        {
+          "id": "chain-hardware",
+          "name": "Chain Hardware",
+          "image": "/images/subcategories/chain-hardware.png",
+          "locked": true
+        },
+        {
+          "id": "s-hooks",
+          "name": "S-Hooks",
+          "image": "/images/subcategories/s-hooks.png",
+          "locked": true
+        },
+        {
+          "id": "screw-eyes",
+          "name": "Screw Eyes",
+          "image": "/images/subcategories/screw-eyes.png",
+          "locked": true
+        },
+        {
+          "id": "screw-hooks",
+          "name": "Screw Hooks",
+          "image": "/images/subcategories/screw-hooks.png",
+          "locked": true
+        },
+        {
+          "id": "peg-board-hardware",
+          "name": "Pegboard Hardware",
+          "image": "/images/subcategories/peg-board-hardware.png",
+          "locked": true
+        },
+        {
+          "id": "wire-lock-pins",
+          "name": "Wire Lock Pins",
+          "image": "/images/subcategories/wire-lock-pins.png",
+          "locked": true
+        },
+        {
+          "id": "springs",
+          "name": "Springs",
+          "image": "/images/subcategories/springs.png",
+          "locked": true
+        },
+        {
+          "id": "retaining-rings",
+          "name": "Retaining Rings",
+          "image": "/images/subcategories/retaining-rings.png",
+          "locked": true
+        },
+        {
+          "id": "shaft-collars",
+          "name": "Shaft Collars",
+          "image": "/images/subcategories/shaft-collars.png",
+          "locked": true
+        },
+        {
+          "id": "hinges",
+          "name": "Hinges",
+          "image": "/images/subcategories/hinges.png",
+          "locked": true
+        },
+        {
+          "id": "chain",
+          "name": "Chain",
+          "image": "/images/subcategories/wire-hardware-chain.png",
+          "imageFull": true,
+          "locked": true
+        },
+        {
+          "id": "cable-wire-rope",
+          "name": "Cable & Wire Rope",
+          "image": "/images/subcategories/cable-wire-rope.png",
+          "locked": true
         }
       ]
     },
@@ -444,6 +763,78 @@
           "name": "Taps & Dies",
           "image": "/images/subcategories/taps-dies.png",
           "locked": false
+        },
+        {
+          "id": "reciprocating-saw-blades",
+          "name": "Reciprocating Saw Blades",
+          "image": "/images/subcategories/bits-drivers-reciprocating-saw-blades.png",
+          "locked": true
+        },
+        {
+          "id": "masonry-bits",
+          "name": "Masonry Bits",
+          "image": "/images/subcategories/masonry-bits.png",
+          "locked": true
+        },
+        {
+          "id": "end-mills",
+          "name": "End Mills",
+          "image": "/images/subcategories/end-mills.png",
+          "locked": true
+        },
+        {
+          "id": "countersinks",
+          "name": "Countersinks",
+          "image": "/images/subcategories/countersinks.png",
+          "locked": true
+        },
+        {
+          "id": "screw-extractors",
+          "name": "Screw Extractors",
+          "image": "/images/subcategories/screw-extractors.png",
+          "locked": true
+        },
+        {
+          "id": "spade-bits",
+          "name": "Spade Bits",
+          "image": "/images/subcategories/spade-bits.png",
+          "locked": true
+        },
+        {
+          "id": "thread-repair",
+          "name": "Thread Repair",
+          "image": "/images/subcategories/thread-repair.png",
+          "locked": true
+        },
+        {
+          "id": "burrs-deburring-tools",
+          "name": "Burrs & Deburring Tools",
+          "image": "/images/subcategories/burrs-deburring-tools.png",
+          "locked": true
+        },
+        {
+          "id": "jig-saw-blades",
+          "name": "Jig Saw Blades",
+          "image": "/images/subcategories/jig-saw-blades.png",
+          "locked": true
+        },
+        {
+          "id": "hacksaw-blades",
+          "name": "Hacksaw Blades",
+          "image": "/images/subcategories/hacksaw-blades.png",
+          "locked": true
+        },
+        {
+          "id": "band-saw-blades",
+          "name": "Band Saw Blades",
+          "image": "/images/subcategories/band-saw-blades.png",
+          "locked": true
+        },
+        {
+          "id": "threaded-inserts",
+          "name": "Threaded Inserts",
+          "image": "/images/subcategories/threaded-inserts.png",
+          "locked": true
         }
       ]
     },
@@ -530,6 +921,75 @@
           "image": "/images/subcategories/tools.png",
           "locked": false
         }
+      ],
+      "hidden": true
+    },
+    {
+      "id": "makita",
+      "name": "Makita",
+      "image": "/vendor-logos/Makita.png",
+      "subcategories": [
+        {
+          "id": "power-tools",
+          "name": "Power Tools",
+          "image": "/images/subcategories/makita-power-tools.png",
+          "locked": true
+        },
+        {
+          "id": "batteries-chargers",
+          "name": "Batteries & Chargers",
+          "image": "/images/subcategories/makita-batteries-chargers.png",
+          "locked": true
+        },
+        {
+          "id": "blades-wheels-bits",
+          "name": "Blades, Wheels & Bits",
+          "image": "/images/subcategories/makita-blades-wheels-bits.png",
+          "locked": true
+        },
+        {
+          "id": "accessories-apparel",
+          "name": "Accessories & Apparel",
+          "image": "/images/subcategories/makita-accessories-apparel.png",
+          "locked": true
+        }
+      ]
+    },
+    {
+      "id": "diablo",
+      "name": "Diablo",
+      "image": "/vendor-logos/Diablo.png",
+      "subcategories": [
+        {
+          "id": "hole-saws-cutters",
+          "name": "Hole Saws & Cutters",
+          "image": "/images/subcategories/diablo-hole-saws-cutters.png",
+          "locked": true
+        },
+        {
+          "id": "drill-bits",
+          "name": "Drill Bits",
+          "image": "/images/subcategories/diablo-drill-bits.png",
+          "locked": true
+        },
+        {
+          "id": "reciprocating-saw-blades",
+          "name": "Reciprocating Saw Blades",
+          "image": "/images/subcategories/diablo-reciprocating-saw-blades.png",
+          "locked": true
+        },
+        {
+          "id": "circular-saw-blades",
+          "name": "Circular Saw Blades",
+          "image": "/images/subcategories/diablo-circular-saw-blades.png",
+          "locked": true
+        },
+        {
+          "id": "accessories",
+          "name": "Accessories",
+          "image": "/images/subcategories/diablo-accessories.png",
+          "locked": true
+        }
       ]
     },
     {
@@ -578,37 +1038,24 @@
           "name": "Cutting & Tapping Fluid",
           "image": "/images/subcategories/cutting-tapping-fluid.png",
           "locked": true
-        }
-      ]
-    },
-    {
-      "id": "hose-tubing",
-      "name": "Hose & Tubing",
-      "image": "/images/categories/HOSE-TUBING.png",
-      "subcategories": [
+        },
         {
-          "id": "hose-clamps",
-          "name": "Hose Clamps",
-          "image": "/images/subcategories/hose-clamps.png",
+          "id": "tapes",
+          "name": "Tapes",
+          "image": "/images/subcategories/chemicals-paints-sealants-tapes.png",
           "locked": true
         },
         {
-          "id": "wire-loom",
-          "name": "Wire Loom",
-          "image": "/images/subcategories/wire-loom.png",
-          "locked": true
-        },
-        {
-          "id": "shrink-wrap",
-          "name": "Shrink Wrap",
-          "image": "/images/subcategories/shrink-wrap.png",
+          "id": "grease-fittings",
+          "name": "Grease Fittings",
+          "image": "/images/subcategories/grease-fittings.png",
           "locked": true
         }
       ]
     },
     {
       "id": "electrical",
-      "name": "Electrical",
+      "name": "Electrical & Hose",
       "image": "/images/categories/ELECTRICAL.png",
       "subcategories": [
         {
@@ -652,6 +1099,138 @@
           "name": "Primary Wire",
           "image": "/images/subcategories/primary-wire.png",
           "locked": true
+        },
+        {
+          "id": "hose-clamps",
+          "name": "Hose Clamps",
+          "image": "/images/subcategories/hose-clamps.png",
+          "locked": true
+        },
+        {
+          "id": "wire-loom",
+          "name": "Wire Loom",
+          "image": "/images/subcategories/wire-loom.png",
+          "locked": true
+        },
+        {
+          "id": "shrink-wrap",
+          "name": "Shrink Wrap",
+          "image": "/images/subcategories/shrink-wrap.png",
+          "locked": true
+        },
+        {
+          "id": "fuses",
+          "name": "Fuses",
+          "image": "/images/subcategories/fuses.png",
+          "locked": true
+        },
+        {
+          "id": "cable-ties",
+          "name": "Cable Ties",
+          "image": "/images/subcategories/cable-ties.png",
+          "locked": true
+        },
+        {
+          "id": "copper-lugs",
+          "name": "Copper Lugs",
+          "image": "/images/subcategories/copper-lugs.png",
+          "locked": true
+        },
+        {
+          "id": "battery-terminals",
+          "name": "Battery Terminals",
+          "image": "/images/subcategories/battery-terminals.png",
+          "locked": true
+        },
+        {
+          "id": "battery-accessories",
+          "name": "Battery Accessories",
+          "image": "/images/subcategories/battery-accessories.png",
+          "locked": true
+        },
+        {
+          "id": "connectors",
+          "name": "Connectors",
+          "image": "/images/subcategories/electrical-connectors.png",
+          "locked": true
+        },
+        {
+          "id": "wire-nuts",
+          "name": "Wire Nuts",
+          "image": "/images/subcategories/wire-nuts.png",
+          "locked": true
+        },
+        {
+          "id": "solder",
+          "name": "Solder",
+          "image": "/images/subcategories/solder.png",
+          "locked": true
+        },
+        {
+          "id": "extension-cords",
+          "name": "Extension Cords",
+          "image": "/images/subcategories/extension-cords.png",
+          "locked": true
+        },
+        {
+          "id": "piggyback-connectors",
+          "name": "Piggyback Connectors",
+          "image": "/images/subcategories/piggyback-connectors.png",
+          "locked": true
+        },
+        {
+          "id": "wire-ferrules",
+          "name": "Wire Ferrules",
+          "image": "/images/subcategories/wire-ferrules.png",
+          "locked": true
+        },
+        {
+          "id": "trailer-connectors",
+          "name": "Trailer Connectors",
+          "image": "/images/subcategories/trailer-connectors.png",
+          "locked": true
+        },
+        {
+          "id": "cord-ends-connectors",
+          "name": "Cord Ends & Connectors",
+          "image": "/images/subcategories/cord-ends-connectors.png",
+          "locked": true
+        },
+        {
+          "id": "work-lights",
+          "name": "Work Lights",
+          "image": "/images/subcategories/work-lights.png",
+          "locked": true
+        },
+        {
+          "id": "weather-pack-connectors",
+          "name": "Weather Pack Connectors",
+          "image": "/images/subcategories/weather-pack-connectors.png",
+          "locked": true
+        },
+        {
+          "id": "pigtails",
+          "name": "Pigtails",
+          "image": "/images/subcategories/pigtails.png",
+          "locked": true
+        },
+        {
+          "id": "plug-wedges",
+          "name": "Plug Wedges",
+          "image": "/images/subcategories/plug-wedges.png",
+          "locked": true
+        },
+        {
+          "id": "receptacle-connectors",
+          "name": "Receptacle Connectors",
+          "image": "/images/subcategories/receptacle-connectors.png",
+          "locked": true
+        },
+        {
+          "id": "receptacle-wedges",
+          "name": "Receptacle Wedges",
+          "image": "/images/subcategories/receptacle-wedges.png",
+          "locked": true
         }
       ]
     },
@@ -682,15 +1261,209 @@
     },
     {
       "id": "tools",
-      "name": "Tools",
+      "name": "Tools & Shop Supplies",
       "image": "/images/categories/TOOLS.png",
-      "subcategories": []
+      "subcategories": [
+        {
+          "id": "hand-tools",
+          "name": "Hand Tools",
+          "image": "/images/subcategories/hand-tools.png",
+          "locked": true
+        },
+        {
+          "id": "ladders-scaffolding",
+          "name": "Ladders & Scaffolding",
+          "image": "/images/subcategories/ladders-scaffolding.png",
+          "locked": true
+        },
+        {
+          "id": "shop-storage",
+          "name": "Shop Storage",
+          "image": "/images/subcategories/shop-storage.png",
+          "locked": true
+        },
+        {
+          "id": "welding",
+          "name": "Welding",
+          "image": "/images/subcategories/tools-welding.png",
+          "locked": true
+        },
+        {
+          "id": "grease-guns-accessories",
+          "name": "Grease Guns & Accessories",
+          "image": "/images/subcategories/grease-guns-accessories.png",
+          "locked": true
+        },
+        {
+          "id": "measuring-tools",
+          "name": "Measuring Tools",
+          "image": "/images/subcategories/measuring-tools.png",
+          "locked": true
+        },
+        {
+          "id": "rags-wipes",
+          "name": "Rags & Wipes",
+          "image": "/images/subcategories/rags-wipes.png",
+          "directPath": "/products/shop-supplies/rags-wipes",
+          "locked": true
+        },
+        {
+          "id": "tarps",
+          "name": "Tarps",
+          "image": "/images/subcategories/tarps.png",
+          "directPath": "/products/shop-supplies/tarps",
+          "locked": true
+        },
+        {
+          "id": "tie-downs-straps",
+          "name": "Tie-Downs & Straps",
+          "image": "/images/subcategories/tie-downs-straps.png",
+          "directPath": "/products/shop-supplies/tie-downs-straps",
+          "locked": true
+        },
+        {
+          "id": "brooms-brushes",
+          "name": "Brooms & Brushes",
+          "image": "/images/subcategories/brooms-brushes.png",
+          "directPath": "/products/shop-supplies/brooms-brushes",
+          "locked": true
+        },
+        {
+          "id": "ice-melt",
+          "name": "Ice Melt",
+          "image": "/images/subcategories/ice-melt.png",
+          "directPath": "/products/shop-supplies/ice-melt",
+          "locked": true
+        },
+        {
+          "id": "funnels",
+          "name": "Funnels",
+          "image": "/images/subcategories/funnels.png",
+          "directPath": "/products/shop-supplies/funnels",
+          "locked": true
+        }
+      ]
     },
     {
-      "id": "utilities",
-      "name": "Utilities",
-      "image": "/images/categories/UTILITIES.png",
-      "subcategories": []
+      "id": "fittings",
+      "name": "Fittings",
+      "image": "/images/subcategories/subcategory-placeholder.png",
+      "homeHidden": true,
+      "subcategories": [
+        {
+          "id": "pipe-fittings",
+          "name": "Pipe Fittings",
+          "image": "/images/subcategories/pipe-fittings.png",
+          "locked": true
+        },
+        {
+          "id": "compression-fittings",
+          "name": "Compression Fittings",
+          "image": "/images/subcategories/compression-fittings.png",
+          "locked": true
+        },
+        {
+          "id": "flare-fittings",
+          "name": "Flare Fittings",
+          "image": "/images/subcategories/flare-fittings.png",
+          "locked": true
+        },
+        {
+          "id": "hose-vacuum-fittings",
+          "name": "Hose & Vacuum Fittings",
+          "image": "/images/subcategories/fittings-hose-vacuum-fittings.png",
+          "locked": true
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "id": "shop-supplies",
+      "name": "Shop Supplies",
+      "image": "/images/subcategories/subcategory-placeholder.png",
+      "homeHidden": true,
+      "subcategories": [
+        {
+          "id": "rags-wipes",
+          "name": "Rags & Wipes",
+          "image": "/images/subcategories/rags-wipes.png",
+          "locked": true
+        },
+        {
+          "id": "tarps",
+          "name": "Tarps",
+          "image": "/images/subcategories/tarps.png",
+          "locked": true
+        },
+        {
+          "id": "tie-downs-straps",
+          "name": "Tie-Downs & Straps",
+          "image": "/images/subcategories/tie-downs-straps.png",
+          "locked": true
+        },
+        {
+          "id": "brooms-brushes",
+          "name": "Brooms & Brushes",
+          "image": "/images/subcategories/brooms-brushes.png",
+          "locked": true
+        },
+        {
+          "id": "ice-melt",
+          "name": "Ice Melt",
+          "image": "/images/subcategories/ice-melt.png",
+          "locked": true
+        },
+        {
+          "id": "funnels",
+          "name": "Funnels",
+          "image": "/images/subcategories/funnels.png",
+          "locked": true
+        }
+      ],
+      "hidden": true
+    },
+    {
+      "id": "safety-ppe",
+      "name": "Safety & PPE",
+      "image": "/images/categories/SAFETY-PPE.png",
+      "subcategories": [
+        {
+          "id": "gloves",
+          "name": "Gloves",
+          "image": "/images/subcategories/gloves.png",
+          "locked": true
+        },
+        {
+          "id": "hi-vis-apparel",
+          "name": "Hi-Vis Apparel",
+          "image": "/images/subcategories/hi-vis-apparel.png",
+          "locked": true
+        },
+        {
+          "id": "hard-hats",
+          "name": "Hard Hats",
+          "image": "/images/subcategories/hard-hats.png",
+          "locked": true
+        },
+        {
+          "id": "respiratory-protection",
+          "name": "Respiratory Protection",
+          "image": "/images/subcategories/respiratory-protection.png",
+          "locked": true
+        },
+        {
+          "id": "hearing-protection",
+          "name": "Hearing Protection",
+          "image": "/images/subcategories/hearing-protection.png",
+          "locked": true
+        },
+        {
+          "id": "eye-protection",
+          "name": "Eye Protection",
+          "image": "/images/subcategories/eye-protection.png",
+          "locked": true
+        }
+      ]
     }
   ]
 }

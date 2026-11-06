@@ -1,43 +1,94 @@
 import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
 import VendorOffering from "../../models/VendorOffering.js";
+import {
+  buildReviewerInfo,
+  isDraftPreview,
+  overlayDraft,
+  previewProductFilter,
+  visibleDraftProductIds,
+} from "./draftPreview.js";
+
+// Draft preview only: find the product whose page would have this slug after promotion.
+// The slug may be live or staged (agentDraft.seo.slug). Promote keeps a published product's live slug and
+// never takes a slug another enrichment already uses, so a live slug wins over a staged one.
+async function findPreviewProductBySlug(slug) {
+  const candidates = await ProductEnrichment.find({
+    $or: [{ "seo.slug": slug }, { "agentDraft.seo.slug": slug }],
+  }).lean();
+  if (!candidates.length) return null;
+
+  const products = await Product.find(
+    previewProductFilter(
+      { _id: { $in: candidates.map((e) => e.productId) }, isActive: true },
+      { isPublished: true, catalogStatus: "published" },
+      visibleDraftProductIds(candidates)
+    )
+  ).lean();
+  const productMap = new Map(products.map((product) => [String(product._id), product]));
+  const liveOwner = candidates.find((e) => e?.seo?.slug === slug);
+
+  const matches = candidates
+    .filter((enrichment) => productMap.has(String(enrichment.productId)))
+    .map((enrichment) =>
+      overlayDraft(enrichment, {
+        published: !!productMap.get(String(enrichment.productId))?.isPublished,
+        slugTaken: !!liveOwner && String(liveOwner._id) !== String(enrichment._id),
+      })
+    )
+    .filter((enrichment) => enrichment?.seo?.slug === slug);
+
+  const enrichment = matches[0];
+  if (!enrichment) return null;
+  return { product: productMap.get(String(enrichment.productId)), enrichment };
+}
 
 export async function getPublishedProductBySlug(slug) {
   if (!slug) {
     throw new Error("slug is required");
   }
 
-  // Find all enrichments with this slug in case older test data created duplicates
-  const enrichments = await ProductEnrichment.find({
-    "seo.slug": slug,
-  }).lean();
+  const preview = isDraftPreview();
+  let product;
+  let enrichment;
 
-  if (!enrichments.length) {
-    return null;
-  }
+  if (preview) {
+    const found = await findPreviewProductBySlug(slug);
+    if (!found) return null;
+    ({ product, enrichment } = found);
+  } else {
+    // Find all enrichments with this slug in case older test data created duplicates
+    const enrichments = await ProductEnrichment.find({
+      "seo.slug": slug,
+    }).lean();
 
-  const productIds = enrichments.map((e) => e.productId);
+    if (!enrichments.length) {
+      return null;
+    }
 
-  const products = await Product.find({
-    _id: { $in: productIds },
-    isPublished: true,
-    isActive: true,
-    catalogStatus: "published",
-  }).lean();
+    const productIds = enrichments.map((e) => e.productId);
 
-  if (!products.length) {
-    return null;
-  }
+    const products = await Product.find({
+      _id: { $in: productIds },
+      isPublished: true,
+      isActive: true,
+      catalogStatus: "published",
+    }).lean();
 
-  // Pick the published product and its matching enrichment
-  const product = products[0];
-  const enrichment =
-    enrichments.find(
-      (e) => String(e.productId) === String(product._id)
-    ) || null;
+    if (!products.length) {
+      return null;
+    }
 
-  if (!enrichment) {
-    return null;
+    // Pick the published product and its matching enrichment
+    product = products[0];
+    enrichment =
+      enrichments.find(
+        (e) => String(e.productId) === String(product._id)
+      ) || null;
+
+    if (!enrichment) {
+      return null;
+    }
   }
 
   const offerings = await VendorOffering.find({
@@ -137,6 +188,8 @@ export async function getPublishedProductBySlug(slug) {
       isPreferred: !!offering.isPreferred,
       isSelectableByCustomer: !!offering.isSelectableByCustomer,
     })),
+
+    ...(preview ? { preview: buildReviewerInfo(product, enrichment) } : {}),
   };
 }
 

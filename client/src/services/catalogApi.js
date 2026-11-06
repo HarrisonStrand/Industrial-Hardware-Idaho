@@ -14,6 +14,9 @@ export async function fetchCatalog(params = {}) {
   if (params.measurementSystem) {
     query.set("measurementSystem", params.measurementSystem);
   }
+  for (const [key, value] of Object.entries(params.attributeFilters || {})) {
+    if (value) query.set(`attr.${key}`, value);
+  }
   if (params.limit) query.set("limit", String(params.limit));
   if (params.skip !== undefined && params.skip !== null) {
     query.set("skip", String(params.skip));

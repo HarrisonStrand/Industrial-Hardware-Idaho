@@ -47,3 +47,52 @@
     justify-content: flex-start;
   }
 }
+
+/* Page navigation in the site's green (Bootstrap's blue is replaced). */
+.catalog-grid-result-bar .pagination,
+.catalog-grid-footer .pagination {
+  gap: 4px;
+}
+
+.catalog-grid-result-bar .page-link,
+.catalog-grid-footer .page-link {
+  min-width: 34px;
+  text-align: center;
+  border-radius: 8px !important;
+  border: 1px solid rgb(from var(--main-color) r g b / 0.3);
+  background: var(--main-light);
+  color: var(--main-color);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  box-shadow: 1px 2px 4px rgb(0 0 0 / 15%);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.catalog-grid-result-bar .page-link:hover,
+.catalog-grid-footer .page-link:hover {
+  background: rgb(from var(--main-color) r g b / 0.15);
+  color: var(--alt-color);
+  transform: translateY(-1px);
+}
+
+.catalog-grid-result-bar .page-link:focus-visible,
+.catalog-grid-footer .page-link:focus-visible {
+  box-shadow: 0 0 0 3px rgb(from var(--main-color) r g b / 0.35);
+}
+
+.catalog-grid-result-bar .page-item.active .page-link,
+.catalog-grid-footer .page-item.active .page-link {
+  background: var(--main-color);
+  border-color: var(--main-color);
+  color: #fff;
+  cursor: default;
+}
+
+.catalog-grid-result-bar .page-item.disabled .page-link,
+.catalog-grid-footer .page-item.disabled .page-link {
+  background: transparent;
+  color: rgb(from var(--main-color) r g b / 0.45);
+  box-shadow: none;
+  cursor: default;
+}

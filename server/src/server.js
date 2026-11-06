@@ -1,4 +1,6 @@
 import "./config/env.js";
+// Draft preview guard must load before any model is compiled. It does nothing unless CATALOG_PREVIEW=drafts.
+import { draftPreviewReadOnly } from "./config/draftPreviewGuard.js";
 
 import path from "path";
 import express from "express";
@@ -29,6 +31,7 @@ import catalogLayoutRoutes from "./routes/catalogLayoutRoutes.js";
 import adminCatalogLayoutRoutes from "./routes/adminCatalogLayoutRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
+import { isDraftPreview } from "./services/catalog/draftPreview.js";
 import { startFishbowlInventorySyncScheduler } from "./services/fishbowl/fishbowlInventorySyncScheduler.js";
 import { startFishbowlProductIntakeScheduler } from "./services/fishbowl/fishbowlProductIntakeScheduler.js";
 // import adminVendorMappingsRoutes from "./routes/adminVendorMappingsRoutes.js";
@@ -36,7 +39,17 @@ import { startFishbowlProductIntakeScheduler } from "./services/fishbowl/fishbow
 console.log("Stripe key loaded?", Boolean(process.env.STRIPE_SECRET_KEY));
 console.log("🔥 RUNNING server/src/server.js build:", new Date().toISOString());
 
+const DRAFT_PREVIEW = isDraftPreview();
+if (DRAFT_PREVIEW) {
+  console.log("DRAFT PREVIEW MODE: read-only, staged drafts shown");
+}
+
 const app = express();
+
+// Draft preview is read-only: refuse every write before any route (Stripe webhook included) sees it.
+if (DRAFT_PREVIEW) {
+  app.use(draftPreviewReadOnly);
+}
 
 app.use("/api/stripe", stripeWebhookRoutes);
 app.use(express.json());
@@ -75,6 +88,14 @@ app.use(
 // health should not depend on DB connection
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
+// Tells the client to show the draft preview banner and reviewer strips. Only exists in preview.
+if (DRAFT_PREVIEW) {
+  app.get("/api/preview-status", (_req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json({ previewMode: true });
+  });
+}
+
 app.use("/api/auth", authRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/users", userRoutes);
@@ -109,8 +130,12 @@ const PORT = process.env.PORT || 5001;
     console.log("✅ MongoDB connected");
     console.log("ABOUT TO LISTEN ON PORT:", PORT);
 
-    startFishbowlInventorySyncScheduler();
-    startFishbowlProductIntakeScheduler();
+    if (DRAFT_PREVIEW) {
+      console.log("DRAFT PREVIEW MODE: Fishbowl schedulers not started");
+    } else {
+      startFishbowlInventorySyncScheduler();
+      startFishbowlProductIntakeScheduler();
+    }
 
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   } catch (err) {

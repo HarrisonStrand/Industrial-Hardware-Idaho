@@ -8,6 +8,7 @@ import {
   getCatalogSubcategorySetting,
   resolveEffectiveCatalogMode,
 } from "../services/catalog/catalogLayoutDefaults.js";
+import { isDraftPreview } from "../services/catalog/draftPreview.js";
 
 const router = express.Router();
 
@@ -26,8 +27,10 @@ router.get("/:categoryId/:subcategoryId", optionalAuth, async (req, res) => {
       ? resolveEffectiveCatalogMode(layoutSetting, globalSetting)
       : "hidden";
 
+    // Draft preview shows every builder page to everyone (local only, read-only).
     if (
       !isAdmin &&
+      !isDraftPreview() &&
       (!layoutSetting || layoutSetting.isVisible === false || effectiveMode !== "builder")
     ) {
       return res.status(404).json({ message: "Product builder is not available" });

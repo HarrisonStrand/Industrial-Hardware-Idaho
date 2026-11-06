@@ -64,6 +64,17 @@
   backface-visibility: hidden;
 }
 
+.category-card-image-wrapper img.category-image-logo {
+  width: 72% !important;
+  margin: 12px auto 0;
+}
+
+/* A picture that runs off both edges, such as chain, spans the whole card ("imageFull" in categories.json). */
+.category-card-image-wrapper img.category-image-full {
+  width: 100% !important;
+  align-self: center !important;
+}
+
 .category-card:hover .category-image {
 	transform: translateZ(0) scale(1.06);
 }

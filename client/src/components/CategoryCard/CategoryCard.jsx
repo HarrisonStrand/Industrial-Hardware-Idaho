@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
+import useDraftPreview from "../../hooks/useDraftPreview.js";
 import "./CategoryCard.css";
 
 const CATEGORY_FALLBACK_IMAGE =
@@ -21,10 +22,15 @@ export default function CategoryCard({
 	isGroup = false,
 }) {
 	const { isAdmin, loadingAuth } = useAuth();
-	const adminCanOpenLockedCategory = !loadingAuth && isAdmin;
+	// Local draft preview opens locked categories for everyone.
+	const previewMode = useDraftPreview();
+	const adminCanOpenLockedCategory = (!loadingAuth && isAdmin) || previewMode;
 	const locked = isLockedCategory(category) && !adminCanOpenLockedCategory;
 
-	let linkTo = category.directPath || category.path || category.href || "";
+	// Brand logos fill their picture edge to edge, so they are centered with room for the hover zoom.
+	const isLogo = (category.image || "").startsWith("/vendor-logos/");
+
+	let linkTo =category.directPath || category.path || category.href || "";
 
 	if (!linkTo && isSubcategory && parentCategoryId) {
 		linkTo = `/products/${parentCategoryId}/${category.id}`;
@@ -39,7 +45,9 @@ export default function CategoryCard({
 			<img
 				src={category.image || CATEGORY_FALLBACK_IMAGE}
 				alt={category.name}
-				className='category-image object-fit-cover w-75 align-self-start m-0'
+				className={`category-image object-fit-cover w-75 align-self-start ${
+					isLogo ? "category-image-logo" : "m-0"
+				}${category.imageFull ? " category-image-full" : ""}`}
 				onError={(event) => {
 					if (event.currentTarget.src.includes(CATEGORY_FALLBACK_IMAGE)) return;
 					event.currentTarget.src = CATEGORY_FALLBACK_IMAGE;

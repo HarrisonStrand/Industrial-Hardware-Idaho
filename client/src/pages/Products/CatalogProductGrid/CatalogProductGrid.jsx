@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { fetchCatalog } from "../../../services/catalogApi.js";
+import ReviewerStrip from "../../../components/DraftPreview/ReviewerStrip.jsx";
+import { formatBuilderValue, systemForRows } from "../../../utils/formatBuilderValue.js";
 import "./CatalogProductGrid.css";
 
 const EMPTY_FACETS = {
@@ -135,6 +137,8 @@ function Pagination({ currentPage, totalPages, onPageChange, disabled = false })
 export default function CatalogProductGrid({ page = {} }) {
   const [items, setItems] = useState([]);
   const [facets, setFacets] = useState(EMPTY_FACETS);
+  const [attributeFacets, setAttributeFacets] = useState([]);
+  const [attributeFilters, setAttributeFilters] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -169,6 +173,7 @@ export default function CatalogProductGrid({ page = {} }) {
       materialFinish: "",
       measurementSystem: "",
     });
+    setAttributeFilters({});
   }, [page.categoryId, page.subcategoryId]);
 
   useEffect(() => {
@@ -184,6 +189,7 @@ export default function CatalogProductGrid({ page = {} }) {
           subcategory: toCatalogValue(page.subcategoryId),
           search: searchTerm,
           ...filters,
+          attributeFilters,
           limit: pageSize,
           skip: (currentPage - 1) * pageSize,
         });
@@ -201,6 +207,7 @@ export default function CatalogProductGrid({ page = {} }) {
           ...EMPTY_FACETS,
           ...(data?.facets || {}),
         });
+        setAttributeFacets(Array.isArray(data?.attributeFacets) ? data.attributeFacets : []);
 
         if (nextTotalPages > 0 && currentPage > nextTotalPages) {
           setCurrentPage(nextTotalPages);
@@ -229,22 +236,37 @@ export default function CatalogProductGrid({ page = {} }) {
     pageSize,
     searchTerm,
     filters,
+    attributeFilters,
   ]);
 
   const activeFilterCount = useMemo(
-    () => Object.values(filters).filter(Boolean).length + (searchTerm ? 1 : 0),
-    [filters, searchTerm]
+    () =>
+      Object.values(filters).filter(Boolean).length +
+      Object.values(attributeFilters).filter(Boolean).length +
+      (searchTerm ? 1 : 0),
+    [filters, attributeFilters, searchTerm]
   );
 
   const firstResult = total ? (currentPage - 1) * pageSize + 1 : 0;
   const lastResult = total ? Math.min(currentPage * pageSize, total) : 0;
+
+  // Size filters show inch marks (display only; the filter still sends the stored value). With no system
+  // picked on a page that has metric rows, only fractions get the mark.
+  const pageSystem = systemForRows(facets.measurementSystems || []);
+  const facetSystem = filters.measurementSystem || (pageSystem === "mixed" ? "unknown" : pageSystem);
 
   function updateFilter(key, value) {
     setFilters((current) => ({ ...current, [key]: value }));
     setCurrentPage(1);
   }
 
+  function updateAttributeFilter(key, value) {
+    setAttributeFilters((current) => ({ ...current, [key]: value }));
+    setCurrentPage(1);
+  }
+
   function clearFilters() {
+    setAttributeFilters({});
     setSearchInput("");
     setSearchTerm("");
     setFilters({
@@ -367,6 +389,28 @@ export default function CatalogProductGrid({ page = {} }) {
               </div>
             ) : null}
 
+            {attributeFacets
+              .filter((facet) => facet.values.length > 1)
+              .map((facet) => (
+                <div key={facet.key} className="col-6 col-md-4 col-lg-2">
+                  <label className="form-label small text-muted text-uppercase mb-1">
+                    {facet.label}
+                  </label>
+                  <select
+                    className="form-select"
+                    value={attributeFilters[facet.key] || ""}
+                    onChange={(event) => updateAttributeFilter(facet.key, event.target.value)}
+                  >
+                    <option value="">All</option>
+                    {facet.values.map((value) => (
+                      <option key={value} value={value}>
+                        {formatFacetValue(formatBuilderValue(facet.key, value, facetSystem))}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+
             <div className="col-6 col-md-3 col-lg-auto">
               <label className="form-label small text-muted text-uppercase mb-1">
                 Per Page
@@ -456,6 +500,7 @@ export default function CatalogProductGrid({ page = {} }) {
                       {item.sku || "Catalog Product"}
                     </div>
                     <h2 className="h5 text-main mb-2">{item.title}</h2>
+                    <ReviewerStrip info={item.preview} />
                     <p className="small text-muted flex-grow-1">
                       {item.shortDescription || "View product details and availability."}
                     </p>

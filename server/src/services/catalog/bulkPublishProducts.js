@@ -4,8 +4,8 @@ import evaluateProductPublishReadiness from "./evaluateProductPublishReadiness.j
 import publishProduct from "./publishProduct.js";
 import { catalogNamePattern } from "./getCatalogBuilderSubcategory.js";
 
-// Admin bulk publish (site review, 2026-10-13). The admin picks products by a pasted list
-// of part numbers, an enrichment batch, or a category page; "Check" reports what
+// Admin bulk publish (2026-10-13). The admin picks products by a pasted list
+// of part numbers, a enrichment batch, or a category page; "Check" reports what
 // would happen without saving anything, and "Publish" runs the normal single-product
 // publish for each one. Publishing is always the admin's own action.
 

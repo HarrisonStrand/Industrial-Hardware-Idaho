@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "nodemon src/server.js",
+    "dev:preview": "CATALOG_PREVIEW=drafts PORT=5051 nodemon src/server.js",
     "start": "node src/server.js",
     "seed:catalog-test": "node src/scripts/seedCatalogTest.js",
     "test:fishbowl-upsert": "node src/scripts/testFishbowlUpsert.js",
@@ -17,7 +18,10 @@
     "test:vendor-selection": "node src/scripts/testVendorSelection.js",
     "test:vendor-image-storage": "node src/scripts/testVendorImageStorage.js",
     "test:catalog-publishing": "node src/scripts/testCatalogPublishing.js",
-    "test:catalog-api": "node src/scripts/testCatalogApiServices.js"
+    "test:catalog-api": "node src/scripts/testCatalogApiServices.js",
+    "test:draft-preview": "node --test src/services/catalog/__tests__/draftPreview.test.js src/services/catalog/__tests__/draftPreviewGuard.test.js",
+    "test:page-layouts": "node --test src/services/catalog/__tests__/builderShaping.test.js src/services/catalog/__tests__/pageLayoutPlan.test.js",
+    "layout:plan": "node src/scripts/applyPageLayoutPlan.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.966.0",
@@ -31,8 +35,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.8.9",
     "multer": "^2.0.2",
-    "stripe": "^20.2.0",
-    "nodemailer": "^6.9.16"
+    "nodemailer": "^6.9.16",
+    "stripe": "^20.2.0"
   },
   "devDependencies": {
     "baseline-browser-mapping": "^2.9.14",

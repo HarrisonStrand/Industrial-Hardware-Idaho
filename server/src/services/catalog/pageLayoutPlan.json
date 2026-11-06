@@ -1,0 +1,858 @@
+{
+  "bolts/hex-cap-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/socket-head-cap-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/button-head-cap-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/flat-head-cap-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/hanger-bolts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/elevator-bolts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/flange-bolts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/carriage-bolts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/threaded-rod": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/set-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/shoulder-bolts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/studs": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/structural-bolts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/plow-bolts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/square-head": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bolts/penta-head": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "screws/machine-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "screws/sheet-metal-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "screws/wood-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "screws/drywall-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "screws/outdoor-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "screws/lag-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "screws/self-drilling-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "screws/thread-cutting-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "screws/thumb-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/hex-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/lock-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/flange-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/castle-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/square-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/torque-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/jam-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/wing-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/acorn-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/eye-nuts": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/coupling-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/rivet-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/t-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/weld-nuts": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/cage-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/axle-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "nuts/stand-offs": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "washers/flat-washers": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "washers/lock-washers": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "washers/internal-lock-washers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "washers/external-lock-washers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "washers/wave-washers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "washers/retaining-push-nuts": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "washers/square-washers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "washers/finishing-washers": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "washers/fender-washers": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "washers/sealing-washers": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "washers/square-plate-washers": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "washers/belleville-wave-washers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "washers/specialty-washers": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "washers/machine-bushings": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "rivets/blind-rivets": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "rivets/solid-specialty-rivets": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "rivets/riveting-tools": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/cut-off-wheels": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/flap-wheels": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/fibre-discs": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/twist-lock-discs": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/velcro-discs": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/grinding-wheels": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/shop-rolls": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/hand-pads": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/sanding-belts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/sanding-sheets": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/psa-discs": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/back-up-pads": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/wire-brushes": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/mounted-stones": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "abrasives/cartridge-rolls": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/wedge-anchors": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/concrete-screws": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/sleeve-anchors": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/drop-in-anchors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/lag-expansion-shields": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/anchor-bolts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/hollow-wall-anchors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/light-duty-anchors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/rod-hanger-anchors": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/adhesive-anchoring": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "concrete/powder-loads": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/u-bolts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/snap-links": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/quick-links": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/eye-bolts": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/eye-lags": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/j-hooks": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/turnbuckles": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/cotter-pins": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/clevis-pins": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/roll-pins": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/dowel-pins": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/coiled-spring-pins": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/hitch-pins": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/keys-key-stock": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/chain-hardware": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/s-hooks": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/screw-eyes": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/screw-hooks": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/peg-board-hardware": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/wire-lock-pins": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/springs": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/retaining-rings": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/shaft-collars": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/hinges": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/chain": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "wire-hardware/cable-wire-rope": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/drill-bits": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/driver-bits": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/nut-setters": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/hanger-bolt-drivers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/hole-saws-arbors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/taps-dies": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/reciprocating-saw-blades": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/masonry-bits": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/end-mills": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/countersinks": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/screw-extractors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/spade-bits": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/thread-repair": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/burrs-deburring-tools": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/jig-saw-blades": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/hacksaw-blades": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/band-saw-blades": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "bits-drivers/threaded-inserts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/retainers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/moulding-trim-fasteners": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/clips": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/u-nuts-specialty-nuts": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/body-bolts-screws": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/hole-plugs-grommets": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/hose-vacuum-fittings": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/oil-drain-plugs-gaskets": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/o-rings-weatherstripping": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/electrical-weather-pack": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/steering-linkage": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/thread-repair-shims-misc": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "auveco/tools": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "makita/power-tools": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "makita/batteries-chargers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "makita/blades-wheels-bits": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "makita/accessories-apparel": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "diablo/hole-saws-cutters": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "diablo/drill-bits": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "diablo/reciprocating-saw-blades": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "diablo/circular-saw-blades": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "diablo/accessories": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "chemicals-paints-sealants/spray-paint": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "chemicals-paints-sealants/sealants-caulk": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "chemicals-paints-sealants/adhesives-threadlockers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "chemicals-paints-sealants/cleaners-degreasers": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "chemicals-paints-sealants/lubricants-penetrants": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "chemicals-paints-sealants/anti-seize": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "chemicals-paints-sealants/cutting-tapping-fluid": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "chemicals-paints-sealants/tapes": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "chemicals-paints-sealants/grease-fittings": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/ring-terminals": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/spade-terminals": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/butt-connectors": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/quick-connectors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/wire-loom-clamps": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/bullet-connectors": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/primary-wire": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/hose-clamps": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/wire-loom": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/shrink-wrap": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/fuses": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/cable-ties": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/copper-lugs": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/battery-terminals": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/battery-accessories": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/connectors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/wire-nuts": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/solder": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/extension-cords": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/piggyback-connectors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/wire-ferrules": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/trailer-connectors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/cord-ends-connectors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/work-lights": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/weather-pack-connectors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/pigtails": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/plug-wedges": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/receptacle-connectors": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "electrical/receptacle-wedges": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "strut/deep-strut": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "strut/shallow-strut": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "strut/connectors-accessories": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "tools/hand-tools": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "tools/ladders-scaffolding": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "tools/shop-storage": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "tools/welding": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "tools/grease-guns-accessories": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "tools/measuring-tools": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "fittings/pipe-fittings": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "fittings/compression-fittings": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "fittings/flare-fittings": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "fittings/hose-vacuum-fittings": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "safety-ppe/gloves": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "safety-ppe/hi-vis-apparel": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "safety-ppe/hard-hats": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "safety-ppe/respiratory-protection": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "safety-ppe/hearing-protection": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "safety-ppe/eye-protection": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "shop-supplies/rags-wipes": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "shop-supplies/tarps": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
+  "shop-supplies/tie-downs-straps": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "shop-supplies/brooms-brushes": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "shop-supplies/ice-melt": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "shop-supplies/funnels": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  }
+}

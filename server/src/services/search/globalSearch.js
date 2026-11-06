@@ -9,8 +9,18 @@ import {
 	ensureCatalogLayoutRecords,
 	getCatalogGlobalSetting,
 	normalizeCatalogId,
+	previewLayoutSettings,
 	resolveEffectiveCatalogMode,
 } from "../catalog/catalogLayoutDefaults.js";
+import {
+	buildReviewerInfo,
+	isDraftPreview,
+	overlayDraft,
+	previewProductFilter,
+	visibleDraftProductIds,
+	widenToDrafts,
+} from "../catalog/draftPreview.js";
+import { isListedForImage } from "../catalog/productImageVisibility.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -363,7 +373,111 @@ function mapProductResult({ product, enrichment, query, terms }) {
 		qtyAvailable: Number(product?.inventory?.qtyAvailable || 0),
 		isPublished: !!product?.isPublished,
 		catalogStatus: product?.catalogStatus || "",
+		...(isDraftPreview() ? { preview: buildReviewerInfo(product, enrichment) } : {}),
 	};
+}
+
+// Draft preview only: the enrichment fields searchProducts reads, plus the staged draft and the locks.
+const PREVIEW_ENRICHMENT_SELECT = {
+	_id: 1,
+	productId: 1,
+	title: 1,
+	shortTitle: 1,
+	description: 1,
+	shortDescription: 1,
+	category: 1,
+	subcategory: 1,
+	tags: 1,
+	attributes: 1,
+	images: 1,
+	seo: 1,
+	agentDraft: 1,
+	overrideFlags: 1,
+};
+
+// Draft preview only: searchProducts with staged drafts laid over the live rows. A product shows when it is
+// published or has a visible draft; the rest of the public rule (active in the site and in Fishbowl) stays.
+async function searchProductsPreview(query, { limit, layoutMap, candidateLimit, regexes, terms }) {
+	const { isPublished: _published, ...activeFilter } = PUBLIC_PRODUCT_FILTER;
+
+	const [matchingProducts, matchingEnrichments] = await Promise.all([
+		Product.find({ ...activeFilter, $or: buildOrRegexQuery(PRODUCT_SEARCH_FIELDS, regexes) })
+			.select({ _id: 1 })
+			.limit(candidateLimit)
+			.lean(),
+		ProductEnrichment.find(widenToDrafts({ $or: buildOrRegexQuery(ENRICHMENT_SEARCH_FIELDS, regexes) }))
+			.select({ _id: 1, productId: 1 })
+			.limit(candidateLimit)
+			.lean(),
+	]);
+
+	const productIds = Array.from(
+		new Set([
+			...matchingProducts.map((product) => String(product._id)),
+			...matchingEnrichments.map((enrichment) => String(enrichment.productId)),
+		]),
+	);
+	if (!productIds.length) return [];
+
+	const enrichments = await ProductEnrichment.find({ productId: { $in: productIds } })
+		.select(PREVIEW_ENRICHMENT_SELECT)
+		.lean();
+	const products = await Product.find(
+		previewProductFilter(
+			{ _id: { $in: productIds }, ...activeFilter },
+			{ isPublished: true },
+			visibleDraftProductIds(enrichments),
+		),
+	)
+		.select({
+			_id: 1,
+			sku: 1,
+			internalPartNumber: 1,
+			fishbowl: 1,
+			inventory: 1,
+			isActive: 1,
+			isPublished: 1,
+			catalogStatus: 1,
+		})
+		.lean();
+
+	const productMap = new Map(products.map((product) => [String(product._id), product]));
+	const enrichmentMap = new Map(
+		enrichments.map((enrichment) => [
+			String(enrichment.productId),
+			overlayDraft(enrichment, {
+				published: !!productMap.get(String(enrichment.productId))?.isPublished,
+			}),
+		]),
+	);
+
+	return productIds
+		.map((productId) => {
+			const product = productMap.get(productId);
+			const enrichment = enrichmentMap.get(productId);
+			if (!product || !enrichment) return null;
+			if (!isListedForImage(enrichment)) return null;
+			if (
+				!isProductLayoutSearchable(
+					layoutMap,
+					enrichment?.category || enrichment?.attributes?.categoryCanonical,
+					enrichment?.subcategory || enrichment?.attributes?.subcategoryCanonical,
+				)
+			) {
+				return null;
+			}
+			return mapProductResult({ product, enrichment, query, terms });
+		})
+		.filter((result) => result && result.score > 0)
+		.sort(
+			(a, b) =>
+				b.score - a.score ||
+				String(a.partNumber || "").localeCompare(String(b.partNumber || ""), undefined, {
+					numeric: true,
+					sensitivity: "base",
+				}),
+		)
+		.slice(0, limit);
 }
 
 function scoreBuilder({ category, subcategory = null, query, terms }) {
@@ -430,6 +544,7 @@ function searchBuilders(query = "", limit = 8, layoutMap = new Map()) {
 		}
 
 		for (const subcategory of category.subcategories || []) {
+			if (subcategory.directPath) continue;   // a card shown under another category; its own page is listed there
 			if (!isLayoutVisible(layoutMap, category.id, subcategory.id)) continue;
 			const subcategoryScore = scoreBuilder({ category, subcategory, query, terms });
 			if (subcategoryScore <= 0) continue;
@@ -469,6 +584,10 @@ async function searchProducts(query = "", options = {}) {
 	const terms = getQueryTerms(query);
 
 	if (!regexes.length) return [];
+
+	if (isDraftPreview()) {
+		return searchProductsPreview(query, { limit, layoutMap, candidateLimit, regexes, terms });
+	}
 
 	const productQuery = {
 		...PUBLIC_PRODUCT_FILTER,
@@ -561,6 +680,7 @@ async function searchProducts(query = "", options = {}) {
 			const product = productMap.get(productId);
 			const enrichment = enrichmentMap.get(productId);
 			if (!product || !enrichment) return null;
+			if (!isListedForImage(enrichment)) return null;
 			if (
 				!isProductLayoutSearchable(
 					layoutMap,
@@ -604,7 +724,7 @@ export async function globalSearch(options = {}) {
 	await ensureCatalogLayoutRecords();
 	const [globalSetting, layoutSettings] = await Promise.all([
 		getCatalogGlobalSetting(),
-		CatalogSubcategorySetting.find({}).lean(),
+		isDraftPreview() ? previewLayoutSettings() : CatalogSubcategorySetting.find({}).lean(),
 	]);
 	const layoutMap = new Map(
 		layoutSettings.map((setting) => [

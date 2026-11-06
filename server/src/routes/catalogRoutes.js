@@ -19,6 +19,13 @@ router.get("/", async (req, res) => {
       skip,
     } = req.query;
 
+    // Page attribute filters arrive as attr.<key>=value; the service keeps only the page's own keys.
+    const attributeFilters = Object.fromEntries(
+      Object.entries(req.query)
+        .filter(([key, value]) => key.startsWith("attr.") && typeof value === "string")
+        .map(([key, value]) => [key.slice(5), value])
+    );
+
     const result = await getPublishedCatalog({
       category,
       subcategory,
@@ -27,6 +34,7 @@ router.get("/", async (req, res) => {
       grade,
       materialFinish,
       measurementSystem,
+      attributeFilters,
       limit,
       skip,
     });

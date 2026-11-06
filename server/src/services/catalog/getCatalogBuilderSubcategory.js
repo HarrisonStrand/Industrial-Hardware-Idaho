@@ -1,6 +1,18 @@
 import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
 import CatalogFamilyAsset from "../../models/CatalogFamilyAsset.js";
+import { buildReviewerInfo, findPreviewRows, isDraftPreview } from "./draftPreview.js";
+import { getCatalogPageFilters } from "./catalogLayoutDefaults.js";
+import {
+	NUMBERED_DIAMETER_SIZES,
+	collectGeneralChoiceOptions,
+	dedupeGeneralVariants,
+	parseBuilderSizeSort,
+	planGeneralBuilderChoices,
+	shapeGeneralBuilderAttributes,
+	unifyChoiceValueCase,
+	usesGeneralBuilderShaping,
+} from "./builderShaping.js";
 import {
 	getPricingContext,
 	getPricingSettings,
@@ -398,8 +410,6 @@ function asNumber(value, fallback = 0) {
 }
 
 
-const NUMBERED_DIAMETER_SIZES = new Set(["0", "2", "3", "4", "5", "6", "8", "10", "12"]);
-
 function normalizeNumberedDiameterForBuilder(diameter = "", threadPitch = "") {
 	const raw = String(diameter || "").replace(/\s+/g, "").trim();
 	const pitch = String(threadPitch || "").replace(/\s+/g, "").trim();
@@ -418,56 +428,6 @@ function normalizeNumberedDiameterForBuilder(diameter = "", threadPitch = "") {
 	}
 
 	return `#${sizeOnly[1]}`;
-}
-
-function parseBuilderSizeSort(value = "", key = "") {
-	const lowerKey = String(key || "").toLowerCase();
-	let str = String(value || "")
-		.trim()
-		.replace(/[”″]/g, '"')
-		.replace(/"|in\.?$/gi, "")
-		.replace(/mm$/i, "")
-		.trim();
-
-	if (!str) return null;
-
-	const metricMatch = str.match(/^m(\d+(?:\.\d+)?)$/i);
-	if (metricMatch) return { primary: Number(metricMatch[1]), secondary: 0 };
-
-	const numberedThreadMatch = str.match(/^#?(\d+)\s*-\s*(\d+(?:\.\d+)?)$/);
-	if (numberedThreadMatch && NUMBERED_DIAMETER_SIZES.has(numberedThreadMatch[1])) {
-		return {
-			primary: Number(numberedThreadMatch[1]) / 1000,
-			secondary: Number(numberedThreadMatch[2]),
-		};
-	}
-
-	str = str.replace(/^(\d+)\s*-\s*(\d+\/\d+)$/, "$1 $2");
-
-	if (/^\d+\/\d+$/.test(str)) {
-		const [num, den] = str.split("/").map(Number);
-		return den ? { primary: num / den, secondary: 0 } : null;
-	}
-
-	if (/^\d+\s+\d+\/\d+$/.test(str)) {
-		const [whole, frac] = str.split(/\s+/, 2);
-		const [num, den] = frac.split("/").map(Number);
-		return den ? { primary: Number(whole) + num / den, secondary: 0 } : null;
-	}
-
-	if (/^#\d+(?:\.\d+)?$/.test(str)) {
-		return { primary: Number(str.replace(/^#/, "")) / 1000, secondary: 0 };
-	}
-
-	if (lowerKey === "diameter" && NUMBERED_DIAMETER_SIZES.has(str)) {
-		return { primary: Number(str) / 1000, secondary: 0 };
-	}
-
-	if (/^\d+(?:\.\d+)?$/.test(str)) {
-		return { primary: Number(str), secondary: 0 };
-	}
-
-	return null;
 }
 
 function sortBuilderOptionValues(values = [], key = "") {
@@ -897,14 +857,101 @@ export async function getCatalogBuilderSubcategory(
 				),
 			};
 
-	let enrichmentQuery = ProductEnrichment.find(enrichmentFilter);
-	if (useFastProjection) {
-		enrichmentQuery = enrichmentQuery.select(FAST_BUILDER_ENRICHMENT_PROJECTION);
+	const preview = isDraftPreview();
+	// General shaping (builderShaping.js) for every page without a hand-tuned shape. Draft preview only for now:
+	// live builder pages without a hand-tuned shape are visible today (buildersEnabled is on), and their
+	// output must not change until launch.
+	const generalShaping = usesGeneralBuilderShaping(normalizedSubcategoryId, preview);
+	const includeUnpublished = options?.includeUnpublished === true;
+	const allowedReviewStatuses = Array.isArray(options?.allowedReviewStatuses)
+		? options.allowedReviewStatuses.filter(Boolean)
+		: null;
+	let enrichments;
+	let productMap;
+
+	if (preview) {
+		// Draft preview: staged values laid over the live ones; a product with a visible draft counts as published.
+		let productPublished = { isPublished: true };
+		if (allowedReviewStatuses?.length) {
+			productPublished = {
+				$or: [
+					{ isPublished: true },
+					{ "review.status": { $in: allowedReviewStatuses } },
+				],
+			};
+		} else if (includeUnpublished) {
+			productPublished = {};
+		}
+		({ enrichments, productMap } = await findPreviewRows({
+			ProductEnrichment,
+			Product,
+			query: enrichmentFilter,
+			productCommon: {
+				isActive: { $ne: false },
+				"fishbowl.active": { $ne: false },
+			},
+			productPublished,
+		}));
+	} else {
+		let enrichmentQuery = ProductEnrichment.find(enrichmentFilter);
+		if (useFastProjection) {
+			enrichmentQuery = enrichmentQuery.select(FAST_BUILDER_ENRICHMENT_PROJECTION);
+		}
+
+		enrichments = await enrichmentQuery.lean();
+
+		if (!enrichments.length) {
+			return {
+				categoryId: String(categoryId || ""),
+				subcategoryId: String(subcategoryId || ""),
+				name: toTitle(subcategoryId),
+				description: "",
+				image: "",
+				attributes: {},
+				families: [],
+				variants: [],
+				pricing: {
+					accountType: pricingContext.approvedType,
+					label: pricingContext.label,
+					multiplier: pricingContext.multiplier,
+				},
+				totals: {
+					variantCount: 0,
+					familyCount: 0,
+					rawVariantCount: 0,
+					omittedVariantCount: 0,
+				},
+			};
+		}
+
+		const productIds = enrichments.map((e) => e.productId);
+
+		const productFilter = {
+			_id: { $in: productIds },
+			isActive: { $ne: false },
+			"fishbowl.active": { $ne: false },
+		};
+
+		if (allowedReviewStatuses?.length) {
+			productFilter.$or = [
+				{ isPublished: true },
+				{ "review.status": { $in: allowedReviewStatuses } },
+			];
+		} else if (!includeUnpublished) {
+			productFilter.isPublished = true;
+		}
+
+		let productQuery = Product.find(productFilter);
+		if (useFastProjection) {
+			productQuery = productQuery.select(FAST_BUILDER_PRODUCT_PROJECTION);
+		}
+
+		const products = await productQuery.lean();
+
+		productMap = new Map(products.map((p) => [String(p._id), p]));
 	}
 
-	const enrichments = await enrichmentQuery.lean();
-
-	if (!enrichments.length) {
+	if (preview && !enrichments.length) {
 		return {
 			categoryId: String(categoryId || ""),
 			subcategoryId: String(subcategoryId || ""),
@@ -927,37 +974,6 @@ export async function getCatalogBuilderSubcategory(
 			},
 		};
 	}
-
-	const productIds = enrichments.map((e) => e.productId);
-	const includeUnpublished = options?.includeUnpublished === true;
-
-	const productFilter = {
-		_id: { $in: productIds },
-		isActive: { $ne: false },
-		"fishbowl.active": { $ne: false },
-	};
-
-	const allowedReviewStatuses = Array.isArray(options?.allowedReviewStatuses)
-		? options.allowedReviewStatuses.filter(Boolean)
-		: null;
-
-	if (allowedReviewStatuses?.length) {
-		productFilter.$or = [
-			{ isPublished: true },
-			{ "review.status": { $in: allowedReviewStatuses } },
-		];
-	} else if (!includeUnpublished) {
-		productFilter.isPublished = true;
-	}
-
-	let productQuery = Product.find(productFilter);
-	if (useFastProjection) {
-		productQuery = productQuery.select(FAST_BUILDER_PRODUCT_PROJECTION);
-	}
-
-	const products = await productQuery.lean();
-
-	const productMap = new Map(products.map((p) => [String(p._id), p]));
 
 	const rawVariants = enrichments
 		.map((enrichment) => {
@@ -1012,10 +1028,15 @@ export async function getCatalogBuilderSubcategory(
 						enrichment.images?.[0]?.url ||
 						"",
 
-					attributes: normalizeVariantAttributesForBuilder(
-						enrichment.attributes || {},
-						normalizedSubcategoryId,
-					),
+					attributes: generalShaping
+						? polishBuilderValues(
+								shapeGeneralBuilderAttributes(enrichment.attributes || {}),
+								enrichment.attributes || {},
+							)
+						: normalizeVariantAttributesForBuilder(
+								enrichment.attributes || {},
+								normalizedSubcategoryId,
+							),
 
 					price: resolvedPricing.resolvedPrice,
 					baseCatalogPrice: resolvedPricing.baseCatalogPrice,
@@ -1039,6 +1060,7 @@ export async function getCatalogBuilderSubcategory(
 						toTitle(subcategoryId),
 					familyAttributeOptions:
 						enrichment?.attributes?.familyAttributeOptions || {},
+					...(preview ? { preview: buildReviewerInfo(product, enrichment) } : {}),
 				};
 		})
 		.filter(Boolean);
@@ -1058,6 +1080,15 @@ export async function getCatalogBuilderSubcategory(
 	const workingVariants = builderReadyFilter ? filteredVariants : rawVariants;
 
 	const omittedVariantCount = rawVariants.length - workingVariants.length;
+
+	if (generalShaping) unifyChoiceValueCase(workingVariants.map((variant) => variant.attributes || {}));
+	const generalChoices = generalShaping
+		? planGeneralBuilderChoices(
+				workingVariants.map((variant) => variant.attributes || {}),
+				getCatalogPageFilters(categoryId, subcategoryId),
+			)
+		: null;
+	const generalChoiceKeys = generalChoices ? generalChoices.map((choice) => choice.key) : [];
 
 	const familyKeys = [
 		...new Set(workingVariants.map((v) => v.familyKey).filter(Boolean)),
@@ -1105,7 +1136,9 @@ export async function getCatalogBuilderSubcategory(
 	}
 
 	const families = Array.from(familiesMap.values()).map((family) => {
-		const dedupedVariants = dedupeVariants(family.rawVariants);
+		const dedupedVariants = generalShaping
+			? dedupeGeneralVariants(family.rawVariants, generalChoiceKeys, sortVariantsForSelection)
+			: dedupeVariants(family.rawVariants);
 
 		return {
 			subcategoryId: normalizedSubcategoryId,
@@ -1113,10 +1146,12 @@ export async function getCatalogBuilderSubcategory(
 			familySlug: family.familySlug,
 			familyTitle: family.familyTitle,
 			familyDescription: family.familyDescription,
-			familyAttributeOptions: collectAttributeOptions(
-				dedupedVariants,
-				normalizedSubcategoryId,
-			),
+			familyAttributeOptions: generalShaping
+				? collectGeneralChoiceOptions(dedupedVariants, generalChoices)
+				: collectAttributeOptions(
+						dedupedVariants,
+						normalizedSubcategoryId,
+					),
 			image: family.image,
 			imageAlt: family.imageAlt,
 			variants: dedupedVariants,
@@ -1138,10 +1173,14 @@ export async function getCatalogBuilderSubcategory(
 			? `${first.familyTitle} options available in this category.`
 			: "",
 		image: firstFamilyWithImage?.image || "",
-		attributes: collectAttributeOptions(
-			flattenedVariants,
-			normalizedSubcategoryId,
-		),
+		attributes: generalShaping
+			? collectGeneralChoiceOptions(flattenedVariants, generalChoices)
+			: collectAttributeOptions(
+					flattenedVariants,
+					normalizedSubcategoryId,
+				),
+		// General pages only: the choices in buyer order with readable labels; the client shows exactly these.
+		...(generalShaping ? { shaping: "general", choices: generalChoices } : {}),
 		families,
 		variants: flattenedVariants,
 		pricing: {
