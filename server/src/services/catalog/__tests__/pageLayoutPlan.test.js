@@ -56,7 +56,7 @@ function withPreview(on, fn) {
 	});
 }
 
-test("the plan file covers every page in categories.json: 112 builder, 104 product grid (11 weak pages moved to grid, 2026-11-04; Diablo Drill Bits split into Metal, Wood and Concrete Bits 2026-11-06)", () => {
+test("the plan file covers every page in categories.json: 115 builder, 101 product grid (11 weak pages moved to grid, 2026-11-04; Diablo Drill Bits split into Metal, Wood and Concrete Bits and Quick / Piggyback Connectors and Hose Clamps moved to builder, 2026-11-06)", () => {
 	const raw = JSON.parse(fs.readFileSync(PLAN_PATH, "utf8"));
 	const known = new Set(getKnownCatalogSubcategories().map((d) => `${d.categoryId}/${d.subcategoryId}`));
 	assert.equal(Object.keys(raw).length, 216);
@@ -66,7 +66,7 @@ test("the plan file covers every page in categories.json: 112 builder, 104 produ
 		counts[entry.displayMode] = (counts[entry.displayMode] || 0) + 1;
 		assert.equal(entry.fallbackMode, "product-grid");
 	}
-	assert.deepEqual(counts, { builder: 112, "product-grid": 104 });
+	assert.deepEqual(counts, { builder: 115, "product-grid": 101 });
 	for (const page of ["metal-bits", "wood-bits", "concrete-bits"]) assert.equal(raw[`diablo/${page}`].displayMode, "product-grid");
 	assert.equal(raw["diablo/drill-bits"], undefined);
 	assert.equal(raw["wire-hardware/shaft-collars"].displayMode, "builder");

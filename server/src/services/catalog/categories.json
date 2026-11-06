@@ -1278,22 +1278,41 @@
         {
           "id": "ring-terminals",
           "name": "Ring Terminals",
-          "image": "/images/subcategories/ring-terminals.png"
+          "image": "/images/subcategories/ring-terminals.png",
+          "filters": [
+            { "key": "wireGauge", "label": "Wire Gauge", "sort": "gauge" },
+            { "key": "studSize", "label": "Diameter", "sort": "stud" },
+            { "key": "insulation", "label": "Insulation" }
+          ]
         },
         {
           "id": "spade-terminals",
           "name": "Spade Terminals",
-          "image": "/images/subcategories/spade-terminals.png"
+          "image": "/images/subcategories/spade-terminals.png",
+          "filters": [
+            { "key": "wireGauge", "label": "Wire Gauge", "sort": "gauge" },
+            { "key": "studSize", "label": "Diameter", "sort": "stud" },
+            { "key": "insulation", "label": "Insulation" }
+          ]
         },
         {
           "id": "butt-connectors",
           "name": "Butt Connectors",
-          "image": "/images/subcategories/butt-connectors.png"
+          "image": "/images/subcategories/butt-connectors.png",
+          "filters": [
+            { "key": "wireGauge", "label": "Wire Gauge", "sort": "gauge" },
+            { "key": "insulation", "label": "Insulation" }
+          ]
         },
         {
           "id": "quick-connectors",
           "name": "Quick Connectors",
-          "image": "/images/subcategories/quick-connectors.png"
+          "image": "/images/subcategories/quick-connectors.png",
+          "filters": [
+            { "key": "terminalType", "label": "Male / Female" },
+            { "key": "wireGauge", "label": "Wire Gauge", "sort": "gauge" },
+            { "key": "insulation", "label": "Insulation" }
+          ]
         },
         {
           "id": "wire-loom-clamps",
@@ -1303,7 +1322,11 @@
         {
           "id": "bullet-connectors",
           "name": "Bullet Connectors",
-          "image": "/images/subcategories/bullet-connectors.png"
+          "image": "/images/subcategories/bullet-connectors.png",
+          "filters": [
+            { "key": "wireGauge", "label": "Wire Gauge", "sort": "gauge" },
+            { "key": "insulation", "label": "Insulation" }
+          ]
         },
         {
           "id": "primary-wire",
@@ -1313,7 +1336,12 @@
         {
           "id": "hose-clamps",
           "name": "Hose Clamps",
-          "image": "/images/subcategories/hose-clamps.png"
+          "image": "/images/subcategories/hose-clamps.png",
+          "filters": [
+            { "key": "clampType", "label": "Type" },
+            { "key": "clampRange", "label": "Diameter Range", "sort": "size" },
+            { "key": "materialFinish", "label": "Material / Finish" }
+          ]
         },
         {
           "id": "wire-loom",
@@ -1373,7 +1401,11 @@
         {
           "id": "piggyback-connectors",
           "name": "Piggyback Connectors",
-          "image": "/images/subcategories/piggyback-connectors.png"
+          "image": "/images/subcategories/piggyback-connectors.png",
+          "filters": [
+            { "key": "wireGauge", "label": "Wire Gauge", "sort": "gauge" },
+            { "key": "insulation", "label": "Insulation" }
+          ]
         },
         {
           "id": "wire-ferrules",

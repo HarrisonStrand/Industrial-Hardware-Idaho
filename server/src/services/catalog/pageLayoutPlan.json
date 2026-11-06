@@ -660,7 +660,7 @@
     "fallbackMode": "product-grid"
   },
   "electrical/quick-connectors": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "electrical/wire-loom-clamps": {
@@ -676,7 +676,7 @@
     "fallbackMode": "product-grid"
   },
   "electrical/hose-clamps": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "electrical/wire-loom": {
@@ -724,7 +724,7 @@
     "fallbackMode": "product-grid"
   },
   "electrical/piggyback-connectors": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "electrical/wire-ferrules": {

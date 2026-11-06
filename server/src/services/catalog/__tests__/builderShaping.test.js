@@ -240,3 +240,15 @@ test("on a general page a bare diameter is a plain number, not a screw gauge", (
 	);
 	assert.deepEqual(sortGeneralChoiceValues(["1/4", "#10", "#6"], "diameter"), ["#6", "#10", "1/4"]);
 });
+
+test("wire gauge sorts thinnest wire first; stud size smallest first, numbered sizes before inches", async () => {
+	const { sortGeneralChoiceValues } = await import("../builderShaping.js");
+	assert.deepEqual(
+		sortGeneralChoiceValues(["2", "8", "12-10", "22-18", "16-14", "22-16", "4"], "wireGauge", "gauge"),
+		["22-18", "22-16", "16-14", "12-10", "8", "4", "2"],
+	);
+	assert.deepEqual(
+		sortGeneralChoiceValues(['1/4"', '3/8"', "#10", "#6", '5/16"', "#8"], "studSize", "stud"),
+		["#6", "#8", "#10", '1/4"', '5/16"', '3/8"'],
+	);
+});

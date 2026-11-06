@@ -94,9 +94,14 @@ export function titleEvidence(number = "", titles = []) {
  * ("imperial", "Standard", "metric", "Metric", "mixed" or ""). options.titles: product titles that use this value,
  * read as evidence for bare numbers. Returns the display string; never changes the stored value.
  */
+// Shop words for stored values: an uninsulated terminal is sold as "Bare".
+const VALUE_LABELS = { insulation: { "non-insulated": "Bare" } };
+
 export function formatBuilderValue(key = "", value = "", system = "", options = {}) {
 	if (value === undefined || value === null) return "";
 	const raw = String(value).trim();
+	const shopWord = VALUE_LABELS[key]?.[raw.toLowerCase()];
+	if (shopWord) return shopWord;
 	if (!raw || !isInchMeasureKey(key)) return String(value);
 
 	const mode = normalizeSystem(system);

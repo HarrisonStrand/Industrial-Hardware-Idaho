@@ -245,8 +245,44 @@ export function isSizeSortKey(key = "", sort = "") {
 	return sort === "size" || SIZE_SORT_KEYS.has(String(key || "").toLowerCase());
 }
 
+// Wire gauge, thinnest wire first: the largest AWG number in the value leads ("22-18", "16-14", "12-10", "8", "2").
+export function wireGaugeSortKey(value = "") {
+	const numbers = (String(value).match(/\d+/g) || []).map(Number);
+	if (!numbers.length) return null;
+	return [-Math.max(...numbers), -Math.min(...numbers)];
+}
+
+// Terminal stud size, smallest first: numbered sizes (#4 ... #12, read as their real diameter) before inch sizes.
+export function studSizeSortKey(value = "") {
+	const text = String(value).replace(/[”″]/g, '"').trim();
+	const numbered = text.match(/^#\s*(\d+)/);
+	if (numbered) return 0.06 + 0.013 * Number(numbered[1]);
+	const loose = leadingSizeSort(text);
+	return Number.isFinite(loose) ? loose : null;
+}
+
+function compareByKey(keyOf) {
+	return (a, b) => {
+		const ka = keyOf(a);
+		const kb = keyOf(b);
+		if (ka !== null && kb !== null) {
+			const la = [].concat(ka);
+			const lb = [].concat(kb);
+			for (let i = 0; i < Math.max(la.length, lb.length); i += 1) {
+				if ((la[i] ?? 0) !== (lb[i] ?? 0)) return (la[i] ?? 0) - (lb[i] ?? 0);
+			}
+		}
+		if (ka !== null && kb === null) return -1;
+		if (ka === null && kb !== null) return 1;
+		return compareText(a, b);
+	};
+}
+
 // Sizes by value (as sortBuilderOptionValues does, plus the general size keys); everything else alphabetically.
+// sort "gauge": wire gauge, thinnest first. sort "stud": stud size, smallest first (numbered sizes before inches).
 export function sortGeneralChoiceValues(values = [], key = "", sort = "") {
+	if (sort === "gauge") return [...values].sort(compareByKey(wireGaugeSortKey));
+	if (sort === "stud") return [...values].sort(compareByKey(studSizeSortKey));
 	if (!isSizeSortKey(key, sort)) return [...values].sort(compareText);
 	return [...values].sort((a, b) => {
 		const aSort = generalSizeSortValue(a, key);
