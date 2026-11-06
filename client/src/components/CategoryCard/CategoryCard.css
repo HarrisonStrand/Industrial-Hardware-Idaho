@@ -75,6 +75,11 @@
   align-self: center !important;
 }
 
+/* No name on the card (logo cards): the white fade that keeps the name readable is not needed. */
+.category-card-image-wrapper.category-card-no-name::before {
+  display: none;
+}
+
 /* A logo on a solid color fills the card: the card takes the logo's color, the whole logo is centered. */
 .category-card-image-wrapper.category-card-image-cover {
   justify-content: center !important;

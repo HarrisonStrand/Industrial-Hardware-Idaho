@@ -32,6 +32,8 @@ export default function CategoryCard({
 	// A logo on a solid color (Diablo, Makita): the card is filled with that color and the whole logo
 	// sits centered on it ("imageBackground" in categories.json).
 	const coverColor = category.imageBackground || "";
+	// The logo already says the name (Diablo, Makita), so the text label is left off ("hideName").
+	const hideName = Boolean(category.hideName);
 
 	let linkTo =category.directPath || category.path || category.href || "";
 
@@ -47,7 +49,7 @@ export default function CategoryCard({
 		<div
 			className={`category-card-image-wrapper position-relative flex-row justify-content-end${
 				coverColor ? " category-card-image-cover" : ""
-			}`}
+			}${hideName ? " category-card-no-name" : ""}`}
 			style={coverColor ? { backgroundColor: coverColor } : undefined}>
 			<img
 				src={category.image || CATEGORY_FALLBACK_IMAGE}
@@ -61,13 +63,15 @@ export default function CategoryCard({
 				}}
 			/>
 
-			<div className='category-card-text-layer position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-start align-items-end ps-3'>
-				<div>
-					<h5 className='font-secondary category-name text-uppercase fw-semibold'>
-						{category.name}
-					</h5>
+			{hideName ? null : (
+				<div className='category-card-text-layer position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-start align-items-end ps-3'>
+					<div>
+						<h5 className='font-secondary category-name text-uppercase fw-semibold'>
+							{category.name}
+						</h5>
+					</div>
 				</div>
-			</div>
+			)}
 
 			{locked ? (
 				<div className='category-card-locked-overlay'>
