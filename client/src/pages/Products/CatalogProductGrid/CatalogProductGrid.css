@@ -7,6 +7,17 @@
   transition: transform 180ms ease, box-shadow 180ms ease;
 }
 
+.catalog-grid-card {
+  font: inherit;
+  cursor: pointer;
+}
+
+/* The product picked for the chosen-product panel below the grid. */
+.catalog-grid-card.is-selected {
+  border-color: var(--main-color);
+  box-shadow: 0 0 0 2px rgb(from var(--main-color) r g b / 0.45);
+}
+
 .catalog-grid-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 14px 35px rgba(0, 0, 0, 0.12);

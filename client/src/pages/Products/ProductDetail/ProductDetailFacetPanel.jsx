@@ -1155,7 +1155,8 @@ function ProductResultsGrid({
 
 
 
-function ProductPreviewPanel({
+// Also used by product grid pages for the product picked from the grid.
+export function ProductPreviewPanel({
 	variant,
 	builderImage = "",
 	subcategoryId = "",
@@ -1172,6 +1173,8 @@ function ProductPreviewPanel({
 	onAddToCart,
 	onViewCart,
 	onOpenDetails,
+	hidePrice = false,
+	emptyPriceText = "Select a card for pricing",
 }) {
 	const { stockDisplayEnabled: showStock } = useSiteSwitches();
 	const image = variant?.image || builderImage || "";
@@ -1230,9 +1233,13 @@ function ProductPreviewPanel({
 
 				<div className='builder-product-preview-actions'>
 					<div className='price-container text-main font-secondary fs-2 text-md-end mb-2'>
-						{variant ? formatCurrency(totalPrice, currency) : "--"}
+						{variant && !hidePrice ? formatCurrency(totalPrice, currency) : "--"}
 						<div className='fs-6 text-muted font-sans-serif'>
-							{variant ? `${formatCurrency(unitPrice, currency)} each` : "Select a card for pricing"}
+							{!variant
+								? emptyPriceText
+								: hidePrice
+									? "Contact for pricing"
+									: `${formatCurrency(unitPrice, currency)} each`}
 						</div>
 					</div>
 

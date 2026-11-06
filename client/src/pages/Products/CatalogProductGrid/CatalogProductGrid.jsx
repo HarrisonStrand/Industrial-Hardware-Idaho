@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from "../../../context/CartContext.jsx";
+import { useToast } from "../../../context/ToastContext.jsx";
+import { ProductPreviewPanel } from "../ProductDetail/ProductDetailFacetPanel.jsx";
 import { fetchCatalog } from "../../../services/catalogApi.js";
 import ReviewerStrip from "../../../components/DraftPreview/ReviewerStrip.jsx";
 import { formatBuilderValue, systemForRows } from "../../../utils/formatBuilderValue.js";
@@ -135,8 +138,37 @@ function Pagination({ currentPage, totalPages, onPageChange, disabled = false })
   );
 }
 
+// Turns a grid item into the shape the builder's "Selected Preview" panel expects.
+function toPreviewVariant(item) {
+  if (!item) return null;
+  return {
+    productId: item.productId,
+    name: item.title,
+    title: item.title,
+    partNumber: item.sku,
+    sku: item.sku,
+    slug: item.slug,
+    image: item.image,
+    price: item.price,
+    qtyAvailable: Number(item.qtyAvailable || 0),
+    attributes: {},
+    preview: item.preview,
+  };
+}
+
+function toQuantity(value) {
+  return Math.max(1, Math.floor(Number(value || 1)) || 1);
+}
+
 export default function CatalogProductGrid({ page = {} }) {
   const { stockDisplayEnabled: showStock } = useSiteSwitches();
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+  const { showToast } = useToast();
+  const selectedPanelRef = useRef(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [showViewCartCta, setShowViewCartCta] = useState(false);
   const [items, setItems] = useState([]);
   const [facets, setFacets] = useState(EMPTY_FACETS);
   const [attributeFacets, setAttributeFacets] = useState([]);
@@ -176,6 +208,9 @@ export default function CatalogProductGrid({ page = {} }) {
       measurementSystem: "",
     });
     setAttributeFilters({});
+    setSelectedItem(null);
+    setQuantity(1);
+    setShowViewCartCta(false);
   }, [page.categoryId, page.subcategoryId]);
 
   useEffect(() => {
@@ -278,6 +313,46 @@ export default function CatalogProductGrid({ page = {} }) {
       measurementSystem: "",
     });
     setCurrentPage(1);
+  }
+
+  const selectedVariant = toPreviewVariant(selectedItem);
+  const unitPrice = Number(selectedItem?.price || 0);
+  const hidePrice = !page.showPricing || selectedItem?.price === null || selectedItem?.price === undefined;
+
+  // Clicking a card picks it and scrolls down to the chosen-product panel, like the builder pages.
+  function selectItem(item) {
+    if (String(item.productId) !== String(selectedItem?.productId)) setQuantity(1);
+    setSelectedItem(item);
+    window.setTimeout(() => {
+      selectedPanelRef.current?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+    }, 60);
+  }
+
+  function handleAddToCart() {
+    if (!selectedItem) return;
+    const safeQuantity = toQuantity(quantity);
+    addToCart({
+      productId: selectedItem.productId,
+      quantity: safeQuantity,
+      partNumber: selectedItem.sku,
+      sku: selectedItem.sku,
+      slug: selectedItem.slug || "",
+      title: selectedItem.title,
+      image: selectedItem.image || "",
+      attributes: {},
+      price: unitPrice,
+      category: page.categoryId || "",
+      subcategory: page.subcategoryId || "",
+      shortDescription: selectedItem.shortDescription || "",
+      metadata: { source: "catalog-product-grid" },
+    });
+    showToast({
+      message: safeQuantity > 1 ? `Added ${safeQuantity} items to cart` : "Added to cart",
+      variant: "success",
+      duration: 4000,
+    });
+    setShowViewCartCta(true);
+    setQuantity(1);
   }
 
   function changePage(nextPage) {
@@ -474,9 +549,13 @@ export default function CatalogProductGrid({ page = {} }) {
           <div className="row g-4">
             {items.map((item) => (
               <div key={item.productId} className="col-12 col-md-6 col-xl-4 col-xxl-3">
-                <Link
-                  to={`/catalog/product/${item.slug}`}
-                  className="catalog-grid-card theme-section-container rounded-4 overflow-hidden text-decoration-none text-main h-100 d-flex flex-column"
+                <button
+                  type="button"
+                  onClick={() => selectItem(item)}
+                  aria-pressed={String(item.productId) === String(selectedItem?.productId)}
+                  className={`catalog-grid-card theme-section-container rounded-4 overflow-hidden text-decoration-none text-main text-start w-100 h-100 d-flex flex-column p-0${
+                    String(item.productId) === String(selectedItem?.productId) ? " is-selected" : ""
+                  }`}
                 >
                   <div className="catalog-grid-image bg-main-light d-flex align-items-center justify-content-center">
                     {item.image ? (
@@ -524,7 +603,7 @@ export default function CatalogProductGrid({ page = {} }) {
                       ) : null}
                     </div>
                   </div>
-                </Link>
+                </button>
               </div>
             ))}
           </div>
@@ -563,6 +642,29 @@ export default function CatalogProductGrid({ page = {} }) {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={changePage}
+            />
+          </div>
+        ) : null}
+
+        {!error && (items.length || selectedItem) ? (
+          <div ref={selectedPanelRef} className="catalog-grid-selected mt-4">
+            <ProductPreviewPanel
+              variant={selectedVariant}
+              choices={[]}
+              displayName={page.displayName || ""}
+              unitPrice={unitPrice}
+              currency={selectedItem?.currency || "USD"}
+              qtyAvailable={Number(selectedItem?.qtyAvailable || 0)}
+              quantity={quantity}
+              totalPrice={unitPrice * toQuantity(quantity)}
+              exactVariant={selectedVariant}
+              hidePrice={hidePrice}
+              emptyPriceText="Select a product above"
+              showViewCartCta={showViewCartCta}
+              onQuantityChange={setQuantity}
+              onAddToCart={handleAddToCart}
+              onViewCart={() => navigate("/cart")}
+              onOpenDetails={() => selectedItem?.slug && navigate(`/catalog/product/${selectedItem.slug}`)}
             />
           </div>
         ) : null}

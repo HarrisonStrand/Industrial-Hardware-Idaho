@@ -342,6 +342,12 @@ export async function getPublishedCatalog(filters = {}) {
         null;
 
       const facetValues = getFacetValues(enrichment);
+      // Store stock from the Fishbowl snapshot (the same number the cart and orders use);
+      // the vendor offering's count only when the product has none.
+      const qtyAvailable = Math.max(
+        0,
+        Number(product?.inventory?.qtyAvailable ?? preferredOffering?.inventory?.qtyAvailable ?? 0) || 0
+      );
 
       return {
         productId: product._id,
@@ -368,8 +374,8 @@ export async function getPublishedCatalog(filters = {}) {
           product?.pricing?.currency ||
           "USD",
         vendorName: preferredOffering?.vendorName || "",
-        inStock: (preferredOffering?.inventory?.qtyAvailable || 0) > 0,
-        qtyAvailable: preferredOffering?.inventory?.qtyAvailable || 0,
+        inStock: qtyAvailable > 0,
+        qtyAvailable,
         productType: facetValues.productType,
         grade: facetValues.grade,
         materialFinish: facetValues.materialFinish,
