@@ -8,6 +8,11 @@ import {
   findFixedPriceGroup,
   sanitizeFixedPriceGroups,
 } from "../config/fixedPriceGroups.js";
+import { websiteGroupFor } from "../services/fishbowl/fishbowlPricingRules.js";
+
+// "markup": Fishbowl list price x account markup (or a fixed-price group).
+// "fishbowl-rules": the price Fishbowl's own pricing rules give (copied nightly); markup when a product has none.
+export const PRICE_MODES = ["markup", "fishbowl-rules"];
 
 let pricingSettingsCache = {
   value: null,
@@ -68,6 +73,7 @@ export async function getPricingSettings({ forceRefresh = false } = {}) {
     accountRules: sanitizeAccountRules(doc?.accountRules || DEFAULT_ACCOUNT_PRICE_RULES),
     // Never saved = the default groups; saved as an empty list = no fixed-price groups.
     fixedPriceGroups: sanitizeFixedPriceGroups(doc?.fixedPriceGroups),
+    priceMode: PRICE_MODES.includes(doc?.priceMode) ? doc.priceMode : "markup",
     updatedAt: doc?.updatedAt || null,
   };
 
@@ -126,7 +132,25 @@ export async function buildPricingContextFromUser(user = null, pricingSettings =
 // The price a customer pays: the Fishbowl price times the account's markup, unless the product is in
 // a fixed-price group (strut, Diablo, ...), which sells at the group's multiplier (1 = Fishbowl price)
 // for every account. `groupInfo` is { category, makers } from priceGroupInfo(); without it no group applies.
-export function applyPriceMultiplier(baseCatalogPrice = 0, pricingContext = {}, groupInfo = null, fixedPriceGroups = []) {
+export function applyPriceMultiplier(
+  baseCatalogPrice = 0,
+  pricingContext = {},
+  groupInfo = null,
+  fixedPriceGroups = [],
+  priceMode = "markup"
+) {
+  // Fishbowl rules mode: the rule price for the account's Fishbowl group (Retail, or House for House / Net 30).
+  if (priceMode === "fishbowl-rules") {
+    const rulePrice = groupInfo?.rulePrices?.[websiteGroupFor(pricingContext?.approvedType)];
+    if (rulePrice && Number(rulePrice.price) > 0) {
+      return {
+        multiplier: null,
+        fixedPriceGroup: null,
+        priceRule: rulePrice.source === "rule" ? rulePrice.ruleName || "Fishbowl rule" : "Fishbowl list price",
+        resolvedPrice: roundCurrency(Number(rulePrice.price)),
+      };
+    }
+  }
   const group = groupInfo ? findFixedPriceGroup(groupInfo, fixedPriceGroups) : null;
   const multiplier = group ? Number(group.multiplier || 1) : Number(pricingContext?.multiplier || 1);
   return {
@@ -140,18 +164,24 @@ export async function resolveProductPrice(product = {}, pricingInput = {}, prici
   const settings = pricingSettings || (await getPricingSettings());
   const pricingContext = await getPricingContext(pricingInput, settings);
   const baseCatalogPrice = getBaseCatalogPrice(product);
-  const { resolvedPrice, multiplier, fixedPriceGroup } = applyPriceMultiplier(
+  const { resolvedPrice, multiplier, fixedPriceGroup, priceRule } = applyPriceMultiplier(
     baseCatalogPrice,
     pricingContext,
     groupInfo,
-    settings?.fixedPriceGroups || []
+    settings?.fixedPriceGroups || [],
+    settings?.priceMode || "markup"
   );
 
   return {
     ...pricingContext,
     multiplier,
     fixedPriceGroup,
-    label: fixedPriceGroup ? `${fixedPriceGroup} (fixed price)` : pricingContext.label,
+    priceRule: priceRule || null,
+    label: priceRule
+      ? `${pricingContext.label} (Fishbowl pricing)`
+      : fixedPriceGroup
+        ? `${fixedPriceGroup} (fixed price)`
+        : pricingContext.label,
     baseCatalogPrice,
     resolvedPrice,
     currency: product?.pricing?.currency || "USD",

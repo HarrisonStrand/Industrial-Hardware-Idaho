@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch";
 import AdminPriceSync from "./AdminPriceSync.jsx";
+import AdminFishbowlRules from "./AdminFishbowlRules.jsx";
 import { useToast } from "../../context/ToastContext";
 import "./AdminPricing.css";
 
@@ -340,6 +341,8 @@ async function save() {
 					Last updated: {prettyDate(updatedAt)}
 				</div>
 			</div>
+
+			<AdminFishbowlRules />
 
 			<div className='row g-4'>
 				{["RETAIL", "HOUSE", "NET30"].map((type) => (

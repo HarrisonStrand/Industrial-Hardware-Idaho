@@ -19,6 +19,7 @@ import {
 	getPricingSettings,
 } from "../../utils/resolveProductPrice.js";
 import { priceGroupInfo } from "../../config/fixedPriceGroups.js";
+import { loadRulePrices, productPartNumber } from "../fishbowl/loadRulePrices.js";
 
 
 
@@ -32,6 +33,7 @@ function resolveBuilderPriceFast(
 	includePricing = true,
 	groupInfo = null,
 	fixedPriceGroups = [],
+	priceMode = "markup",
 ) {
 	if (!includePricing) {
 		return {
@@ -55,7 +57,7 @@ function resolveBuilderPriceFast(
 	);
 
 	// Same rule as checkout: fixed-price groups (strut, Diablo, ...) skip the account markup.
-	const priced = applyPriceMultiplier(baseCatalogPrice, pricingContext, groupInfo, fixedPriceGroups);
+	const priced = applyPriceMultiplier(baseCatalogPrice, pricingContext, groupInfo, fixedPriceGroups, priceMode);
 
 	return {
 		resolvedPrice: priced.resolvedPrice,
@@ -63,9 +65,11 @@ function resolveBuilderPriceFast(
 		currency: product?.pricing?.currency || "USD",
 		source: product?.pricing?.priceSource || "fishbowl",
 		approvedType: pricingContext?.approvedType || "RETAIL",
-		label: priced.fixedPriceGroup
-			? `${priced.fixedPriceGroup} (fixed price)`
-			: pricingContext?.label || "Retail",
+		label: priced.priceRule
+			? `${pricingContext?.label || "Retail"} (Fishbowl pricing)`
+			: priced.fixedPriceGroup
+				? `${priced.fixedPriceGroup} (fixed price)`
+				: pricingContext?.label || "Retail",
 	};
 }
 
@@ -989,6 +993,11 @@ export async function getCatalogBuilderSubcategory(
 		};
 	}
 
+	// Fishbowl rules mode: the copied rule prices for these products (empty map in markup mode).
+	const rulePriceMap = includePricing
+		? await loadRulePrices([...productMap.values()], pricingSettings)
+		: new Map();
+
 	const rawVariants = enrichments
 		.map((enrichment) => {
 				const product = productMap.get(String(enrichment.productId));
@@ -1000,8 +1009,9 @@ export async function getCatalogBuilderSubcategory(
 					product,
 					pricingContext,
 					includePricing,
-					priceGroupInfo(product, enrichment),
+					priceGroupInfo(product, enrichment, rulePriceMap.get(productPartNumber(product)) || null),
 					pricingSettings?.fixedPriceGroups || [],
+					pricingSettings?.priceMode || "markup",
 				);
 				const qtyAvailable = asNumber(product?.inventory?.qtyAvailable, 0);
 

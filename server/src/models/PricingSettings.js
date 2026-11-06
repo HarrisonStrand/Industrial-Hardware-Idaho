@@ -32,6 +32,9 @@ const PricingSettingsSchema = new mongoose.Schema(
       },
     },
 
+    // "markup": Fishbowl list price x account markup. "fishbowl-rules": Fishbowl's own pricing rules.
+    priceMode: { type: String, enum: ["markup", "fishbowl-rules"], default: "markup" },
+
     // Groups that sell at the Fishbowl price for every account (see config/fixedPriceGroups.js).
     // No default: a record that never saved groups uses the code's default list.
     fixedPriceGroups: {

@@ -25,6 +25,13 @@ import {
   runFishbowlPriceSync,
 } from "../services/fishbowl/syncFishbowlPrices.js";
 import { getFishbowlPriceSyncSchedulerState } from "../services/fishbowl/fishbowlPriceSyncScheduler.js";
+import { FishbowlPricingSnapshot } from "../models/FishbowlPricing.js";
+import {
+  getFishbowlPricingRulesRuntimeState,
+  runFishbowlPricingRulesCopy,
+} from "../services/fishbowl/syncFishbowlPricingRules.js";
+import { comparePricingModes, comparisonCsv } from "../services/fishbowl/comparePricingModes.js";
+import { getPricingSettings } from "../utils/resolveProductPrice.js";
 
 const router = express.Router();
 
@@ -259,6 +266,64 @@ router.post("/price-changes/decide", requireAuth, requireAdmin, async (req, res)
   } catch (err) {
     console.error(err);
     res.status(400).json({ message: err?.message || "Failed to save the decision" });
+  }
+});
+
+// --- Fishbowl pricing rules (copy, compare, used when Admin > Pricing is set to "Fishbowl rules") ---
+
+router.get("/pricing-rules/status", requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const [snapshot, lastRun, settings] = await Promise.all([
+      FishbowlPricingSnapshot.findOne({ key: "default" }, { counts: 1, syncedAt: 1 }).lean(),
+      SyncRun.findOne({ jobType: "fishbowl-pricing-rules" }).sort({ startedAt: -1 }).lean(),
+      getPricingSettings({ forceRefresh: true }),
+    ]);
+    res.json({
+      ok: true,
+      runtime: getFishbowlPricingRulesRuntimeState(),
+      priceMode: settings.priceMode,
+      copiedAt: snapshot?.syncedAt || null,
+      counts: snapshot?.counts || {},
+      lastRun: mapSyncRun(lastRun),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err?.message || "Failed to load Fishbowl rules status" });
+  }
+});
+
+router.post("/pricing-rules/copy", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const result = await runFishbowlPricingRulesCopy({
+      triggeredBy: req.user?.email || req.user?.id || "admin-button",
+    });
+    res.json({ ok: true, result });
+  } catch (err) {
+    console.error(err);
+    res.status(err?.status || 500).json({ message: err?.message || "Fishbowl rules copy failed" });
+  }
+});
+
+// Summary plus the 100 biggest Retail changes. The full list is /pricing-rules/compare.csv.
+router.get("/pricing-rules/compare", requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const { rows, ...report } = await comparePricingModes();
+    res.json({ ok: true, ...report, biggestChanges: rows.slice(0, 100) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err?.message || "Failed to compare prices" });
+  }
+});
+
+router.get("/pricing-rules/compare.csv", requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const { rows } = await comparePricingModes();
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="price-comparison.csv"');
+    res.send(comparisonCsv(rows));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err?.message || "Failed to build the price comparison" });
   }
 });
 

@@ -1,6 +1,7 @@
 import Product from "../models/Product.js";
 import ProductEnrichment from "../models/ProductEnrichment.js";
 import { priceGroupInfo } from "../config/fixedPriceGroups.js";
+import { loadRulePrices, productPartNumber } from "../services/fishbowl/loadRulePrices.js";
 import { splitOrderLineStock } from "../services/catalog/stockDisplay.js";
 import {
   resolveProductPrice,
@@ -133,6 +134,7 @@ export async function normalizeOrderItems(
       ).lean()
     : [];
   const enrichmentByProductId = new Map(enrichments.map((row) => [String(row.productId), row]));
+  const rulePriceMap = await loadRulePrices(products, pricingSettings);
 
   return Promise.all(
     normalized.map(async (item) => {
@@ -153,7 +155,11 @@ export async function normalizeOrderItems(
         product,
         resolvedPricingContext,
         pricingSettings,
-        priceGroupInfo(product, enrichmentByProductId.get(String(product._id)))
+        priceGroupInfo(
+          product,
+          enrichmentByProductId.get(String(product._id)),
+          rulePriceMap.get(productPartNumber(product)) || null
+        )
       );
 
       const resolvedPartNumber =

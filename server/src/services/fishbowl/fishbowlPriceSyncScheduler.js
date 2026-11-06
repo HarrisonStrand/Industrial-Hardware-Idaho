@@ -1,6 +1,7 @@
 import { runFishbowlPriceSync } from "./syncFishbowlPrices.js";
+import { runFishbowlPricingRulesCopy } from "./syncFishbowlPricingRules.js";
 
-// Runs the Fishbowl price sync once a day. Off unless FISHBOWL_PRICE_SYNC_ENABLED=true (set it on the
+// Runs the Fishbowl price sync once a day, then refreshes the copy of Fishbowl's pricing rules and costs. Off unless FISHBOWL_PRICE_SYNC_ENABLED=true (set it on the
 // live server only, so a local copy never changes prices).
 //   FISHBOWL_PRICE_SYNC_HOUR_UTC   hour of day to run, 0-23 (default 9 = 2-3 am Mountain time)
 
@@ -49,6 +50,12 @@ async function runScheduled() {
 		schedulerState.lastError = "";
 		const result = await runFishbowlPriceSync({ dryRun: false, triggeredBy: "schedule" });
 		if (result?.stopped) schedulerState.lastError = result.message;
+		try {
+			await runFishbowlPricingRulesCopy({ triggeredBy: "schedule" });
+		} catch (err) {
+			schedulerState.lastError = `Rules copy: ${err?.message || "failed"}`;
+			console.error("❌ Scheduled Fishbowl rules copy failed:", err);
+		}
 		schedulerState.lastFinishedAt = new Date();
 	} catch (err) {
 		schedulerState.lastError = err?.message || "Scheduled Fishbowl price sync failed";

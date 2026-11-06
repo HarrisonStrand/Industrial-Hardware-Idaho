@@ -43,10 +43,12 @@ export function sanitizeFixedPriceGroups(input) {
 }
 
 // What a product is matched on: its website category and every name its maker goes by.
-export function priceGroupInfo(product = {}, enrichment = {}) {
+// rulePrices: the product's copied Fishbowl rule prices (only used in "Fishbowl rules" mode).
+export function priceGroupInfo(product = {}, enrichment = {}, rulePrices = null) {
   return {
     category: enrichment?.category || "",
     makers: [enrichment?.manufacturer?.name, product?.brand, product?.vendor].filter(Boolean),
+    rulePrices,
   };
 }
 

@@ -6,6 +6,7 @@ import { catalogNamePattern } from "./getCatalogBuilderSubcategory.js";
 import { buildReviewerInfo, findPreviewRows, isDraftPreview } from "./draftPreview.js";
 import { isListedForImage } from "./productImageVisibility.js";
 import { priceGroupInfo } from "../../config/fixedPriceGroups.js";
+import { loadRulePrices, productPartNumber } from "../fishbowl/loadRulePrices.js";
 import { getPricingContext, getPricingSettings, resolveProductPrice } from "../../utils/resolveProductPrice.js";
 
 function escapeRegex(value = "") {
@@ -335,18 +336,24 @@ export async function getPublishedCatalog(filters = {}) {
   // account's markup, or the fixed price for fixed-price groups.
   const pricingSettings = await getPricingSettings();
   const resolvedPricingContext = await getPricingContext(pricingContext, pricingSettings);
+  const rulePriceMap = await loadRulePrices(
+    pageEnrichments.map((enrichment) => productMap.get(String(enrichment.productId))).filter(Boolean),
+    pricingSettings
+  );
   const resolvedPrices = new Map(
     await Promise.all(
       pageEnrichments.map(async (enrichment) => {
         const product = productMap.get(String(enrichment.productId));
         if (!product) return [String(enrichment.productId), null];
         const base = product?.pricing?.basePrice ?? product?.pricing?.salePrice;
-        if (base === null || base === undefined) return [String(enrichment.productId), null];
+        const rulePrices = rulePriceMap.get(productPartNumber(product)) || null;
+        // No Fishbowl price and no rule price: "Call for price".
+        if ((base === null || base === undefined) && !rulePrices) return [String(enrichment.productId), null];
         const resolved = await resolveProductPrice(
           product,
           resolvedPricingContext,
           pricingSettings,
-          priceGroupInfo(product, enrichment)
+          priceGroupInfo(product, enrichment, rulePrices)
         );
         return [String(enrichment.productId), resolved.resolvedPrice];
       })

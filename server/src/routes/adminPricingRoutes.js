@@ -7,6 +7,7 @@ import {
 } from "../config/pricingRules.js";
 import { sanitizeFixedPriceGroups } from "../config/fixedPriceGroups.js";
 import {
+  PRICE_MODES,
   clearPricingSettingsCache,
   getPricingSettings,
 } from "../utils/resolveProductPrice.js";
@@ -25,17 +26,17 @@ router.get("/", requireAuth, requireAdmin, async (_req, res) => {
 
 router.put("/", requireAuth, requireAdmin, async (req, res) => {
   try {
-    const nextRules = sanitizeAccountRules(
-      req.body?.accountRules || DEFAULT_ACCOUNT_PRICE_RULES
-    );
-
-    const update = {
-      accountRules: nextRules,
-      updatedBy: req.user?.id || null,
-    };
-    // Only saved when sent, so an older admin page never wipes the groups.
+    // Each part is saved only when it is sent, so saving one setting (e.g. the price mode) never
+    // resets the markups or the groups.
+    const update = { updatedBy: req.user?.id || null };
+    if (req.body?.accountRules && typeof req.body.accountRules === "object") {
+      update.accountRules = sanitizeAccountRules(req.body.accountRules);
+    }
     if (Array.isArray(req.body?.fixedPriceGroups)) {
       update.fixedPriceGroups = sanitizeFixedPriceGroups(req.body.fixedPriceGroups);
+    }
+    if (PRICE_MODES.includes(req.body?.priceMode)) {
+      update.priceMode = req.body.priceMode;
     }
 
     const doc = await PricingSettings.findOneAndUpdate(
@@ -56,6 +57,7 @@ router.put("/", requireAuth, requireAdmin, async (req, res) => {
         key: doc.key,
         accountRules: sanitizeAccountRules(doc.accountRules),
         fixedPriceGroups: sanitizeFixedPriceGroups(doc.toObject().fixedPriceGroups),
+        priceMode: PRICE_MODES.includes(doc.priceMode) ? doc.priceMode : "markup",
         updatedAt: doc.updatedAt,
       },
     });

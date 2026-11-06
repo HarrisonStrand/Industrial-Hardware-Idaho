@@ -23,7 +23,7 @@
     "test:page-layouts": "node --test src/services/catalog/__tests__/builderShaping.test.js src/services/catalog/__tests__/pageLayoutPlan.test.js",
     "layout:plan": "node src/scripts/applyPageLayoutPlan.js",
     "test:stock-display": "node --test src/services/catalog/__tests__/stockDisplay.test.js",
-    "test:pricing": "node --test src/services/catalog/__tests__/fixedPriceGroups.test.js src/services/catalog/__tests__/priceChangeRules.test.js"
+    "test:pricing": "node --test src/services/catalog/__tests__/fixedPriceGroups.test.js src/services/catalog/__tests__/priceChangeRules.test.js src/services/catalog/__tests__/fishbowlPricingRules.test.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.966.0",
