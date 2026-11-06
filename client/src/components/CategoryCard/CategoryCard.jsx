@@ -49,7 +49,7 @@ export default function CategoryCard({
 		<div
 			className={`category-card-image-wrapper position-relative flex-row justify-content-end${
 				coverColor ? " category-card-image-cover" : ""
-			}${hideName ? " category-card-no-name" : ""}`}
+			}`}
 			style={coverColor ? { backgroundColor: coverColor } : undefined}>
 			<img
 				src={category.image || CATEGORY_FALLBACK_IMAGE}

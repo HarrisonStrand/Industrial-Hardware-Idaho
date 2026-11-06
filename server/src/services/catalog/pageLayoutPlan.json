@@ -587,7 +587,15 @@
     "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
-  "diablo/drill-bits": {
+  "diablo/metal-bits": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "diablo/wood-bits": {
+    "displayMode": "product-grid",
+    "fallbackMode": "product-grid"
+  },
+  "diablo/concrete-bits": {
     "displayMode": "product-grid",
     "fallbackMode": "product-grid"
   },

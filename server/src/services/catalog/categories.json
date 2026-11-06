@@ -1062,9 +1062,59 @@
           ]
         },
         {
-          "id": "drill-bits",
-          "name": "Drill Bits",
-          "image": "/images/subcategories/diablo-drill-bits.png",
+          "id": "metal-bits",
+          "name": "Metal Bits",
+          "image": "/images/subcategories/diablo-metal-bits.png",
+          "filters": [
+            {
+              "key": "toolType",
+              "label": "Tool Type"
+            },
+            {
+              "key": "diameter",
+              "label": "Diameter (in.)",
+              "sort": "size"
+            },
+            {
+              "key": "length",
+              "label": "Length (in.)",
+              "sort": "size"
+            },
+            {
+              "key": "packageQuantity",
+              "label": "Pack Quantity"
+            }
+          ]
+        },
+        {
+          "id": "wood-bits",
+          "name": "Wood Bits",
+          "image": "/images/subcategories/diablo-wood-bits.png",
+          "filters": [
+            {
+              "key": "toolType",
+              "label": "Tool Type"
+            },
+            {
+              "key": "diameter",
+              "label": "Diameter (in.)",
+              "sort": "size"
+            },
+            {
+              "key": "length",
+              "label": "Length (in.)",
+              "sort": "size"
+            },
+            {
+              "key": "packageQuantity",
+              "label": "Pack Quantity"
+            }
+          ]
+        },
+        {
+          "id": "concrete-bits",
+          "name": "Concrete Bits",
+          "image": "/images/subcategories/diablo-concrete-bits.png",
           "filters": [
             {
               "key": "toolType",

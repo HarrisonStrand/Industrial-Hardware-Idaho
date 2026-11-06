@@ -153,7 +153,7 @@ export function getDefaultSubcategorySetting(definition = {}) {
     fallbackMode: "range-list",
     rangeDataSource: "ready",
     isVisible: isInitialBuilder || DEFAULT_VISIBLE_CATEGORIES.has(categoryId) || DEFAULT_VISIBLE_KEYS.has(key),
-    showPricing: false,
+    showPricing: true,
     allowCart: isInitialBuilder,
     image: {
       url: definition.imageUrl || "",
