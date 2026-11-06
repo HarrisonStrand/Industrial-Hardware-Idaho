@@ -4,6 +4,10 @@ import {
   normalizeApprovedType,
   sanitizeAccountRules,
 } from "../config/pricingRules.js";
+import {
+  findFixedPriceGroup,
+  sanitizeFixedPriceGroups,
+} from "../config/fixedPriceGroups.js";
 
 let pricingSettingsCache = {
   value: null,
@@ -62,6 +66,8 @@ export async function getPricingSettings({ forceRefresh = false } = {}) {
   const value = {
     key: "default",
     accountRules: sanitizeAccountRules(doc?.accountRules || DEFAULT_ACCOUNT_PRICE_RULES),
+    // Never saved = the default groups; saved as an empty list = no fixed-price groups.
+    fixedPriceGroups: sanitizeFixedPriceGroups(doc?.fixedPriceGroups),
     updatedAt: doc?.updatedAt || null,
   };
 
@@ -117,16 +123,35 @@ export async function buildPricingContextFromUser(user = null, pricingSettings =
   );
 }
 
-export async function resolveProductPrice(product = {}, pricingInput = {}, pricingSettings = null) {
+// The price a customer pays: the Fishbowl price times the account's markup, unless the product is in
+// a fixed-price group (strut, Diablo, ...), which sells at the group's multiplier (1 = Fishbowl price)
+// for every account. `groupInfo` is { category, makers } from priceGroupInfo(); without it no group applies.
+export function applyPriceMultiplier(baseCatalogPrice = 0, pricingContext = {}, groupInfo = null, fixedPriceGroups = []) {
+  const group = groupInfo ? findFixedPriceGroup(groupInfo, fixedPriceGroups) : null;
+  const multiplier = group ? Number(group.multiplier || 1) : Number(pricingContext?.multiplier || 1);
+  return {
+    multiplier,
+    fixedPriceGroup: group ? group.label : null,
+    resolvedPrice: roundCurrency(Number(baseCatalogPrice || 0) * multiplier),
+  };
+}
+
+export async function resolveProductPrice(product = {}, pricingInput = {}, pricingSettings = null, groupInfo = null) {
   const settings = pricingSettings || (await getPricingSettings());
   const pricingContext = await getPricingContext(pricingInput, settings);
   const baseCatalogPrice = getBaseCatalogPrice(product);
-  const resolvedPrice = roundCurrency(
-    baseCatalogPrice * Number(pricingContext.multiplier || 1)
+  const { resolvedPrice, multiplier, fixedPriceGroup } = applyPriceMultiplier(
+    baseCatalogPrice,
+    pricingContext,
+    groupInfo,
+    settings?.fixedPriceGroups || []
   );
 
   return {
     ...pricingContext,
+    multiplier,
+    fixedPriceGroup,
+    label: fixedPriceGroup ? `${fixedPriceGroup} (fixed price)` : pricingContext.label,
     baseCatalogPrice,
     resolvedPrice,
     currency: product?.pricing?.currency || "USD",

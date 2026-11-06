@@ -34,6 +34,7 @@ import searchRoutes from "./routes/searchRoutes.js";
 import { isDraftPreview } from "./services/catalog/draftPreview.js";
 import { startFishbowlInventorySyncScheduler } from "./services/fishbowl/fishbowlInventorySyncScheduler.js";
 import { startFishbowlProductIntakeScheduler } from "./services/fishbowl/fishbowlProductIntakeScheduler.js";
+import { startFishbowlPriceSyncScheduler } from "./services/fishbowl/fishbowlPriceSyncScheduler.js";
 // import adminVendorMappingsRoutes from "./routes/adminVendorMappingsRoutes.js";
 
 console.log("Stripe key loaded?", Boolean(process.env.STRIPE_SECRET_KEY));
@@ -135,6 +136,7 @@ const PORT = process.env.PORT || 5001;
     } else {
       startFishbowlInventorySyncScheduler();
       startFishbowlProductIntakeScheduler();
+      startFishbowlPriceSyncScheduler();
     }
 
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

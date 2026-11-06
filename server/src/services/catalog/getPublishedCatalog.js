@@ -5,6 +5,8 @@ import { getCatalogPageFilters } from "./catalogLayoutDefaults.js";
 import { catalogNamePattern } from "./getCatalogBuilderSubcategory.js";
 import { buildReviewerInfo, findPreviewRows, isDraftPreview } from "./draftPreview.js";
 import { isListedForImage } from "./productImageVisibility.js";
+import { priceGroupInfo } from "../../config/fixedPriceGroups.js";
+import { getPricingContext, getPricingSettings, resolveProductPrice } from "../../utils/resolveProductPrice.js";
 
 function escapeRegex(value = "") {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -189,6 +191,7 @@ export async function getPublishedCatalog(filters = {}) {
     attributeFilters = {},
     limit = 24,
     skip = 0,
+    pricingContext = { approvedType: "RETAIL", approvalStatus: "NONE" },
   } = filters;
   const pageFilters =
     category && subcategory ? getCatalogPageFilters(category, subcategory) : [];
@@ -328,6 +331,28 @@ export async function getPublishedCatalog(filters = {}) {
     offeringsByProductId.get(key).push(offering);
   }
 
+  // Grid prices follow the same rule as the builder and checkout: the Fishbowl price times the
+  // account's markup, or the fixed price for fixed-price groups.
+  const pricingSettings = await getPricingSettings();
+  const resolvedPricingContext = await getPricingContext(pricingContext, pricingSettings);
+  const resolvedPrices = new Map(
+    await Promise.all(
+      pageEnrichments.map(async (enrichment) => {
+        const product = productMap.get(String(enrichment.productId));
+        if (!product) return [String(enrichment.productId), null];
+        const base = product?.pricing?.basePrice ?? product?.pricing?.salePrice;
+        if (base === null || base === undefined) return [String(enrichment.productId), null];
+        const resolved = await resolveProductPrice(
+          product,
+          resolvedPricingContext,
+          pricingSettings,
+          priceGroupInfo(product, enrichment)
+        );
+        return [String(enrichment.productId), resolved.resolvedPrice];
+      })
+    )
+  );
+
   const items = pageEnrichments
     .map((enrichment) => {
       const product = productMap.get(String(enrichment.productId));
@@ -365,14 +390,8 @@ export async function getPublishedCatalog(filters = {}) {
           enrichment.images?.find((image) => image.isPrimary)?.url ||
           enrichment.images?.[0]?.url ||
           "",
-        price:
-          preferredOffering?.pricing?.price ??
-          product?.pricing?.basePrice ??
-          null,
-        currency:
-          preferredOffering?.pricing?.currency ||
-          product?.pricing?.currency ||
-          "USD",
+        price: resolvedPrices.get(String(enrichment.productId)) ?? null,
+        currency: product?.pricing?.currency || "USD",
         vendorName: preferredOffering?.vendorName || "",
         inStock: qtyAvailable > 0,
         qtyAvailable,

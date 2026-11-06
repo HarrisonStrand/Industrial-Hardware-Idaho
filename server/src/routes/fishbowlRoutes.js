@@ -18,6 +18,14 @@ import {
   getFishbowlProductIntakeSchedulerState,
 } from "../services/fishbowl/fishbowlProductIntakeScheduler.js";
 
+import PriceChange from "../models/PriceChange.js";
+import {
+  decidePriceChanges,
+  getFishbowlPriceSyncRuntimeState,
+  runFishbowlPriceSync,
+} from "../services/fishbowl/syncFishbowlPrices.js";
+import { getFishbowlPriceSyncSchedulerState } from "../services/fishbowl/fishbowlPriceSyncScheduler.js";
+
 const router = express.Router();
 
 function safeObject(value) {
@@ -179,6 +187,78 @@ router.post("/product-intake/scan", requireAuth, requireAdmin, async (req, res) 
     const status = err?.status || (err?.code === "FISHBOWL_PRODUCT_INTAKE_RUNNING" ? 409 : 500);
     console.error(err);
     res.status(status).json({ message: err?.message || "Fishbowl product intake scan failed" });
+  }
+});
+
+// --- Fishbowl price sync ---
+
+router.get("/price-sync/status", requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const [lastRun, pendingCount] = await Promise.all([
+      SyncRun.findOne({ jobType: "fishbowl-prices" }).sort({ startedAt: -1 }).lean(),
+      PriceChange.countDocuments({ status: "pending" }),
+    ]);
+    res.json({
+      ok: true,
+      runtime: getFishbowlPriceSyncRuntimeState(),
+      schedule: getFishbowlPriceSyncSchedulerState(),
+      lastRun: mapSyncRun(lastRun),
+      pendingCount,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err?.message || "Failed to load price sync status" });
+  }
+});
+
+// { dryRun: true } checks Fishbowl and reports what would change, without changing prices.
+router.post("/price-sync/run", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const dryRun = safeObject(req.body).dryRun === true;
+    const result = await runFishbowlPriceSync({
+      dryRun,
+      triggeredBy: req.user?.email || req.user?.id || "admin-button",
+    });
+    res.json({ ok: true, result });
+  } catch (err) {
+    console.error(err);
+    res.status(err?.status || 500).json({ message: err?.message || "Fishbowl price sync failed" });
+  }
+});
+
+// ?status=pending (default) | applied | approved | rejected | cleared
+router.get("/price-changes", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const allowed = ["pending", "applied", "approved", "rejected", "cleared"];
+    const status = allowed.includes(String(req.query.status)) ? String(req.query.status) : "pending";
+    const limit = Math.min(500, Math.max(1, Number(req.query.limit) || 200));
+    const items = await PriceChange.find({ status })
+      .sort({ detectedAt: -1 })
+      .limit(limit)
+      .lean();
+    res.json({ ok: true, status, items });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err?.message || "Failed to load price changes" });
+  }
+});
+
+// { decision: "approve" | "reject", ids: [...] } or { decision, all: true }
+router.post("/price-changes/decide", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const body = safeObject(req.body);
+    const ids = Array.isArray(body.ids) ? body.ids.map(String).filter((id) => /^[a-f0-9]{24}$/i.test(id)) : [];
+    if (!body.all && !ids.length) return res.status(400).json({ message: "No price changes picked" });
+    const result = await decidePriceChanges({
+      ids,
+      all: body.all === true,
+      decision: String(body.decision || ""),
+      decidedBy: req.user?.email || req.user?.id || "admin",
+    });
+    res.json({ ok: true, result });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ message: err?.message || "Failed to save the decision" });
   }
 });
 

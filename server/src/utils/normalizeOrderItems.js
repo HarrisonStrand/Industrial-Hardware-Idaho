@@ -1,4 +1,6 @@
 import Product from "../models/Product.js";
+import ProductEnrichment from "../models/ProductEnrichment.js";
+import { priceGroupInfo } from "../config/fixedPriceGroups.js";
 import { splitOrderLineStock } from "../services/catalog/stockDisplay.js";
 import {
   resolveProductPrice,
@@ -123,6 +125,15 @@ export async function normalizeOrderItems(
   const pricingSettings = await getPricingSettings();
   const resolvedPricingContext = await getPricingContext(pricingContext, pricingSettings);
 
+  // Category and maker decide whether a product is in a fixed-price group (strut, Diablo, ...).
+  const enrichments = products.length
+    ? await ProductEnrichment.find(
+        { productId: { $in: products.map((product) => product._id) } },
+        { productId: 1, category: 1, "manufacturer.name": 1 }
+      ).lean()
+    : [];
+  const enrichmentByProductId = new Map(enrichments.map((row) => [String(row.productId), row]));
+
   return Promise.all(
     normalized.map(async (item) => {
       const product =
@@ -141,7 +152,8 @@ export async function normalizeOrderItems(
       const resolved = await resolveProductPrice(
         product,
         resolvedPricingContext,
-        pricingSettings
+        pricingSettings,
+        priceGroupInfo(product, enrichmentByProductId.get(String(product._id)))
       );
 
       const resolvedPartNumber =

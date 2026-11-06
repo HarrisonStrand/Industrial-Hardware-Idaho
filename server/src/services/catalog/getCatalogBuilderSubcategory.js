@@ -14,9 +14,11 @@ import {
 	usesGeneralBuilderShaping,
 } from "./builderShaping.js";
 import {
+	applyPriceMultiplier,
 	getPricingContext,
 	getPricingSettings,
 } from "../../utils/resolveProductPrice.js";
+import { priceGroupInfo } from "../../config/fixedPriceGroups.js";
 
 
 
@@ -24,7 +26,13 @@ function roundCurrency(value = 0) {
 	return Number(Number(value || 0).toFixed(2));
 }
 
-function resolveBuilderPriceFast(product = {}, pricingContext = {}, includePricing = true) {
+function resolveBuilderPriceFast(
+	product = {},
+	pricingContext = {},
+	includePricing = true,
+	groupInfo = null,
+	fixedPriceGroups = [],
+) {
 	if (!includePricing) {
 		return {
 			resolvedPrice: null,
@@ -46,15 +54,18 @@ function resolveBuilderPriceFast(product = {}, pricingContext = {}, includePrici
 				: 0,
 	);
 
+	// Same rule as checkout: fixed-price groups (strut, Diablo, ...) skip the account markup.
+	const priced = applyPriceMultiplier(baseCatalogPrice, pricingContext, groupInfo, fixedPriceGroups);
+
 	return {
-		resolvedPrice: roundCurrency(
-			baseCatalogPrice * Number(pricingContext?.multiplier || 1),
-		),
+		resolvedPrice: priced.resolvedPrice,
 		baseCatalogPrice,
 		currency: product?.pricing?.currency || "USD",
 		source: product?.pricing?.priceSource || "fishbowl",
 		approvedType: pricingContext?.approvedType || "RETAIL",
-		label: pricingContext?.label || "Retail",
+		label: priced.fixedPriceGroup
+			? `${priced.fixedPriceGroup} (fixed price)`
+			: pricingContext?.label || "Retail",
 	};
 }
 
@@ -76,6 +87,7 @@ const FAST_BUILDER_ENRICHMENT_PROJECTION = {
 	shortDescription: 1,
 	description: 1,
 	category: 1,
+	"manufacturer.name": 1,
 	subcategory: 1,
 	"seo.slug": 1,
 	"images.url": 1,
@@ -126,6 +138,8 @@ const FAST_BUILDER_PRODUCT_PROJECTION = {
 	"pricing.salePrice": 1,
 	"pricing.currency": 1,
 	"pricing.priceSource": 1,
+	brand: 1,
+	vendor: 1,
 };
 
 function toTitle(value = "") {
@@ -986,6 +1000,8 @@ export async function getCatalogBuilderSubcategory(
 					product,
 					pricingContext,
 					includePricing,
+					priceGroupInfo(product, enrichment),
+					pricingSettings?.fixedPriceGroups || [],
 				);
 				const qtyAvailable = asNumber(product?.inventory?.qtyAvailable, 0);
 

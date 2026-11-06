@@ -32,6 +32,23 @@ const PricingSettingsSchema = new mongoose.Schema(
       },
     },
 
+    // Groups that sell at the Fishbowl price for every account (see config/fixedPriceGroups.js).
+    // No default: a record that never saved groups uses the code's default list.
+    fixedPriceGroups: {
+      type: [
+        new mongoose.Schema(
+          {
+            type: { type: String, enum: ["category", "maker"], required: true },
+            value: { type: String, required: true },
+            label: { type: String, default: "" },
+            multiplier: { type: Number, default: 1, min: 0 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: undefined,
+    },
+
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

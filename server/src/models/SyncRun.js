@@ -8,6 +8,7 @@ const SyncRunSchema = new mongoose.Schema(
         "fishbowl-products",
         "fishbowl-inventory",
         "fishbowl-product-intake",
+        "fishbowl-prices",
         "fishbowl-customers",
         "vendor-brighton-import",
         "product-enrichment-pass",

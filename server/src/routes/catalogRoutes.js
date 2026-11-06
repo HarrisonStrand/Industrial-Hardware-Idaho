@@ -1,11 +1,14 @@
 import express from "express";
 import getPublishedCatalog from "../services/catalog/getPublishedCatalog.js";
 import getPublishedProductBySlug from "../services/catalog/getPublishedProductBySlug.js";
+import User from "../models/User.js";
+import { optionalAuth } from "../middleware/auth.js";
+import { buildPricingContextFromUser } from "../utils/resolveProductPrice.js";
 
 const router = express.Router();
 
 // GET /api/catalog
-router.get("/", async (req, res) => {
+router.get("/", optionalAuth, async (req, res) => {
   try {
     const {
       category,
@@ -26,7 +29,15 @@ router.get("/", async (req, res) => {
         .map(([key, value]) => [key.slice(5), value])
     );
 
+    // Signed-in accounts see their own prices, the same as on builder pages and at checkout.
+    let pricingContext = { approvedType: "RETAIL", approvalStatus: "NONE" };
+    if (req.user?.id) {
+      const user = await User.findById(req.user.id).lean();
+      if (user) pricingContext = await buildPricingContextFromUser(user);
+    }
+
     const result = await getPublishedCatalog({
+      pricingContext,
       category,
       subcategory,
       search,

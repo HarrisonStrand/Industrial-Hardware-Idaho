@@ -5,6 +5,7 @@ import {
   DEFAULT_ACCOUNT_PRICE_RULES,
   sanitizeAccountRules,
 } from "../config/pricingRules.js";
+import { sanitizeFixedPriceGroups } from "../config/fixedPriceGroups.js";
 import {
   clearPricingSettingsCache,
   getPricingSettings,
@@ -28,14 +29,18 @@ router.put("/", requireAuth, requireAdmin, async (req, res) => {
       req.body?.accountRules || DEFAULT_ACCOUNT_PRICE_RULES
     );
 
+    const update = {
+      accountRules: nextRules,
+      updatedBy: req.user?.id || null,
+    };
+    // Only saved when sent, so an older admin page never wipes the groups.
+    if (Array.isArray(req.body?.fixedPriceGroups)) {
+      update.fixedPriceGroups = sanitizeFixedPriceGroups(req.body.fixedPriceGroups);
+    }
+
     const doc = await PricingSettings.findOneAndUpdate(
       { key: "default" },
-      {
-        $set: {
-          accountRules: nextRules,
-          updatedBy: req.user?.id || null,
-        },
-      },
+      { $set: update },
       {
         new: true,
         upsert: true,
@@ -50,6 +55,7 @@ router.put("/", requireAuth, requireAdmin, async (req, res) => {
       settings: {
         key: doc.key,
         accountRules: sanitizeAccountRules(doc.accountRules),
+        fixedPriceGroups: sanitizeFixedPriceGroups(doc.toObject().fixedPriceGroups),
         updatedAt: doc.updatedAt,
       },
     });

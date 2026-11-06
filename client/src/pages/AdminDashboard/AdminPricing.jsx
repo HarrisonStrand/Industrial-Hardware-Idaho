@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch";
+import AdminPriceSync from "./AdminPriceSync.jsx";
 import { useToast } from "../../context/ToastContext";
 import "./AdminPricing.css";
 
@@ -124,6 +125,8 @@ export default function AdminPricing() {
 	});
 
 	const [focusedField, setFocusedField] = useState(null);
+	// Fixed-price groups: sell at the Fishbowl price for every account (no markup).
+	const [groups, setGroups] = useState([]);
 
 	useEffect(() => {
 		let alive = true;
@@ -152,6 +155,7 @@ export default function AdminPricing() {
 					),
 				});
 
+				setGroups(Array.isArray(data?.fixedPriceGroups) ? data.fixedPriceGroups : []);
 				setUpdatedAt(data?.updatedAt || "");
 			} catch (err) {
 				console.error("Failed to load pricing settings", err);
@@ -283,6 +287,9 @@ async function save() {
 					multiplier: safePercentToMultiplier(form.NET30.markupPercent),
 				},
 			},
+			fixedPriceGroups: groups
+				.map((group) => ({ ...group, value: String(group.value || "").trim() }))
+				.filter((group) => group.value),
 		};
 
 		const data = await apiFetch("/api/admin/pricing-settings", {
@@ -292,6 +299,7 @@ async function save() {
 		});
 
 		setUpdatedAt(data?.settings?.updatedAt || "");
+		if (Array.isArray(data?.settings?.fixedPriceGroups)) setGroups(data.settings.fixedPriceGroups);
 
 		showToast({
 			variant: "success",
@@ -448,6 +456,63 @@ async function save() {
 				))}
 			</div>
 
+			<div className='border rounded-4 p-4 mt-4'>
+				<div className='text-main text-uppercase fs-5 mb-1'>Fixed-Price Groups</div>
+				<div className='text-muted small mb-3'>
+					Products in these groups sell at the Fishbowl price for every account (Retail, House and
+					Net 30). The markups above do not apply to them. Pick by website category (e.g. strut) or by
+					maker (e.g. Big Timber).
+				</div>
+				{groups.length ? (
+					<div className='d-flex flex-column gap-2 mb-3'>
+						{groups.map((group, index) => (
+							<div key={index} className='d-flex flex-wrap align-items-center gap-2'>
+								<select
+									className='form-select rounded-3 w-auto'
+									value={group.type}
+									aria-label='Group type'
+									onChange={(e) =>
+										setGroups((list) =>
+											list.map((row, i) => (i === index ? { ...row, type: e.target.value } : row)),
+										)
+									}>
+									<option value='category'>Category</option>
+									<option value='maker'>Maker</option>
+								</select>
+								<input
+									className='form-control rounded-3'
+									style={{ maxWidth: 280 }}
+									value={group.value}
+									placeholder={group.type === "maker" ? "Maker name" : "Category name"}
+									aria-label='Group name'
+									onChange={(e) =>
+										setGroups((list) =>
+											list.map((row, i) =>
+												i === index ? { ...row, value: e.target.value, label: e.target.value } : row,
+											),
+										)
+									}
+								/>
+								<button
+									type='button'
+									className='btn btn-outline-secondary rounded-3'
+									onClick={() => setGroups((list) => list.filter((_, i) => i !== index))}>
+									Remove
+								</button>
+							</div>
+						))}
+					</div>
+				) : (
+					<div className='text-muted small mb-3'>No fixed-price groups. Every product uses the markups above.</div>
+				)}
+				<button
+					type='button'
+					className='btn btn-outline-secondary rounded-3'
+					onClick={() => setGroups((list) => [...list, { type: "category", value: "", label: "", multiplier: 1 }])}>
+					Add Group
+				</button>
+			</div>
+
 			<div className='d-flex justify-content-end mt-4'>
 				<button
 					className='btn-main-cta rounded-3 text-uppercase fw-regular py-2 px-4 text-main-light'
@@ -456,6 +521,8 @@ async function save() {
 					{saving ? "Saving…" : "Save Pricing Rules"}
 				</button>
 			</div>
+
+			<AdminPriceSync />
 		</div>
 	);
 }
