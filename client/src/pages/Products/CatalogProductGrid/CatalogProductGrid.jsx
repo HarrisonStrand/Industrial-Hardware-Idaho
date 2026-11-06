@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
-import { ProductPreviewPanel } from "../ProductDetail/ProductDetailFacetPanel.jsx";
-import { fetchCatalog } from "../../../services/catalogApi.js";
+import { ProductDetailModal, ProductPreviewPanel } from "../ProductDetail/ProductDetailFacetPanel.jsx";
+import { fetchCatalog, fetchCatalogProductBySlug } from "../../../services/catalogApi.js";
 import ReviewerStrip from "../../../components/DraftPreview/ReviewerStrip.jsx";
 import { formatBuilderValue, systemForRows } from "../../../utils/formatBuilderValue.js";
 import useSiteSwitches from "../../../hooks/useSiteSwitches.js";
@@ -138,8 +138,9 @@ function Pagination({ currentPage, totalPages, onPageChange, disabled = false })
   );
 }
 
-// Turns a grid item into the shape the builder's "Selected Preview" panel expects.
-function toPreviewVariant(item) {
+// Turns a grid item (plus its full product record, once loaded) into the shape the builder's
+// "Selected Preview" panel and details popup expect.
+function toPreviewVariant(item, detail = null) {
   if (!item) return null;
   return {
     productId: item.productId,
@@ -151,7 +152,11 @@ function toPreviewVariant(item) {
     image: item.image,
     price: item.price,
     qtyAvailable: Number(item.qtyAvailable || 0),
-    attributes: {},
+    shortDescription: item.shortDescription || detail?.shortDescription || "",
+    description: detail?.description || "",
+    attributes: detail?.attributes || {},
+    specs: Array.isArray(detail?.specs) ? detail.specs : [],
+    documents: Array.isArray(detail?.documents) ? detail.documents : [],
     preview: item.preview,
   };
 }
@@ -169,6 +174,9 @@ export default function CatalogProductGrid({ page = {} }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [showViewCartCta, setShowViewCartCta] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  // Full product records (description, specs, documents) for the details popup, by slug.
+  const [detailsBySlug, setDetailsBySlug] = useState({});
   const [items, setItems] = useState([]);
   const [facets, setFacets] = useState(EMPTY_FACETS);
   const [attributeFacets, setAttributeFacets] = useState([]);
@@ -209,6 +217,7 @@ export default function CatalogProductGrid({ page = {} }) {
     });
     setAttributeFilters({});
     setSelectedItem(null);
+    setShowDetails(false);
     setQuantity(1);
     setShowViewCartCta(false);
   }, [page.categoryId, page.subcategoryId]);
@@ -315,7 +324,23 @@ export default function CatalogProductGrid({ page = {} }) {
     setCurrentPage(1);
   }
 
-  const selectedVariant = toPreviewVariant(selectedItem);
+  const selectedVariant = toPreviewVariant(selectedItem, detailsBySlug[selectedItem?.slug] || null);
+
+  // Load the picked product's full record once, so "View Full Details" has its description and specs.
+  useEffect(() => {
+    const slug = selectedItem?.slug;
+    if (!slug || detailsBySlug[slug]) return undefined;
+    let alive = true;
+    fetchCatalogProductBySlug(slug)
+      .then((data) => {
+        const product = data?.product || data || null;
+        if (alive && product) setDetailsBySlug((current) => ({ ...current, [slug]: product }));
+      })
+      .catch((loadError) => console.warn("Product details unavailable:", loadError));
+    return () => {
+      alive = false;
+    };
+  }, [selectedItem?.slug, detailsBySlug]);
   const unitPrice = Number(selectedItem?.price || 0);
   const hidePrice = !page.showPricing || selectedItem?.price === null || selectedItem?.price === undefined;
 
@@ -664,7 +689,27 @@ export default function CatalogProductGrid({ page = {} }) {
               onQuantityChange={setQuantity}
               onAddToCart={handleAddToCart}
               onViewCart={() => navigate("/cart")}
-              onOpenDetails={() => selectedItem?.slug && navigate(`/catalog/product/${selectedItem.slug}`)}
+              onOpenDetails={() => selectedItem && setShowDetails(true)}
+            />
+            <ProductDetailModal
+              show={showDetails && !!selectedItem}
+              variant={selectedVariant}
+              subcategoryId={page.subcategoryId || ""}
+              displayName={page.displayName || ""}
+              unitPrice={unitPrice}
+              currency={selectedItem?.currency || "USD"}
+              qtyAvailable={Number(selectedItem?.qtyAvailable || 0)}
+              quantity={quantity}
+              totalPrice={unitPrice * toQuantity(quantity)}
+              exactVariant={selectedVariant}
+              hidePrice={hidePrice}
+              backLabel="Back to Products"
+              onClose={() => setShowDetails(false)}
+              onAddToCart={() => {
+                handleAddToCart();
+                setShowDetails(false);
+              }}
+              onQuantityChange={setQuantity}
             />
           </div>
         ) : null}

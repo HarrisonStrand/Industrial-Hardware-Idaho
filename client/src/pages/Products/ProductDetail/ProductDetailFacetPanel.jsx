@@ -1306,7 +1306,8 @@ export function ProductPreviewPanel({
 	);
 }
 
-function ProductDetailModal({
+// Also used by product grid pages for the product picked from the grid.
+export function ProductDetailModal({
 	show = false,
 	variant,
 	builderImage = "",
@@ -1322,6 +1323,8 @@ function ProductDetailModal({
 	onClose,
 	onAddToCart,
 	onQuantityChange,
+	hidePrice = false,
+	backLabel = "Back to Builder",
 }) {
 	const { stockDisplayEnabled: showStock } = useSiteSwitches();
 	const [descriptionExpanded, setDescriptionExpanded] = useState(false);
@@ -1432,8 +1435,10 @@ function ProductDetailModal({
 											<div className={showStock ? "col-6 col-md-4" : "col-6 col-md-6"}>
 												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
 													<div className='small text-muted text-uppercase'>Price</div>
-													<div className='fw-semibold text-main'>{formatCurrency(unitPrice, currency)}</div>
-													<div className='small text-muted'>each</div>
+													<div className='fw-semibold text-main'>
+														{hidePrice ? "Contact for pricing" : formatCurrency(unitPrice, currency)}
+													</div>
+													<div className='small text-muted'>{hidePrice ? "" : "each"}</div>
 												</div>
 											</div>
 											{showStock ? (
@@ -1448,7 +1453,7 @@ function ProductDetailModal({
 											<div className={showStock ? "col-12 col-md-4" : "col-6 col-md-6"}>
 												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
 													<div className='small text-muted text-uppercase'>Total</div>
-													<div className='fw-semibold text-main'>{formatCurrency(totalPrice, currency)}</div>
+													<div className='fw-semibold text-main'>{hidePrice ? "--" : formatCurrency(totalPrice, currency)}</div>
 													<div className='small text-muted'>{quantity} selected</div>
 												</div>
 											</div>
@@ -1512,7 +1517,7 @@ function ProductDetailModal({
 						</div>
 						<div className='modal-footer builder-detail-modal-footer border-0'>
 							<button type='button' className='bg-main-light back-to-builder-btn rounded-3 px-4' onClick={onClose}>
-								Back to Builder
+								{backLabel}
 							</button>
 
 							<div className='builder-detail-modal-purchase text-end'>
