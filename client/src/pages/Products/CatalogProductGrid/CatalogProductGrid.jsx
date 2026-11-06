@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { fetchCatalog } from "../../../services/catalogApi.js";
 import ReviewerStrip from "../../../components/DraftPreview/ReviewerStrip.jsx";
 import { formatBuilderValue, systemForRows } from "../../../utils/formatBuilderValue.js";
+import useSiteSwitches from "../../../hooks/useSiteSwitches.js";
 import "./CatalogProductGrid.css";
 
 const EMPTY_FACETS = {
@@ -135,6 +136,7 @@ function Pagination({ currentPage, totalPages, onPageChange, disabled = false })
 }
 
 export default function CatalogProductGrid({ page = {} }) {
+  const { stockDisplayEnabled: showStock } = useSiteSwitches();
   const [items, setItems] = useState([]);
   const [facets, setFacets] = useState(EMPTY_FACETS);
   const [attributeFacets, setAttributeFacets] = useState([]);
@@ -515,9 +517,11 @@ export default function CatalogProductGrid({ page = {} }) {
                           ? formatCurrency(item.price, item.currency)
                           : "Contact for pricing"}
                       </div>
-                      <span className="small text-muted text-end">
-                        {item.inStock ? "In stock" : "Check availability"}
-                      </span>
+                      {showStock ? (
+                        <span className="small text-muted text-end">
+                          {item.inStock ? "In stock" : "Check availability"}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 </Link>

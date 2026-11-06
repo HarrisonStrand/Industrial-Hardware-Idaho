@@ -51,6 +51,7 @@ export default function AdminCatalogLayouts() {
     buildersEnabled: false,
     cartEnabled: false,
     checkoutEnabled: false,
+    stockDisplayEnabled: true,
   });
   const [savingSwitch, setSavingSwitch] = useState("");
   const [items, setItems] = useState([]);
@@ -70,6 +71,7 @@ export default function AdminCatalogLayouts() {
         buildersEnabled: false,
         cartEnabled: false,
         checkoutEnabled: false,
+        stockDisplayEnabled: true,
         ...(data?.global || {}),
       });
       setItems(Array.isArray(data?.items) ? data.items : []);
@@ -175,12 +177,20 @@ export default function AdminCatalogLayouts() {
       const data = await updateAdminCatalogGlobalSettings({ [field]: nextEnabled });
       setGlobal((current) => ({ ...current, ...(data?.global || { [field]: nextEnabled }) }));
       refreshSiteSwitches();
-      const label = field === "cartEnabled" ? "Cart" : "Checkout";
-      setMessage(
-        nextEnabled
-          ? `${label} is now on for customers.`
-          : `${label} is now off for customers. Admins can still use it.`
-      );
+      if (field === "stockDisplayEnabled") {
+        setMessage(
+          nextEnabled
+            ? "Stock counts and backorder notes are showing again."
+            : "Stock counts and backorder notes are hidden. New orders go through with no backorder notes."
+        );
+      } else {
+        const label = field === "cartEnabled" ? "Cart" : "Checkout";
+        setMessage(
+          nextEnabled
+            ? `${label} is now on for customers.`
+            : `${label} is now off for customers. Admins can still use it.`
+        );
+      }
     } catch (saveError) {
       console.error("Failed to update site switch:", saveError);
       setError(saveError.message || "Failed to update switch.");
@@ -281,22 +291,25 @@ export default function AdminCatalogLayouts() {
       <div className="admin-catalog-global card border-0 shadow-sm rounded-4">
         <div className="card-body p-4 d-flex flex-column gap-3">
           <div>
-            <h2 className="h5 text-main text-uppercase mb-1">Cart &amp; Checkout Switches</h2>
+            <h2 className="h5 text-main text-uppercase mb-1">Cart, Checkout &amp; Stock Switches</h2>
             <p className="text-muted mb-0">
               Turns the cart and checkout on or off for customers right away. Admins can always use both for testing.
+              Turn stock quantities off during inventory problems: the site hides stock counts and backorder notes,
+              and orders still go through so the store can tell customers about backorders itself.
             </p>
           </div>
           {[
-            { field: "cartEnabled", label: "Cart enabled for customers" },
-            { field: "checkoutEnabled", label: "Checkout enabled for customers" },
-          ].map(({ field, label }) => (
+            { field: "cartEnabled", label: "Cart enabled for customers", offText: "Off (Coming Soon)" },
+            { field: "checkoutEnabled", label: "Checkout enabled for customers", offText: "Off (Coming Soon)" },
+            { field: "stockDisplayEnabled", label: "Show stock quantities and backorder notes", offText: "Off (hidden)" },
+          ].map(({ field, label, offText }) => (
             <div
               key={field}
               className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2"
             >
               <span className="fw-semibold">{label}</span>
               <div className="d-flex align-items-center gap-3">
-                <span className="small text-muted">{global[field] ? "On" : "Off (Coming Soon)"}</span>
+                <span className="small text-muted">{global[field] ? "On" : offText}</span>
                 <div className="form-check form-switch fs-3 mb-0">
                   <input
                     className="form-check-input"

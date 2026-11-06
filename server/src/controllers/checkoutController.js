@@ -5,6 +5,7 @@ import { generateOrderNumber } from "../utils/orderNumber.js";
 import { normalizeOrderItems, calcAmountTotalCents } from "../utils/normalizeOrderItems.js";
 import { buildPricingContextFromUser } from "../utils/resolveProductPrice.js";
 import { sendOrderConfirmationForOrder } from "../utils/sendOrderConfirmationForOrder.js";
+import { getSiteSwitches } from "../services/catalog/catalogLayoutDefaults.js";
 import {
   SALES_TAX_RATE,
   SALES_TAX_LABEL,
@@ -92,9 +93,11 @@ async function buildNormalizedOrderPayload({
   companyName = "",
   poNumber = "",
 }) {
+  const { stockDisplayEnabled } = await getSiteSwitches();
   const normalizedItems = await normalizeOrderItems(items, {
     pricingContext,
     repriceFromProducts: true,
+    stockDisplayEnabled,
   });
 
   if (!normalizedItems.length) {

@@ -1,6 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import AddToCartButton from "../../../components/Cart/AddToCartButton/AddToCartButton.jsx";
 import StockSplit from "../../../components/StockSplit/StockSplit.jsx";
+import useSiteSwitches from "../../../hooks/useSiteSwitches.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "../../../context/CartContext.jsx";
@@ -962,6 +963,7 @@ function ProductResultCard({
 	selected = false,
 	onClick,
 }) {
+	const { stockDisplayEnabled: showStock } = useSiteSwitches();
 	const image = variant?.image || builderImage || "";
 	const title = variant?.name || variant?.title || "Product option";
 	// General pages: the product title comes first, so rows that share every choice still read differently.
@@ -1011,13 +1013,15 @@ function ProductResultCard({
 							title={variant?.partNumber || variant?.sku || ""}>
 							{variant?.partNumber || variant?.sku || "—"}
 						</div>
-						<div className='builder-grid-stock small text-muted mt-1'>
-							<span
-								className={`builder-grid-stock-dot ${getStockLevelClass(variant)}`}
-								aria-hidden='true'
-							/>
-							<span>{getGridStockLabel(variant)}</span>
-						</div>
+						{showStock ? (
+							<div className='builder-grid-stock small text-muted mt-1'>
+								<span
+									className={`builder-grid-stock-dot ${getStockLevelClass(variant)}`}
+									aria-hidden='true'
+								/>
+								<span>{getGridStockLabel(variant)}</span>
+							</div>
+						) : null}
 					</div>
 				</div>
 
@@ -1051,13 +1055,15 @@ function ProductResultCard({
 								<div className='small fw-semibold text-main text-break'>
 									{variant?.partNumber || variant?.sku || "—"}
 								</div>
-								<div className='builder-grid-stock small text-muted mt-1'>
-									<span
-										className={`builder-grid-stock-dot ${getStockLevelClass(variant)}`}
-										aria-hidden='true'
-									/>
-									<span>{getGridStockLabel(variant)}</span>
-								</div>
+								{showStock ? (
+									<div className='builder-grid-stock small text-muted mt-1'>
+										<span
+											className={`builder-grid-stock-dot ${getStockLevelClass(variant)}`}
+											aria-hidden='true'
+										/>
+										<span>{getGridStockLabel(variant)}</span>
+									</div>
+								) : null}
 							</div>
 
 							<div className='text-end flex-shrink-0 ms-auto'>
@@ -1167,6 +1173,7 @@ function ProductPreviewPanel({
 	onViewCart,
 	onOpenDetails,
 }) {
+	const { stockDisplayEnabled: showStock } = useSiteSwitches();
 	const image = variant?.image || builderImage || "";
 	const title = variant?.name || variant?.title || displayName || "Product preview";
 	// General pages: the selected product's own title is the heading, its choices the line under it.
@@ -1207,12 +1214,16 @@ function ProductPreviewPanel({
 						<span className='badge rounded-3 text-bg-light border fw-normal'>
 							Part #: {variant?.partNumber || variant?.sku || "Select a product"}
 						</span>
-						<span className='badge rounded-3 text-bg-light border fw-normal'>
-							{variant ? getStockLabel(variant) : "Select options"}
-						</span>
-						<span className='badge rounded-3 text-bg-light border fw-normal'>
-							Qty: {variant ? formatStockQuantity(qtyAvailable) : "—"}
-						</span>
+						{showStock ? (
+							<>
+								<span className='badge rounded-3 text-bg-light border fw-normal'>
+									{variant ? getStockLabel(variant) : "Select options"}
+								</span>
+								<span className='badge rounded-3 text-bg-light border fw-normal'>
+									Qty: {variant ? formatStockQuantity(qtyAvailable) : "—"}
+								</span>
+							</>
+						) : null}
 					</div>
 					<ReviewerStrip info={variant?.preview} className='mt-2' />
 				</div>
@@ -1305,6 +1316,7 @@ function ProductDetailModal({
 	onAddToCart,
 	onQuantityChange,
 }) {
+	const { stockDisplayEnabled: showStock } = useSiteSwitches();
 	const [descriptionExpanded, setDescriptionExpanded] = useState(false);
 	const [modalScrollState, setModalScrollState] = useState({ atTop: true, atBottom: true });
 
@@ -1410,21 +1422,23 @@ function ProductDetailModal({
 								<div className='col-12 col-lg-8'>
 									<div className='builder-detail-modal-info d-flex flex-column gap-4 h-100'>
 										<div className='row g-3'>
-											<div className='col-6 col-md-4'>
+											<div className={showStock ? "col-6 col-md-4" : "col-6 col-md-6"}>
 												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
 													<div className='small text-muted text-uppercase'>Price</div>
 													<div className='fw-semibold text-main'>{formatCurrency(unitPrice, currency)}</div>
 													<div className='small text-muted'>each</div>
 												</div>
 											</div>
-											<div className='col-6 col-md-4'>
-												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
-													<div className='small text-muted text-uppercase'>Available</div>
-													<div className='fw-semibold text-main'>{formatStockQuantity(qtyAvailable)}</div>
-													<div className='small text-muted'>{getStockLabel(variant)}</div>
+											{showStock ? (
+												<div className='col-6 col-md-4'>
+													<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
+														<div className='small text-muted text-uppercase'>Available</div>
+														<div className='fw-semibold text-main'>{formatStockQuantity(qtyAvailable)}</div>
+														<div className='small text-muted'>{getStockLabel(variant)}</div>
+													</div>
 												</div>
-											</div>
-											<div className='col-12 col-md-4'>
+											) : null}
+											<div className={showStock ? "col-12 col-md-4" : "col-6 col-md-6"}>
 												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
 													<div className='small text-muted text-uppercase'>Total</div>
 													<div className='fw-semibold text-main'>{formatCurrency(totalPrice, currency)}</div>

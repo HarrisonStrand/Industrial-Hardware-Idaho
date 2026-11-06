@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../../utils/apiFetch";
+import useSiteSwitches from "../../hooks/useSiteSwitches.js";
 import "./StockSplit.css";
 
 // How many of a line are in stock now and how many wait for restock.
@@ -47,8 +48,10 @@ export function useStockLevels(productIds = []) {
 }
 
 // One line of text under a cart / checkout / product line. Shows nothing when everything is in stock
-// or when the stock level is unknown.
+// or when the stock level is unknown, and nothing at all when the stock display is switched off.
 export default function StockSplit({ quantity, available, compact = false }) {
+	const { stockDisplayEnabled } = useSiteSwitches();
+	if (!stockDisplayEnabled) return null;
 	if (available === undefined || available === null) return null;
 	const { inStock, backordered } = splitStock(quantity, available);
 	if (!backordered) return null;

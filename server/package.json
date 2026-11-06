@@ -21,7 +21,8 @@
     "test:catalog-api": "node src/scripts/testCatalogApiServices.js",
     "test:draft-preview": "node --test src/services/catalog/__tests__/draftPreview.test.js src/services/catalog/__tests__/draftPreviewGuard.test.js",
     "test:page-layouts": "node --test src/services/catalog/__tests__/builderShaping.test.js src/services/catalog/__tests__/pageLayoutPlan.test.js",
-    "layout:plan": "node src/scripts/applyPageLayoutPlan.js"
+    "layout:plan": "node src/scripts/applyPageLayoutPlan.js",
+    "test:stock-display": "node --test src/services/catalog/__tests__/stockDisplay.test.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.966.0",

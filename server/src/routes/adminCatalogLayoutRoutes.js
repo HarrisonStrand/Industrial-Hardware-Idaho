@@ -1,4 +1,5 @@
 import express from "express";
+import { isStockDisplayEnabled } from "../services/catalog/stockDisplay.js";
 
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import CatalogGlobalSetting from "../models/CatalogGlobalSetting.js";
@@ -120,6 +121,7 @@ router.get("/", async (_req, res) => {
         buildersEnabled: globalSetting?.buildersEnabled !== false,
         cartEnabled: globalSetting?.cartEnabled === true,
         checkoutEnabled: globalSetting?.checkoutEnabled === true,
+        stockDisplayEnabled: isStockDisplayEnabled(globalSetting),
         updatedAt: globalSetting?.updatedAt || null,
       },
       options: {
@@ -154,7 +156,7 @@ router.put("/global", async (req, res) => {
   try {
     // Only update the switches sent in the request, so saving one never resets another.
     const update = { updatedBy: req.user?.id || null };
-    for (const field of ["buildersEnabled", "cartEnabled", "checkoutEnabled"]) {
+    for (const field of ["buildersEnabled", "cartEnabled", "checkoutEnabled", "stockDisplayEnabled"]) {
       if (typeof req.body?.[field] === "boolean") {
         update[field] = req.body[field];
       }
@@ -172,6 +174,7 @@ router.put("/global", async (req, res) => {
         buildersEnabled: doc.buildersEnabled !== false,
         cartEnabled: doc.cartEnabled === true,
         checkoutEnabled: doc.checkoutEnabled === true,
+        stockDisplayEnabled: isStockDisplayEnabled(doc),
         updatedAt: doc.updatedAt,
       },
     });

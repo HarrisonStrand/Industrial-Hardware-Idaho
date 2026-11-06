@@ -5,6 +5,7 @@ import { useCart } from "../../../context/CartContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
 import { fetchCatalogProductBySlug } from "../../../services/catalogApi.js";
 import SpecificationsTable from "../../../components/Specifications/SpecificationsTable.jsx";
+import useSiteSwitches from "../../../hooks/useSiteSwitches.js";
 import "./ProductDetail.css";
 
 // How each kind of downloadable document is named on the page.
@@ -17,6 +18,7 @@ const DOCUMENT_LABELS = {
 };
 
 export default function CatalogProductDetail() {
+  const { stockDisplayEnabled: showStock } = useSiteSwitches();
   const { slug } = useParams();
   const navigate = useNavigate();
   const { addToCart, cartItemCount } = useCart();
@@ -213,7 +215,7 @@ export default function CatalogProductDetail() {
                       >
                         {option.vendorName}
                         {option.isPreferred ? " (Preferred)" : ""}
-                        {typeof option.qtyAvailable === "number"
+                        {showStock && typeof option.qtyAvailable === "number"
                           ? ` • Qty ${option.qtyAvailable}`
                           : ""}
                         {option.price != null ? ` • $${Number(option.price).toFixed(2)}` : ""}

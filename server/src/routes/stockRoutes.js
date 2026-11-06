@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Product from "../models/Product.js";
+import { getSiteSwitches } from "../services/catalog/catalogLayoutDefaults.js";
 
 const router = Router();
 
@@ -10,6 +11,10 @@ router.post("/", async (req, res) => {
 		const ids = Array.isArray(req.body?.productIds) ? req.body.productIds : [];
 		const productIds = [...new Set(ids.map(String).filter((id) => /^[a-f0-9]{24}$/i.test(id)))].slice(0, 200);
 		if (!productIds.length) return res.json({ stock: {} });
+
+		// Stock display switched off: send no counts, so carts and checkout show no backorder notes.
+		const { stockDisplayEnabled } = await getSiteSwitches();
+		if (!stockDisplayEnabled) return res.json({ stock: {}, stockDisplayEnabled: false });
 
 		const products = await Product.find({ _id: { $in: productIds } }, { "inventory.qtyAvailable": 1 }).lean();
 		const stock = {};

@@ -1,4 +1,5 @@
 import Product from "../models/Product.js";
+import { splitOrderLineStock } from "../services/catalog/stockDisplay.js";
 import {
   resolveProductPrice,
   getPricingContext,
@@ -76,6 +77,7 @@ export async function normalizeOrderItems(
   {
     pricingContext = {},
     repriceFromProducts = true,
+    stockDisplayEnabled = true,
   } = {}
 ) {
   if (!Array.isArray(items)) return [];
@@ -157,9 +159,12 @@ export async function normalizeOrderItems(
       const resolvedUnitPrice = Number(resolved.resolvedPrice || 0);
 
       // Stock split from the Fishbowl inventory snapshot: what ships now and what is backordered.
-      const available = Math.max(0, Math.floor(Number(product?.inventory?.qtyAvailable || 0)));
-      const qtyInStock = Math.min(item.qty, available);
-      const qtyBackordered = Math.max(0, item.qty - qtyInStock);
+      // With the stock display switched off, nothing is recorded as backordered.
+      const { qtyInStock, qtyBackordered } = splitOrderLineStock(
+        item.qty,
+        product?.inventory?.qtyAvailable,
+        stockDisplayEnabled
+      );
 
       return {
         ...item,

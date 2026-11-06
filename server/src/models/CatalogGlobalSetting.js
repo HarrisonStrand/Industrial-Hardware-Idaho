@@ -21,6 +21,11 @@ const CatalogGlobalSettingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Show stock counts and backorder notes to customers. Off = hide them and record no backorders.
+    stockDisplayEnabled: {
+      type: Boolean,
+      default: true,
+    },
     updatedBy: {
       type: mongoose.Schema.Types.Mixed,
       default: null,

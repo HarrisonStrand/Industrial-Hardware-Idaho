@@ -1,4 +1,5 @@
 import fs from "fs";
+import { isStockDisplayEnabled } from "./stockDisplay.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -254,15 +255,17 @@ export async function getCatalogGlobalSetting() {
   );
 }
 
-// Read-only lookup of the cart/checkout switches. Missing record or field = off.
+// Read-only lookup of the site switches. Missing record or field = off for cart and checkout,
+// on for the stock display.
 export async function getSiteSwitches() {
   const doc = await CatalogGlobalSetting.findOne({ key: "default" })
-    .select("cartEnabled checkoutEnabled")
+    .select("cartEnabled checkoutEnabled stockDisplayEnabled")
     .lean();
 
   return {
     cartEnabled: doc?.cartEnabled === true,
     checkoutEnabled: doc?.checkoutEnabled === true,
+    stockDisplayEnabled: isStockDisplayEnabled(doc),
   };
 }
 

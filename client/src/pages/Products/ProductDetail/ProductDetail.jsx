@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useCart } from "../../../context/CartContext.jsx";
 import { useToast } from "../../../context/ToastContext.jsx";
 import { fetchCatalogBuilderSubcategory } from "../../../services/catalogBuilderApi.js";
+import useSiteSwitches from "../../../hooks/useSiteSwitches.js";
 import "./ProductDetail.css";
 
 const HIDDEN_ATTRIBUTE_KEYS = new Set([
@@ -297,6 +298,7 @@ function getGenericDisplayName(builderData, subcategoryId) {
 }
 
 export default function ProductDetail() {
+	const { stockDisplayEnabled: showStock } = useSiteSwitches();
 	const { categoryId, subcategoryId } = useParams();
 	const { addToCart, cartItemCount } = useCart();
 	const { showToast } = useToast();
@@ -554,19 +556,23 @@ export default function ProductDetail() {
 										: "Select options"}
 								</div>
 
-								<div className='mt-2'>
-									<strong>Status:</strong>{" "}
-									{displayVariant
-										? displayVariant.inStock
-											? "Available"
-											: "Available on request"
-										: "Select options"}
-								</div>
+								{showStock ? (
+									<>
+										<div className='mt-2'>
+											<strong>Status:</strong>{" "}
+											{displayVariant
+												? displayVariant.inStock
+													? "Available"
+													: "Available on request"
+												: "Select options"}
+										</div>
 
-								<div className='mt-2'>
-									<strong>Available Qty:</strong>{" "}
-									{displayVariant ? qtyAvailable : "Select options"}
-								</div>
+										<div className='mt-2'>
+											<strong>Available Qty:</strong>{" "}
+											{displayVariant ? qtyAvailable : "Select options"}
+										</div>
+									</>
+								) : null}
 
 								<div className='mt-2'>
 									<strong>Part Number:</strong>{" "}

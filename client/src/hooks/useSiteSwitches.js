@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../utils/apiFetch.js";
 import SITE_ACCESS from "../config/siteAccess.js";
 
-// Cart and checkout on/off switches set in Admin > Catalog Layout.
+// Cart, checkout and stock-display on/off switches set in Admin > Catalog Layout.
 // Fetched once per page load and shared by every caller. Until the server
 // answers (or if it fails), the defaults in config/siteAccess.js apply.
 const FALLBACK = {
 	cartEnabled: Boolean(SITE_ACCESS?.cart?.enabled),
 	checkoutEnabled: Boolean(SITE_ACCESS?.checkout?.enabled),
+	stockDisplayEnabled: true,
 };
 
 let cached = null;
@@ -23,6 +24,7 @@ function load(force = false) {
 			cached = {
 				cartEnabled: data?.cartEnabled === true,
 				checkoutEnabled: data?.checkoutEnabled === true,
+				stockDisplayEnabled: data?.stockDisplayEnabled !== false,
 			};
 			return cached;
 		})
