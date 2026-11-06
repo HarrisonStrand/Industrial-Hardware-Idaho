@@ -75,6 +75,21 @@
   align-self: center !important;
 }
 
+/* A logo on a solid color fills the card: the card takes the logo's color, the whole logo is centered. */
+.category-card-image-wrapper.category-card-image-cover {
+  justify-content: center !important;
+}
+
+.category-card-image-wrapper img.category-image-cover {
+  width: 100% !important;
+  height: 100%;
+  max-height: 100%;
+  object-fit: contain !important;
+  object-position: center;
+  align-self: center !important;
+  margin: 0 !important;
+}
+
 .category-card:hover .category-image {
 	transform: translateZ(0) scale(1.06);
 }

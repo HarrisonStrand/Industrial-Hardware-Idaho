@@ -927,7 +927,8 @@
     {
       "id": "makita",
       "name": "Makita",
-      "image": "/vendor-logos/Makita.png",
+      "image": "/images/categories/makita-logo-card.jpg",
+      "imageBackground": "#0B818F",
       "subcategories": [
         {
           "id": "power-tools",
@@ -958,7 +959,8 @@
     {
       "id": "diablo",
       "name": "Diablo",
-      "image": "/vendor-logos/Diablo.png",
+      "image": "/images/categories/diablo-logo-card.jpg",
+      "imageBackground": "#EA1D24",
       "subcategories": [
         {
           "id": "hole-saws-cutters",

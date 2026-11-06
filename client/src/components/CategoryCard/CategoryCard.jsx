@@ -29,6 +29,9 @@ export default function CategoryCard({
 
 	// Brand logos fill their picture edge to edge, so they are centered with room for the hover zoom.
 	const isLogo = (category.image || "").startsWith("/vendor-logos/");
+	// A logo on a solid color (Diablo, Makita): the card is filled with that color and the whole logo
+	// sits centered on it ("imageBackground" in categories.json).
+	const coverColor = category.imageBackground || "";
 
 	let linkTo =category.directPath || category.path || category.href || "";
 
@@ -41,13 +44,17 @@ export default function CategoryCard({
 	}
 
 	const cardInner = (
-		<div className='category-card-image-wrapper position-relative flex-row justify-content-end'>
+		<div
+			className={`category-card-image-wrapper position-relative flex-row justify-content-end${
+				coverColor ? " category-card-image-cover" : ""
+			}`}
+			style={coverColor ? { backgroundColor: coverColor } : undefined}>
 			<img
 				src={category.image || CATEGORY_FALLBACK_IMAGE}
 				alt={category.name}
 				className={`category-image object-fit-cover w-75 align-self-start ${
 					isLogo ? "category-image-logo" : "m-0"
-				}${category.imageFull ? " category-image-full" : ""}`}
+				}${category.imageFull ? " category-image-full" : ""}${coverColor ? " category-image-cover" : ""}`}
 				onError={(event) => {
 					if (event.currentTarget.src.includes(CATEGORY_FALLBACK_IMAGE)) return;
 					event.currentTarget.src = CATEGORY_FALLBACK_IMAGE;
