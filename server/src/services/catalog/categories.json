@@ -408,7 +408,14 @@
         {
           "id": "grinding-wheels",
           "name": "Grinding Wheels",
-          "image": "/images/subcategories/grinding-wheels.png"
+          "image": "/images/subcategories/grinding-wheels.png",
+          "filters": [
+            { "key": "diameter", "label": "Diameter", "sort": "size" },
+            { "key": "thickness", "label": "Thickness", "sort": "size" },
+            { "key": "arborSize", "label": "Arbor", "sort": "size" },
+            { "key": "grit", "label": "Grit", "sort": "size" },
+            { "key": "materialFinish", "label": "Material / Finish" }
+          ]
         },
         {
           "id": "shop-rolls",
