@@ -252,6 +252,14 @@ export function wireGaugeSortKey(value = "") {
 	return [-Math.max(...numbers), -Math.min(...numbers)];
 }
 
+// Abrasive grade, coarsest first: Coarse, Medium, Fine, Very Fine, Ultra Fine ("Coarse (Brown)" reads as Coarse).
+const GRADE_ORDER = ["coarse", "medium", "fine", "very fine", "ultra fine"];
+export function gradeSortKey(value = "") {
+	const word = String(value).toLowerCase().replace(/\(.*\)/, "").trim();
+	const index = GRADE_ORDER.indexOf(word);
+	return index === -1 ? null : index;
+}
+
 // Terminal stud size, smallest first: numbered sizes (#4 ... #12, read as their real diameter) before inch sizes.
 export function studSizeSortKey(value = "") {
 	const text = String(value).replace(/[”″]/g, '"').trim();
@@ -283,6 +291,7 @@ function compareByKey(keyOf) {
 export function sortGeneralChoiceValues(values = [], key = "", sort = "") {
 	if (sort === "gauge") return [...values].sort(compareByKey(wireGaugeSortKey));
 	if (sort === "stud") return [...values].sort(compareByKey(studSizeSortKey));
+	if (sort === "grade") return [...values].sort(compareByKey(gradeSortKey));
 	if (!isSizeSortKey(key, sort)) return [...values].sort(compareText);
 	return [...values].sort((a, b) => {
 		const aSort = generalSizeSortValue(a, key);

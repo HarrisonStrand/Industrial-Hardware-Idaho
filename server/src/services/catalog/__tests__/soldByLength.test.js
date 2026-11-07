@@ -67,3 +67,16 @@ test("rivet flange type from head style or title", async () => {
 	assert.equal(rivetFlangeType({ headStyle: "Flat" }, "Steel Countersunk Pop Rivet"), "Countersunk");
 	assert.equal(rivetFlangeType({}, "Aluminum Klamp-Tite Blind Rivet"), "Standard");
 });
+
+test("velcro disc grades show their color and sort coarsest first", async () => {
+	const { gradeWithColor } = await import("../pageAttributes.js");
+	const { sortGeneralChoiceValues } = await import("../builderShaping.js");
+	assert.equal(gradeWithColor("Coarse"), "Coarse (Brown)");
+	assert.equal(gradeWithColor("very fine"), "Very Fine (Blue)");
+	assert.equal(gradeWithColor("Ultra Fine"), "Ultra Fine (Grey)");
+	assert.equal(gradeWithColor("Medium"), "Medium (Red)");
+	assert.deepEqual(
+		sortGeneralChoiceValues(["Ultra Fine (Grey)", "Coarse (Brown)", "Very Fine (Blue)", "Medium (Red)", "Fine (Blue)"], "gritColor", "grade"),
+		["Coarse (Brown)", "Medium (Red)", "Fine (Blue)", "Very Fine (Blue)", "Ultra Fine (Grey)"],
+	);
+});

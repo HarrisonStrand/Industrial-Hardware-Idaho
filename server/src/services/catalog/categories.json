@@ -370,7 +370,12 @@
         {
           "id": "cut-off-wheels",
           "name": "Cut-Off Wheels",
-          "image": "/images/subcategories/cut-off-wheels.png"
+          "image": "/images/subcategories/cut-off-wheels.png",
+          "filters": [
+            { "key": "diameter", "label": "Diameter", "sort": "size" },
+            { "key": "thickness", "label": "Thickness", "sort": "size" },
+            { "key": "arborSize", "label": "Arbor", "sort": "size" }
+          ]
         },
         {
           "id": "flap-wheels",
@@ -390,7 +395,11 @@
         {
           "id": "velcro-discs",
           "name": "Velcro Discs",
-          "image": "/images/subcategories/velcro-discs.png"
+          "image": "/images/subcategories/velcro-discs.png",
+          "filters": [
+            { "key": "diameter", "label": "Diameter", "sort": "size" },
+            { "key": "gritColor", "label": "Grit", "sort": "grade" }
+          ]
         },
         {
           "id": "grinding-wheels",

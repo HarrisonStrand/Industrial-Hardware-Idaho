@@ -236,7 +236,7 @@
     "fallbackMode": "product-grid"
   },
   "abrasives/cut-off-wheels": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "abrasives/flap-wheels": {
@@ -252,7 +252,7 @@
     "fallbackMode": "product-grid"
   },
   "abrasives/velcro-discs": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "abrasives/grinding-wheels": {
