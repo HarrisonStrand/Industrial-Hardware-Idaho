@@ -448,7 +448,7 @@
     "fallbackMode": "product-grid"
   },
   "bits-drivers/drill-bits": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "bits-drivers/driver-bits": {
@@ -464,11 +464,11 @@
     "fallbackMode": "product-grid"
   },
   "bits-drivers/hole-saws-arbors": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "bits-drivers/taps-dies": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "bits-drivers/reciprocating-saw-blades": {
@@ -476,7 +476,7 @@
     "fallbackMode": "product-grid"
   },
   "bits-drivers/masonry-bits": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "bits-drivers/end-mills": {
@@ -776,11 +776,11 @@
     "fallbackMode": "product-grid"
   },
   "strut/connectors-accessories": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "tools/hand-tools": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "tools/ladders-scaffolding": {
