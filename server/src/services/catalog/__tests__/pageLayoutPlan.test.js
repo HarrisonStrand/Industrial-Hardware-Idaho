@@ -56,17 +56,17 @@ function withPreview(on, fn) {
 	});
 }
 
-test("the plan file covers every page in categories.json: 116 builder, 100 product grid (11 weak pages moved to grid, 2026-11-04; Diablo Drill Bits split into Metal, Wood and Concrete Bits and Quick / Piggyback Connectors and Hose Clamps moved to builder, 2026-11-06)", () => {
+test("the plan file covers every page in categories.json: 117 builder, 100 product grid (11 weak pages moved to grid, 2026-11-04; Diablo Drill Bits split into Metal, Wood and Concrete Bits and Quick / Piggyback Connectors and Hose Clamps moved to builder, 2026-11-06)", () => {
 	const raw = JSON.parse(fs.readFileSync(PLAN_PATH, "utf8"));
 	const known = new Set(getKnownCatalogSubcategories().map((d) => `${d.categoryId}/${d.subcategoryId}`));
-	assert.equal(Object.keys(raw).length, 216);
+	assert.equal(Object.keys(raw).length, 217);
 	for (const key of Object.keys(raw)) assert.ok(known.has(key), `unknown page ${key}`);
 	const counts = {};
 	for (const entry of Object.values(raw)) {
 		counts[entry.displayMode] = (counts[entry.displayMode] || 0) + 1;
 		assert.equal(entry.fallbackMode, "product-grid");
 	}
-	assert.deepEqual(counts, { builder: 116, "product-grid": 100 });
+	assert.deepEqual(counts, { builder: 117, "product-grid": 100 });
 	for (const page of ["metal-bits", "wood-bits", "concrete-bits"]) assert.equal(raw[`diablo/${page}`].displayMode, "product-grid");
 	assert.equal(raw["diablo/drill-bits"], undefined);
 	assert.equal(raw["wire-hardware/shaft-collars"].displayMode, "builder");

@@ -407,6 +407,12 @@
           "locked": true
         },
         {
+          "id": "flap-discs",
+          "name": "Flap Discs",
+          "image": "/images/subcategories/flap-discs.png",
+          "locked": true
+        },
+        {
           "id": "fibre-discs",
           "name": "Fibre Discs",
           "image": "/images/subcategories/fibre-discs.png",

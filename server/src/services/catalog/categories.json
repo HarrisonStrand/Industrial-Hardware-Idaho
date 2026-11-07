@@ -383,6 +383,17 @@
           "image": "/images/subcategories/flap-wheels.png"
         },
         {
+          "id": "flap-discs",
+          "name": "Flap Discs",
+          "image": "/images/subcategories/flap-discs.png",
+          "filters": [
+            { "key": "diameter", "label": "Diameter", "sort": "size" },
+            { "key": "arborSize", "label": "Arbor", "sort": "size" },
+            { "key": "grit", "label": "Grit", "sort": "size" },
+            { "key": "materialFinish", "label": "Material / Finish" }
+          ]
+        },
+        {
           "id": "fibre-discs",
           "name": "Fibre Discs",
           "image": "/images/subcategories/fibre-discs.png"

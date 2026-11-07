@@ -243,6 +243,10 @@
     "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
+  "abrasives/flap-discs": {
+    "displayMode": "builder",
+    "fallbackMode": "product-grid"
+  },
   "abrasives/fibre-discs": {
     "displayMode": "builder",
     "fallbackMode": "product-grid"
