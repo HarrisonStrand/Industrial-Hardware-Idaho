@@ -20,6 +20,7 @@ import {
 } from "../../utils/resolveProductPrice.js";
 import { priceGroupInfo } from "../../config/fixedPriceGroups.js";
 import { applySoldByLength, isSoldByLengthPage } from "./soldByLength.js";
+import { withPageAttributes } from "./pageAttributes.js";
 import { loadRulePrices, productPartNumber } from "../fishbowl/loadRulePrices.js";
 
 
@@ -1094,7 +1095,8 @@ export async function getCatalogBuilderSubcategory(
 
 	// Tubing, loom, sleeving, chain, wire and cable are sold by the foot (soldByLength.js).
 	const soldByLengthPage = isSoldByLengthPage(categoryId, subcategoryId);
-	const rawVariants = soldByLengthPage ? applySoldByLength(builtVariants) : builtVariants;
+	const lengthShaped = soldByLengthPage ? applySoldByLength(builtVariants) : builtVariants;
+	const rawVariants = withPageAttributes(categoryId, subcategoryId, lengthShaped);
 
 	const builderReadyFilter =
 		options?.applyBuilderReadyFilter === false

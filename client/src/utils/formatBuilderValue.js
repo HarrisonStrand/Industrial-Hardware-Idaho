@@ -102,6 +102,8 @@ export function formatBuilderValue(key = "", value = "", system = "", options = 
 	const raw = String(value).trim();
 	const shopWord = VALUE_LABELS[key]?.[raw.toLowerCase()];
 	if (shopWord) return shopWord;
+	// Rivet grip range: "1/16-1/8" reads as "1/16 - 1/8".
+	if (key === "gripRange") return raw.replace(/\s*-\s*/, " - ");
 	if (!raw || !isInchMeasureKey(key)) return String(value);
 
 	const mode = normalizeSystem(system);

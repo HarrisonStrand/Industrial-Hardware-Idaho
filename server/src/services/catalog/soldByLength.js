@@ -160,3 +160,14 @@ export function applySoldByLength(variants = []) {
 	}
 	return out;
 }
+
+// Heat shrink: the wall (single or dual) is read from the title, for the page's Thickness choice.
+export function withHeatShrinkWall(variants = []) {
+	return variants.map((variant) => ({
+		...variant,
+		attributes: {
+			...(variant.attributes || {}),
+			wallType: DUAL_WALL_RE.test(String(variant.name || "")) ? "Dual Wall" : "Single Wall",
+		},
+	}));
+}

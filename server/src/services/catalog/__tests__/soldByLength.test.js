@@ -48,3 +48,22 @@ test("per foot, dual wall pieces, roll twins hidden, lone rolls and assemblies s
 	assert.equal(unit("HSB08DW"), "piece");
 	assert.equal(unit("LOOM786"), "ft");
 });
+
+test("heat shrink rows say single or dual wall", async () => {
+	const { withHeatShrinkWall } = await import("../soldByLength.js");
+	const rows = withHeatShrinkWall([
+		{ name: "Dual Wall Heat Shrink – 1/2\" x 4', Black", attributes: { size: "1/2" } },
+		{ name: "Heat Shrink – 3/8\", Black", attributes: { size: "3/8" } },
+	]);
+	assert.deepEqual(rows.map((r) => r.attributes.wallType), ["Dual Wall", "Single Wall"]);
+	assert.equal(rows[0].attributes.size, "1/2");
+});
+
+test("rivet flange type from head style or title", async () => {
+	const { rivetFlangeType } = await import("../pageAttributes.js");
+	assert.equal(rivetFlangeType({ headStyle: "Flange" }, "Steel Large Flange Pop Rivet"), "Large Flange");
+	assert.equal(rivetFlangeType({}, "Black Aluminum Large Flange Split-Type Rivet"), "Large Flange");
+	assert.equal(rivetFlangeType({ headStyle: "Button" }, "Aluminum Pop Rivet"), "Standard");
+	assert.equal(rivetFlangeType({ headStyle: "Flat" }, "Steel Countersunk Pop Rivet"), "Countersunk");
+	assert.equal(rivetFlangeType({}, "Aluminum Klamp-Tite Blind Rivet"), "Standard");
+});

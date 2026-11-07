@@ -336,12 +336,24 @@
         {
           "id": "blind-rivets",
           "name": "Blind Rivets",
-          "image": "/images/subcategories/blind-rivets.png"
+          "image": "/images/subcategories/blind-rivets.png",
+          "filters": [
+            { "key": "flangeType", "label": "Flange Type" },
+            { "key": "measurementSystem", "label": "Measurement System" },
+            { "key": "diameter", "label": "Diameter", "sort": "size" },
+            { "key": "gripRange", "label": "Grip Range", "sort": "size" },
+            { "key": "materialFinish", "label": "Material / Finish" }
+          ]
         },
         {
           "id": "solid-specialty-rivets",
           "name": "Solid & Specialty Rivets",
-          "image": "/images/subcategories/solid-specialty-rivets.png"
+          "image": "/images/subcategories/solid-specialty-rivets.png",
+          "filters": [
+            { "key": "diameter", "label": "Diameter", "sort": "size" },
+            { "key": "length", "label": "Length", "sort": "size" },
+            { "key": "materialFinish", "label": "Material / Finish" }
+          ]
         },
         {
           "id": "riveting-tools",
@@ -1351,7 +1363,12 @@
         {
           "id": "shrink-wrap",
           "name": "Shrink Wrap",
-          "image": "/images/subcategories/shrink-wrap.png"
+          "image": "/images/subcategories/shrink-wrap.png",
+          "filters": [
+            { "key": "wallType", "label": "Thickness" },
+            { "key": "size", "label": "Diameter", "sort": "size" },
+            { "key": "color", "label": "Color" }
+          ]
         },
         {
           "id": "fuses",
