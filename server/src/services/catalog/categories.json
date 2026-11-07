@@ -446,12 +446,22 @@
         {
           "id": "sanding-belts",
           "name": "Sanding Belts",
-          "image": "/images/subcategories/sanding-belts.png"
+          "image": "/images/subcategories/sanding-belts.png",
+          "filters": [
+            {"key": "width", "label": "Width", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "grit", "label": "Grit", "sort": "size"}
+          ]
         },
         {
           "id": "sanding-sheets",
           "name": "Sanding Sheets",
-          "image": "/images/subcategories/sanding-sheets.png"
+          "image": "/images/subcategories/sanding-sheets.png",
+          "filters": [
+            {"key": "width", "label": "Width", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "grit", "label": "Grit", "sort": "size"}
+          ]
         },
         {
           "id": "psa-discs",
@@ -461,7 +471,11 @@
         {
           "id": "back-up-pads",
           "name": "Back-Up Pads",
-          "image": "/images/subcategories/back-up-pads.png"
+          "image": "/images/subcategories/back-up-pads.png",
+          "filters": [
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "arborSize", "label": "Arbor", "sort": "size", "always": true}
+          ]
         },
         {
           "id": "wire-brushes",
@@ -471,7 +485,11 @@
         {
           "id": "mounted-stones",
           "name": "Mounted Stones",
-          "image": "/images/subcategories/mounted-stones.png"
+          "image": "/images/subcategories/mounted-stones.png",
+          "filters": [
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"}
+          ]
         },
         {
           "id": "cartridge-rolls",
@@ -488,7 +506,12 @@
         {
           "id": "wedge-anchors",
           "name": "Wedge Anchors",
-          "image": "/images/subcategories/concrete-wedge-anchors.png"
+          "image": "/images/subcategories/concrete-wedge-anchors.png",
+          "filters": [
+            {"key": "anchorSize", "label": "Size", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "materialFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "concrete-screws",
@@ -508,7 +531,11 @@
         {
           "id": "lag-expansion-shields",
           "name": "Lag & Expansion Shields",
-          "image": "/images/subcategories/concrete-lag-expansion-shields.png"
+          "image": "/images/subcategories/concrete-lag-expansion-shields.png",
+          "filters": [
+            {"key": "shieldType", "label": "Type"},
+            {"key": "diameter", "label": "Diameter", "sort": "size"}
+          ]
         },
         {
           "id": "anchor-bolts",
@@ -518,12 +545,24 @@
         {
           "id": "hollow-wall-anchors",
           "name": "Hollow Wall Anchors",
-          "image": "/images/subcategories/concrete-hollow-wall-anchors.png"
+          "image": "/images/subcategories/concrete-hollow-wall-anchors.png",
+          "filters": [
+            {"key": "anchorType", "label": "Type"},
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "materialFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "light-duty-anchors",
           "name": "Light Duty Anchors",
-          "image": "/images/subcategories/concrete-light-duty-anchors.png"
+          "image": "/images/subcategories/concrete-light-duty-anchors.png",
+          "filters": [
+            {"key": "anchorType", "label": "Type"},
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "materialFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "rod-hanger-anchors",

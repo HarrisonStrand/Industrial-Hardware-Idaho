@@ -292,7 +292,7 @@
     "fallbackMode": "product-grid"
   },
   "abrasives/mounted-stones": {
-    "displayMode": "builder",
+    "displayMode": "product-grid",
     "fallbackMode": "product-grid"
   },
   "abrasives/cartridge-rolls": {
@@ -316,7 +316,7 @@
     "fallbackMode": "product-grid"
   },
   "concrete/lag-expansion-shields": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "concrete/anchor-bolts": {
@@ -324,11 +324,11 @@
     "fallbackMode": "product-grid"
   },
   "concrete/hollow-wall-anchors": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "concrete/light-duty-anchors": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "concrete/rod-hanger-anchors": {

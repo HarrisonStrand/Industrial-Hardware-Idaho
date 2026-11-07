@@ -134,6 +134,7 @@ export function getCatalogPageFilters(categoryId, subcategoryId) {
       key: filter.key,
       label: filter.label || filter.key,
       sort: filter.sort || "",
+      always: filter.always === true,
     }));
 }
 

@@ -80,3 +80,29 @@ test("velcro disc grades show their color and sort coarsest first", async () => 
 		["Coarse (Brown)", "Medium (Red)", "Fine (Blue)", "Very Fine (Blue)", "Ultra Fine (Grey)"],
 	);
 });
+
+test("anchor pages: wedge anchor size, shield type, one diameter per size", async () => {
+	const { wedgeAnchorSize, shieldType, withCleanDiameter } = await import("../pageAttributes.js");
+	assert.equal(wedgeAnchorSize({ diameter: "1/4", threadPitch: "20" }), "1/4-20");
+	assert.equal(wedgeAnchorSize({ diameter: "3/8\"", threadPitch: "16" }), "3/8-16");
+	assert.equal(shieldType({ anchorType: "double expansion shield" }), "Expansion Shield");
+	assert.equal(shieldType({ anchorType: "lag shield" }), "Lag Shield");
+	assert.equal(withCleanDiameter([{ attributes: { diameter: "1/4\"" } }])[0].attributes.diameter, "1/4");
+});
+
+test("a page filter marked always shows even with one value", async () => {
+	const { planGeneralBuilderChoices } = await import("../builderShaping.js");
+	const rows = [{ diameter: "4", arborSize: "5/8-11" }, { diameter: "5", arborSize: "5/8-11" }];
+	const keys = (filters) => planGeneralBuilderChoices(rows, filters).map((c) => c.key);
+	assert.deepEqual(keys([{ key: "diameter" }, { key: "arborSize" }]), ["diameter"]);
+	assert.deepEqual(keys([{ key: "diameter" }, { key: "arborSize", always: true }]), ["diameter", "arborSize"]);
+});
+
+test("anchor diameters from titles where the stored value is a screw", async () => {
+	const { withCleanDiameter } = await import("../pageAttributes.js");
+	const one = (attributes, name) => withCleanDiameter([{ attributes, name }])[0].attributes;
+	assert.equal(one({ diameter: "10" }, "Plastic Anchor – #8-#10 x 7/8\"").diameter, "#8-#10");
+	assert.equal(one({ diameter: "#10" }, "Fluted Plastic Anchor – #10-#12 x 1-1/4\"").diameter, "#10-#12");
+	assert.equal(one({ diameter: "32" }, "Hollow Wall Anchor – 1/8\" Short, 6-32 x 1-3/4\" Screw").diameter, "1/8");
+	assert.equal(one({ diameter: "1/4", length: "2\"" }, "Hammer Drive Anchor – 1/4\" x 2\"").length, "2");
+});

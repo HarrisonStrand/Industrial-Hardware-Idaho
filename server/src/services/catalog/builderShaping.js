@@ -359,7 +359,7 @@ export function planGeneralBuilderChoices(attributeRows = [], pageFilters = []) 
 	if (Array.isArray(pageFilters) && pageFilters.length) {
 		candidates = pageFilters
 			.filter((filter) => filter && filter.key)
-			.map((filter) => ({ key: filter.key, label: filter.label || "", sort: filter.sort || "" }));
+			.map((filter) => ({ key: filter.key, label: filter.label || "", sort: filter.sort || "", always: filter.always === true }));
 	} else {
 		const keys = [];
 		const typeKey = TYPE_KEYS.find(has);
@@ -374,10 +374,11 @@ export function planGeneralBuilderChoices(attributeRows = [], pageFilters = []) 
 	}
 
 	const seen = new Set();
-	const kept = candidates.filter(({ key }) => {
+	// A page filter marked "always" shows even with one value (Back-Up Pads: every arbor is 5/8"-11).
+	const kept = candidates.filter(({ key, always }) => {
 		if (seen.has(key) || isInternalBuilderKey(key)) return false;
 		seen.add(key);
-		return distinctValues(attributeRows, key).size > 1;
+		return distinctValues(attributeRows, key).size > (always ? 0 : 1);
 	});
 	const keptKeys = kept.map(({ key }) => key);
 	const fromPageFilters = Array.isArray(pageFilters) && pageFilters.length > 0;
