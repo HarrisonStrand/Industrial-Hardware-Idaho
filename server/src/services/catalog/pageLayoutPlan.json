@@ -260,7 +260,7 @@
     "fallbackMode": "product-grid"
   },
   "abrasives/shop-rolls": {
-    "displayMode": "builder",
+    "displayMode": "product-grid",
     "fallbackMode": "product-grid"
   },
   "abrasives/hand-pads": {

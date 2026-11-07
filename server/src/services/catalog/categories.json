@@ -390,7 +390,11 @@
         {
           "id": "twist-lock-discs",
           "name": "Twist Lock Discs",
-          "image": "/images/subcategories/twist-lock-discs.png"
+          "image": "/images/subcategories/twist-lock-discs.png",
+          "filters": [
+            { "key": "diameter", "label": "Diameter", "sort": "size" },
+            { "key": "grit", "label": "Grit", "sort": "size" }
+          ]
         },
         {
           "id": "velcro-discs",
@@ -409,7 +413,12 @@
         {
           "id": "shop-rolls",
           "name": "Shop Rolls",
-          "image": "/images/subcategories/shop-rolls.png"
+          "image": "/images/subcategories/shop-rolls.png",
+          "filters": [
+            { "key": "width", "label": "Width", "sort": "size" },
+            { "key": "length", "label": "Length", "sort": "size" },
+            { "key": "grit", "label": "Grit", "sort": "size" }
+          ]
         },
         {
           "id": "hand-pads",

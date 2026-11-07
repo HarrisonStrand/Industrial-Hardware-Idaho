@@ -102,6 +102,12 @@ export function formatBuilderValue(key = "", value = "", system = "", options = 
 	const raw = String(value).trim();
 	const shopWord = VALUE_LABELS[key]?.[raw.toLowerCase()];
 	if (shopWord) return shopWord;
+	// Wire gauge: "4" reads as "4GA", "16-14" as "16-14GA"; aught sizes as "1/Ø", "2/Ø" (slashed zero, the shop way).
+	if (key === "wireGauge") {
+		if (/^\d\/0$/.test(raw)) return raw.replace(/0$/, "Ø");
+		if (/^[\d\s\-to]+$/i.test(raw) && /\d$/.test(raw)) return `${raw}GA`;
+		return raw;
+	}
 	// Rivet grip range: "1/16-1/8" reads as "1/16 - 1/8".
 	if (key === "gripRange") return raw.replace(/\s*-\s*/, " - ");
 	if (!raw || !isInchMeasureKey(key)) return String(value);

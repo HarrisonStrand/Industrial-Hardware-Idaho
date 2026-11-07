@@ -871,12 +871,28 @@ function sortByServerOrder(values = [], serverValues = []) {
 	});
 }
 
+// The line under a general card's title: the card's choice values, leaving out any the title already says and
+// any repeat ("Shop Roll – 1" x 50 yd, 240 Grit" needs no "1" · 1" · 240" under it). Empty when nothing is left.
+function summaryKey(value = "") {
+	return String(value).toLowerCase().replace(/[”″"']/g, "").replace(/\s+/g, " ").trim();
+}
+
 function getGeneralChoiceSummary(variant = {}, choices = []) {
 	const attrs = variant?.attributes || {};
-	const titles = [variant?.name || variant?.title || ""];
+	const title = variant?.name || variant?.title || "";
+	const titles = [title];
+	const titleKey = ` ${summaryKey(title).replace(/[^a-z0-9/.#-]+/g, " ")} `;
+	const seen = new Set();
 	return choices
 		.filter(({ key }) => attrs[key] !== undefined && attrs[key] !== null && attrs[key] !== "")
 		.map(({ key }) => formatBuilderValue(key, String(attrs[key]), attrs.measurementSystem, { titles }))
+		.filter((value) => {
+			const key = summaryKey(value);
+			if (!key || seen.has(key)) return false;
+			seen.add(key);
+			const words = ` ${key.replace(/[^a-z0-9/.#-]+/g, " ")} `;
+			return !titleKey.includes(words);
+		})
 		.join(" · ");
 }
 
