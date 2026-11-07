@@ -16,6 +16,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 
 import StockSplit, { splitStock, useStockLevels } from "../../components/StockSplit/StockSplit.jsx";
+import { quantityText, sellUnitWords } from "../../utils/sellUnit.js";
 import "./Checkout.css";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
@@ -429,7 +430,7 @@ export default function Checkout() {
 								<div className='text-main'>
 									<div className='fw-semibold'>{it.name}</div>
 									<div className='text-muted small'>
-										Qty {it.quantity} • ${Number(it.price || 0).toFixed(2)} ea
+										{it.sellUnit ? quantityText(it.quantity, it.sellUnit) : `Qty ${it.quantity}`} • ${Number(it.price || 0).toFixed(2)} {sellUnitWords(it.sellUnit).per === "each" ? "ea" : sellUnitWords(it.sellUnit).per}
 									</div>
 									<StockSplit quantity={it.quantity} available={stock[String(it.productId)]} />
 								</div>

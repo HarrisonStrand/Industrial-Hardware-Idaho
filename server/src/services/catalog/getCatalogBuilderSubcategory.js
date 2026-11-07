@@ -19,6 +19,7 @@ import {
 	getPricingSettings,
 } from "../../utils/resolveProductPrice.js";
 import { priceGroupInfo } from "../../config/fixedPriceGroups.js";
+import { applySoldByLength, isSoldByLengthPage } from "./soldByLength.js";
 import { loadRulePrices, productPartNumber } from "../fishbowl/loadRulePrices.js";
 
 
@@ -998,7 +999,7 @@ export async function getCatalogBuilderSubcategory(
 		? await loadRulePrices([...productMap.values()], pricingSettings)
 		: new Map();
 
-	const rawVariants = enrichments
+	const builtVariants = enrichments
 		.map((enrichment) => {
 				const product = productMap.get(String(enrichment.productId));
 				if (!product) return null;
@@ -1091,6 +1092,10 @@ export async function getCatalogBuilderSubcategory(
 		})
 		.filter(Boolean);
 
+	// Tubing, loom, sleeving, chain, wire and cable are sold by the foot (soldByLength.js).
+	const soldByLengthPage = isSoldByLengthPage(categoryId, subcategoryId);
+	const rawVariants = soldByLengthPage ? applySoldByLength(builtVariants) : builtVariants;
+
 	const builderReadyFilter =
 		options?.applyBuilderReadyFilter === false
 			? null
@@ -1112,7 +1117,7 @@ export async function getCatalogBuilderSubcategory(
 		? planGeneralBuilderChoices(
 				workingVariants.map((variant) => variant.attributes || {}),
 				getCatalogPageFilters(categoryId, subcategoryId),
-			)
+			).filter((choice) => !(soldByLengthPage && ["length", "rollLength"].includes(choice.key)))
 		: null;
 	const generalChoiceKeys = generalChoices ? generalChoices.map((choice) => choice.key) : [];
 

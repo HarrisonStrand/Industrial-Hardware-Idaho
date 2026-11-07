@@ -6,6 +6,7 @@ import { catalogNamePattern } from "./getCatalogBuilderSubcategory.js";
 import { buildReviewerInfo, findPreviewRows, isDraftPreview } from "./draftPreview.js";
 import { isListedForImage } from "./productImageVisibility.js";
 import { priceGroupInfo } from "../../config/fixedPriceGroups.js";
+import { UNIT_LABELS, isSoldByLengthPage, soldByLengthMap, titleWithoutLength } from "./soldByLength.js";
 import { loadRulePrices, productPartNumber } from "../fishbowl/loadRulePrices.js";
 import { getPricingContext, getPricingSettings, resolveProductPrice } from "../../utils/resolveProductPrice.js";
 
@@ -292,6 +293,27 @@ export async function getPublishedCatalog(filters = {}) {
 
   publicEnrichments = publicEnrichments.filter(isListedForImage);
 
+  // Chain and the other sold-by-length pages: decided on the whole page (soldByLength.js). Roll rows with a
+  // per-foot twin drop out; per-foot rows show no spool length.
+  const soldByLength =
+    category && subcategory && isSoldByLengthPage(category, subcategory)
+      ? soldByLengthMap(
+          publicEnrichments.map((enrichment) => {
+            const product = productMap.get(String(enrichment.productId));
+            return {
+              partNumber: product?.sku || "",
+              title: enrichment.title || "",
+              price: product?.pricing?.basePrice ?? product?.pricing?.salePrice ?? 0,
+            };
+          })
+        )
+      : null;
+  if (soldByLength) {
+    publicEnrichments = publicEnrichments.filter(
+      (enrichment) => soldByLength.get(productMap.get(String(enrichment.productId))?.sku || "")?.unit !== "hide"
+    );
+  }
+
   // Facets are calculated before the selected facet filters are applied so
   // customers can switch between every available type in the subcategory.
   const facets = buildFacets(publicEnrichments);
@@ -374,6 +396,7 @@ export async function getPublishedCatalog(filters = {}) {
         null;
 
       const facetValues = getFacetValues(enrichment);
+      const sold = soldByLength ? soldByLength.get(product?.sku || "") || { unit: "ft" } : null;
       // Store stock from the Fishbowl snapshot (the same number the cart and orders use);
       // the vendor offering's count only when the product has none.
       const qtyAvailable = Math.max(
@@ -387,8 +410,9 @@ export async function getPublishedCatalog(filters = {}) {
         sku: product.sku,
         internalPartNumber: product.internalPartNumber,
         slug: enrichment?.seo?.slug || "",
-        title: enrichment.title,
-        shortTitle: enrichment.shortTitle,
+        title: sold?.unit === "ft" ? titleWithoutLength(enrichment.title) : enrichment.title,
+        shortTitle: sold?.unit === "ft" ? titleWithoutLength(enrichment.shortTitle || "") : enrichment.shortTitle,
+        ...(sold ? { sellUnit: sold.unit, unitLabel: UNIT_LABELS[sold.unit] || "" } : {}),
         shortDescription: enrichment.shortDescription,
         category: enrichment.category,
         subcategory: enrichment.subcategory,

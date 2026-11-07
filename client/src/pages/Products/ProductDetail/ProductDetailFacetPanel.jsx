@@ -2,6 +2,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import AddToCartButton from "../../../components/Cart/AddToCartButton/AddToCartButton.jsx";
 import StockSplit from "../../../components/StockSplit/StockSplit.jsx";
 import useSiteSwitches from "../../../hooks/useSiteSwitches.js";
+import { quantityText, sellUnitWords } from "../../../utils/sellUnit.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useCart } from "../../../context/CartContext.jsx";
@@ -1239,12 +1240,14 @@ export function ProductPreviewPanel({
 								? emptyPriceText
 								: hidePrice
 									? "Contact for pricing"
-									: `${formatCurrency(unitPrice, currency)} each`}
+									: `${formatCurrency(unitPrice, currency)} ${sellUnitWords(variant?.sellUnit).per}`}
 						</div>
 					</div>
 
 					<div className='d-flex align-items-center justify-content-md-end gap-2 mb-3'>
-						<label className='form-label text-uppercase small fw-bold mb-0 text-main'>Qty</label>
+						<label className='form-label text-uppercase small fw-bold mb-0 text-main'>
+							{sellUnitWords(variant?.sellUnit).qtyLabel}
+						</label>
 						<button
 							type='button'
 							className='btn btn-md bg-main-light builder-detail-qty-btn'
@@ -1438,7 +1441,7 @@ export function ProductDetailModal({
 													<div className='fw-semibold text-main'>
 														{hidePrice ? "Contact for pricing" : formatCurrency(unitPrice, currency)}
 													</div>
-													<div className='small text-muted'>{hidePrice ? "" : "each"}</div>
+													<div className='small text-muted'>{hidePrice ? "" : sellUnitWords(variant?.sellUnit).per}</div>
 												</div>
 											</div>
 											{showStock ? (
@@ -1454,7 +1457,7 @@ export function ProductDetailModal({
 												<div className='builder-detail-stat theme-section-container bg-main-light rounded-4 p-3 h-100'>
 													<div className='small text-muted text-uppercase'>Total</div>
 													<div className='fw-semibold text-main'>{hidePrice ? "--" : formatCurrency(totalPrice, currency)}</div>
-													<div className='small text-muted'>{quantity} selected</div>
+													<div className='small text-muted'>{quantityText(quantity, variant?.sellUnit)} selected</div>
 												</div>
 											</div>
 										</div>
@@ -1522,7 +1525,9 @@ export function ProductDetailModal({
 
 							<div className='builder-detail-modal-purchase text-end'>
 								<div className='d-flex align-items-center justify-content-end gap-2 mb-3'>
-									<label className='form-label text-uppercase small fw-bold mb-0 text-main'>Qty</label>
+									<label className='form-label text-uppercase small fw-bold mb-0 text-main'>
+							{sellUnitWords(variant?.sellUnit).qtyLabel}
+						</label>
 									<button
 										type='button'
 										className='btn btn-md bg-main-light builder-detail-qty-btn'
@@ -1938,6 +1943,7 @@ const handleAddToCart = () => {
 		quantity: safeQuantity,
 		partNumber: exactVariant.partNumber,
 		sku: exactVariant.sku,
+		sellUnit: exactVariant.sellUnit || "",
 		slug: exactVariant.slug || "",
 		title: exactVariant.name,
 		image: exactVariant.image || builderData?.image || "",

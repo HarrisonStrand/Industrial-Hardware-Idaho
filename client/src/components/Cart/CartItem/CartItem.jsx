@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCart } from "../../../context/CartContext";
+import { quantityText } from "../../../utils/sellUnit.js";
 import "./CartItem.css";
 
 export default function CartItem({ item }) {
@@ -14,6 +15,7 @@ export default function CartItem({ item }) {
 		image,
 		attributes = {},
 		metadata = {},
+		sellUnit = "",
 	} = item;
 
 	const category = metadata.category || "";
@@ -132,7 +134,7 @@ export default function CartItem({ item }) {
 							−
 						</div>
 
-						<div className='mx-0'>{quantity}</div>
+						<div className='mx-0 text-nowrap'>{quantityText(quantity, sellUnit)}</div>
 
 						<div className='qty-btn' onClick={() => handleQtyChange(1)}>
 							+

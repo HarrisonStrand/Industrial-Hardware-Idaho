@@ -1,4 +1,5 @@
 import { useCart } from "../../../context/CartContext";
+import { quantityText } from "../../../utils/sellUnit.js";
 import "./CartDrawerItem.css";
 
 export default function CartDrawerItem({ item }) {
@@ -13,6 +14,7 @@ export default function CartDrawerItem({ item }) {
     image = "",
     attributes = {},
     metadata = {},
+    sellUnit = "",
   } = item;
 
   const details = [];
@@ -94,8 +96,8 @@ export default function CartDrawerItem({ item }) {
             −
           </button>
 
-          <div className="drawer-qty-number mx-3">
-            {quantity}
+          <div className="drawer-qty-number mx-3 text-nowrap">
+            {quantityText(quantity, sellUnit)}
           </div>
 
           <button

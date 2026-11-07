@@ -25,6 +25,8 @@ function normalizeCatalogCartInput(input = {}) {
 		attributes: input.attributes || {},
 		price: toSafeNumber(input.price, 0),
 		quantity,
+		// "ft" (sold by the foot) or "piece" (4 ft pieces); empty for items counted one at a time.
+		sellUnit: input.sellUnit || "",
 		metadata: {
 			source: "catalog-api",
 			category: input.category || "",
