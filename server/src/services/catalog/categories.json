@@ -905,7 +905,13 @@
         {
           "id": "taps-dies",
           "name": "Taps & Dies",
-          "image": "/images/subcategories/taps-dies.png"
+          "image": "/images/subcategories/taps-dies.png",
+          "filters": [
+            {"key": "measurementSystem", "label": "Measurement System"},
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "threadPitch", "label": "Thread", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"}
+          ]
         },
         {
           "id": "reciprocating-saw-blades",
@@ -915,7 +921,12 @@
         {
           "id": "masonry-bits",
           "name": "Masonry Bits",
-          "image": "/images/subcategories/masonry-bits.png"
+          "image": "/images/subcategories/masonry-bits.png",
+          "filters": [
+            {"key": "bitType", "label": "Type"},
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"}
+          ]
         },
         {
           "id": "end-mills",
@@ -935,7 +946,11 @@
         {
           "id": "spade-bits",
           "name": "Spade Bits",
-          "image": "/images/subcategories/spade-bits.png"
+          "image": "/images/subcategories/spade-bits.png",
+          "filters": [
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"}
+          ]
         },
         {
           "id": "thread-repair",
@@ -1400,7 +1415,12 @@
         {
           "id": "grease-fittings",
           "name": "Grease Fittings",
-          "image": "/images/subcategories/grease-fittings.png"
+          "image": "/images/subcategories/grease-fittings.png",
+          "filters": [
+            {"key": "measurementSystem", "label": "Measurement System"},
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "threadPitch", "label": "Thread", "sort": "size"}
+          ]
         }
       ]
     },
@@ -1510,7 +1530,15 @@
         {
           "id": "battery-terminals",
           "name": "Battery Terminals",
-          "image": "/images/subcategories/battery-terminals.png"
+          "image": "/images/subcategories/battery-terminals.png",
+          "filters": [
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "threadPitch", "label": "Thread", "sort": "size"},
+            {"key": "wireGauge", "label": "Wire Gauge", "sort": "gauge"},
+            {"key": "studSize", "label": "Stud Size", "sort": "stud"},
+            {"key": "materialFinish", "label": "Material / Finish"},
+            {"key": "color", "label": "Color"}
+          ]
         },
         {
           "id": "battery-accessories",
@@ -1623,7 +1651,15 @@
         {
           "id": "hand-tools",
           "name": "Hand Tools",
-          "image": "/images/subcategories/hand-tools.png"
+          "image": "/images/subcategories/hand-tools.png",
+          "filters": [
+            {"key": "productGroup", "label": "Type"},
+            {"key": "measurementSystem", "label": "Measurement System"},
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "materialFinish", "label": "Material / Finish"},
+            {"key": "color", "label": "Color"}
+          ]
         },
         {
           "id": "ladders-scaffolding",

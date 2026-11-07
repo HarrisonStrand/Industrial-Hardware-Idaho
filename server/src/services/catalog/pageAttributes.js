@@ -9,6 +9,7 @@
 
 import { pageKeyFor, withHeatShrinkWall } from "./soldByLength.js";
 import { WIRE_HARDWARE_PAGES } from "./wireHardwareAttributes.js";
+import { TOOL_PAGES } from "./toolPageAttributes.js";
 
 export function rivetFlangeType(attributes = {}, title = "") {
 	const head = String(attributes.headStyle || "").toLowerCase();
@@ -108,6 +109,7 @@ const BY_PAGE = {
 	"concrete/hollow-wall-anchors": withCleanDiameter,
 	"concrete/light-duty-anchors": withCleanDiameter,
 	...WIRE_HARDWARE_PAGES,
+	...TOOL_PAGES,
 };
 
 export function withPageAttributes(category = "", subcategory = "", variants = []) {
