@@ -599,12 +599,19 @@
         {
           "id": "u-bolts",
           "name": "U-Bolts",
-          "image": "/images/subcategories/u-bolts.png"
+          "image": "/images/subcategories/u-bolts.png",
+          "filters": [
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "threadPitch", "label": "Thread", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "materialFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "snap-links",
           "name": "Snap Links",
-          "image": "/images/subcategories/snap-links.png"
+          "image": "/images/subcategories/snap-links.png",
+          "hideTypeFilter": true
         },
         {
           "id": "quick-links",
@@ -614,7 +621,13 @@
         {
           "id": "eye-bolts",
           "name": "Eye Bolts",
-          "image": "/images/subcategories/eye-bolts.png"
+          "image": "/images/subcategories/eye-bolts.png",
+          "filters": [
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "countryOfOrigin", "label": "Origin", "always": true},
+            {"key": "titleFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "eye-lags",
@@ -639,7 +652,13 @@
         {
           "id": "clevis-pins",
           "name": "Clevis Pins",
-          "image": "/images/subcategories/clevis-pins.png"
+          "image": "/images/subcategories/clevis-pins.png",
+          "filters": [
+            {"key": "pinType", "label": "Type"},
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "titleFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "roll-pins",
@@ -659,17 +678,34 @@
         {
           "id": "hitch-pins",
           "name": "Hitch Pins & Clips",
-          "image": "/images/subcategories/hitch-pins.png"
+          "image": "/images/subcategories/hitch-pins.png",
+          "filters": [
+            {"key": "pinType", "label": "Type"},
+            {"key": "width", "label": "Width", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "titleFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "keys-key-stock",
           "name": "Keys & Key Stock",
-          "image": "/images/subcategories/keys-key-stock.png"
+          "image": "/images/subcategories/keys-key-stock.png",
+          "filters": [
+            {"key": "keyType", "label": "Type"},
+            {"key": "width", "label": "Width", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"},
+            {"key": "titleFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "chain-hardware",
           "name": "Chain Hardware",
-          "image": "/images/subcategories/chain-hardware.png"
+          "image": "/images/subcategories/chain-hardware.png",
+          "filters": [
+            {"key": "hardwareGroup", "label": "Type"},
+            {"key": "size", "label": "Size", "sort": "size"},
+            {"key": "titleFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "s-hooks",
@@ -679,7 +715,12 @@
         {
           "id": "screw-eyes",
           "name": "Screw Eyes",
-          "image": "/images/subcategories/screw-eyes.png"
+          "image": "/images/subcategories/screw-eyes.png",
+          "filters": [
+            {"key": "size", "label": "Eye Diameter", "sort": "size"},
+            {"key": "wireSize", "label": "Wire Size", "sort": "size"},
+            {"key": "titleFinish", "label": "Material / Finish"}
+          ]
         },
         {
           "id": "screw-hooks",
@@ -689,12 +730,18 @@
         {
           "id": "peg-board-hardware",
           "name": "Pegboard Hardware",
-          "image": "/images/subcategories/peg-board-hardware.png"
+          "image": "/images/subcategories/peg-board-hardware.png",
+          "hideTypeFilter": true
         },
         {
           "id": "wire-lock-pins",
           "name": "Wire Lock Pins",
-          "image": "/images/subcategories/wire-lock-pins.png"
+          "image": "/images/subcategories/wire-lock-pins.png",
+          "filters": [
+            {"key": "pinType", "label": "Type"},
+            {"key": "diameter", "label": "Diameter", "sort": "size"},
+            {"key": "length", "label": "Length", "sort": "size"}
+          ]
         },
         {
           "id": "springs",

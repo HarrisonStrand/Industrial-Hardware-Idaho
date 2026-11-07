@@ -56,7 +56,7 @@ function withPreview(on, fn) {
 	});
 }
 
-test("the plan file covers every page in categories.json: 119 builder, 98 product grid (11 weak pages moved to grid, 2026-11-04; Diablo Drill Bits split into Metal, Wood and Concrete Bits and Quick / Piggyback Connectors and Hose Clamps moved to builder, 2026-11-06)", () => {
+test("the plan file covers every page in categories.json: 123 builder, 94 product grid (11 weak pages moved to grid, 2026-11-04; Diablo Drill Bits split into Metal, Wood and Concrete Bits and Quick / Piggyback Connectors and Hose Clamps moved to builder, 2026-11-06)", () => {
 	const raw = JSON.parse(fs.readFileSync(PLAN_PATH, "utf8"));
 	const known = new Set(getKnownCatalogSubcategories().map((d) => `${d.categoryId}/${d.subcategoryId}`));
 	assert.equal(Object.keys(raw).length, 217);
@@ -66,11 +66,11 @@ test("the plan file covers every page in categories.json: 119 builder, 98 produc
 		counts[entry.displayMode] = (counts[entry.displayMode] || 0) + 1;
 		assert.equal(entry.fallbackMode, "product-grid");
 	}
-	assert.deepEqual(counts, { builder: 119, "product-grid": 98 });
+	assert.deepEqual(counts, { builder: 123, "product-grid": 94 });
 	for (const page of ["metal-bits", "wood-bits", "concrete-bits"]) assert.equal(raw[`diablo/${page}`].displayMode, "product-grid");
 	assert.equal(raw["diablo/drill-bits"], undefined);
 	assert.equal(raw["wire-hardware/shaft-collars"].displayMode, "builder");
-	assert.equal(raw["wire-hardware/chain-hardware"].displayMode, "product-grid");
+	assert.equal(raw["wire-hardware/peg-board-hardware"].displayMode, "product-grid");
 	assert.equal(raw["bolts/hex-cap-screws"].displayMode, "builder");
 });
 
@@ -97,7 +97,7 @@ test("in preview the plan applies and the builder switch counts as on", async ()
 		const byKey = Object.fromEntries(settings.map((s) => [`${s.categoryId}/${s.subcategoryId}`, s]));
 		assert.equal(byKey["wire-hardware/shaft-collars"].displayMode, "builder");
 		assert.equal(byKey["wire-hardware/shaft-collars"].fallbackMode, "product-grid");
-		assert.equal(byKey["wire-hardware/chain-hardware"].displayMode, "product-grid");
+		assert.equal(byKey["wire-hardware/peg-board-hardware"].displayMode, "product-grid");
 		assert.equal(byKey["abrasives/cut-off-wheels"].isVisible, true);
 		assert.equal(byKey["au-ve-co/fasteners"].fallbackMode, "range-list");
 		// Pages without a stored record get defaults in memory, with the plan over them.

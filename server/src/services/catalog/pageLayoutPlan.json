@@ -356,7 +356,7 @@
     "fallbackMode": "product-grid"
   },
   "wire-hardware/eye-bolts": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "wire-hardware/eye-lags": {
@@ -376,7 +376,7 @@
     "fallbackMode": "product-grid"
   },
   "wire-hardware/clevis-pins": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "wire-hardware/roll-pins": {
@@ -392,15 +392,15 @@
     "fallbackMode": "product-grid"
   },
   "wire-hardware/hitch-pins": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "wire-hardware/keys-key-stock": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "wire-hardware/chain-hardware": {
-    "displayMode": "product-grid",
+    "displayMode": "builder",
     "fallbackMode": "product-grid"
   },
   "wire-hardware/s-hooks": {
@@ -416,7 +416,7 @@
     "fallbackMode": "product-grid"
   },
   "wire-hardware/peg-board-hardware": {
-    "displayMode": "builder",
+    "displayMode": "product-grid",
     "fallbackMode": "product-grid"
   },
   "wire-hardware/wire-lock-pins": {

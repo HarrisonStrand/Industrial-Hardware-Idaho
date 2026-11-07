@@ -1,7 +1,7 @@
 import Product from "../../models/Product.js";
 import ProductEnrichment from "../../models/ProductEnrichment.js";
 import VendorOffering from "../../models/VendorOffering.js";
-import { getCatalogPageFilters } from "./catalogLayoutDefaults.js";
+import { catalogPageHidesTypeFilter, getCatalogPageFilters } from "./catalogLayoutDefaults.js";
 import { catalogNamePattern } from "./getCatalogBuilderSubcategory.js";
 import { buildReviewerInfo, findPreviewRows, isDraftPreview } from "./draftPreview.js";
 import { isListedForImage } from "./productImageVisibility.js";
@@ -317,6 +317,7 @@ export async function getPublishedCatalog(filters = {}) {
   // Facets are calculated before the selected facet filters are applied so
   // customers can switch between every available type in the subcategory.
   const facets = buildFacets(publicEnrichments);
+  if (category && subcategory && catalogPageHidesTypeFilter(category, subcategory)) facets.productTypes = [];
   const attributeFacets = buildAttributeFacets(publicEnrichments, pageFilters);
 
   const filteredEnrichments = publicEnrichments.filter((enrichment) => {

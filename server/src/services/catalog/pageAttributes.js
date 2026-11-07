@@ -8,6 +8,7 @@
 //   concrete/* anchor pages  diameter without a stray inch mark (1/4" and 1/4 are one choice)
 
 import { pageKeyFor, withHeatShrinkWall } from "./soldByLength.js";
+import { WIRE_HARDWARE_PAGES } from "./wireHardwareAttributes.js";
 
 export function rivetFlangeType(attributes = {}, title = "") {
 	const head = String(attributes.headStyle || "").toLowerCase();
@@ -106,6 +107,7 @@ const BY_PAGE = {
 	"concrete/lag-expansion-shields": withShieldType,
 	"concrete/hollow-wall-anchors": withCleanDiameter,
 	"concrete/light-duty-anchors": withCleanDiameter,
+	...WIRE_HARDWARE_PAGES,
 };
 
 export function withPageAttributes(category = "", subcategory = "", variants = []) {

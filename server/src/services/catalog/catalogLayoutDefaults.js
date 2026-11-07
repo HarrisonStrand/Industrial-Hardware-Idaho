@@ -104,6 +104,7 @@ function readCategoryDefinitions() {
         displayName: subcategory?.name || subcategory?.id || "",
         imageUrl: subcategory?.image || category?.image || "",
         filters: Array.isArray(subcategory?.filters) ? subcategory.filters : [],
+        hideTypeFilter: subcategory?.hideTypeFilter === true,
         sortOrder: categoryIndex * 1000 + subcategoryIndex,
       }))
     );
@@ -136,6 +137,16 @@ export function getCatalogPageFilters(categoryId, subcategoryId) {
       sort: filter.sort || "",
       always: filter.always === true,
     }));
+}
+
+// Grid pages can turn off the built-in Type filter ("hideTypeFilter": true in categories.json).
+export function catalogPageHidesTypeFilter(categoryId, subcategoryId) {
+  const categoryKey = normalizeCatalogId(categoryId);
+  const subcategoryKey = normalizeCatalogId(subcategoryId);
+  const definition = readCategoryDefinitions().find(
+    (item) => item.categoryId === categoryKey && item.subcategoryId === subcategoryKey
+  );
+  return definition?.hideTypeFilter === true;
 }
 
 export function getDefaultSubcategorySetting(definition = {}) {
